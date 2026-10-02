@@ -100,9 +100,9 @@ declare
   v_inserted uuid;
   v_balance integer;
 begin
-  select tokens, price_stars into v_tokens, v_price
-  from quality_token_packs
-  where id = p_pack_id and active = true;
+  select qtp.tokens, qtp.price_stars into v_tokens, v_price
+  from quality_token_packs qtp
+  where qtp.id = p_pack_id and qtp.active = true;
 
   if v_tokens is null then raise exception 'Token pack not found'; end if;
   if v_price <> p_paid_stars then raise exception 'Token pack price mismatch'; end if;
@@ -120,9 +120,9 @@ begin
   on conflict (telegram_user_id) do nothing;
 
   if v_inserted is not null then
-    update quality_wallets
-    set token_balance = token_balance + v_tokens, updated_at = now()
-    where telegram_user_id = p_telegram_user_id;
+    update quality_wallets qw
+    set token_balance = qw.token_balance + v_tokens, updated_at = now()
+    where qw.telegram_user_id = p_telegram_user_id;
   end if;
 
   select qw.token_balance into v_balance
