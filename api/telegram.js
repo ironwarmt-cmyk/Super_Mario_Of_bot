@@ -742,9 +742,48 @@ export default async function handler(req, res) {
       }
 
       if (action === "qa:tokens") {
+        const [profile, packs, wallet] = await Promise.all([
+          getUserProfile(callback.from.id),
+          listQualityTokenPacks(),
+          getQualityWallet(callback.from.id)
+        ]);
+        const view = renderTokens(packs, profile?.locale || "pl", wallet);
+        await editMessage(token, chatId, messageId, view.text, view.reply_markup);
+        return res.status(200).json({ ok: true });
+      }
+
+      if (action.startsWith("qa:token:")) {
+        const tokensToBuy = Number(action.split(":")[2]);
+        const pack = await getQualityTokenPack(tokensToBuy);
+
+        if (!pack) {
+          const profile = await getUserProfile(callback.from.id);
+          await editMessage(
+            token,
+            chatId,
+            messageId,
+            profile?.locale === "en"
+              ? "This token pack is no longer available."
+              : "Ten pakiet tokenów nie jest już dostępny.",
+            {
+              inline_keyboard: [[
+                { text: profile?.locale === "en" ? "⬅️ Back" : "⬅️ Wróć", callback_data: "qa:tokens" }
+              ]]
+            }
+          );
+          return res.status(200).json({ ok: true });
+        }
+
+        await sendStarsTokenInvoice(token, chatId, pack);
+        return res.status(200).json({ ok: true });
+      }
+
+      if (action === "qa:physical") {
         const profile = await getUserProfile(callback.from.id);
-        const packs = await listQualityTokenPacks();
-        const view = renderTokens(packs, profile?.locale || "pl");
+        const view = renderPhysicalProduct(
+          profile?.locale || "pl",
+          callback.from.id
+        );
         await editMessage(token, chatId, messageId, view.text, view.reply_markup);
         return res.status(200).json({ ok: true });
       }
@@ -757,9 +796,16 @@ export default async function handler(req, res) {
       }
 
       if (action === "qa:membership") {
-        const profile = await getUserProfile(callback.from.id);
-        const membership = await getQualityMembership(callback.from.id);
-        const view = renderMembership(membership, profile?.locale || "pl");
+        const [profile, membership, wallet] = await Promise.all([
+          getUserProfile(callback.from.id),
+          getQualityMembership(callback.from.id),
+          getQualityWallet(callback.from.id)
+        ]);
+        const view = renderMembership(
+          membership,
+          profile?.locale || "pl",
+          wallet
+        );
         await editMessage(token, chatId, messageId, view.text, view.reply_markup);
         return res.status(200).json({ ok: true });
       }
