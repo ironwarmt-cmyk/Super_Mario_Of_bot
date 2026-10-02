@@ -485,6 +485,97 @@ export default async function handler(req, res) {
         return res.status(200).json({ ok: true });
       }
 
+      if (action === "communities") {
+        const view = await renderCreatorCommunities(callback.from);
+        await editMessage(
+          token,
+          chatId,
+          messageId,
+          view.text,
+          view.reply_markup
+        );
+        return res.status(200).json({ ok: true });
+      }
+
+      if (action === "community_add") {
+        const creator = await ensureCreator(callback.from);
+        await setSession(callback.from.id, "community_wait_forward", {
+          creatorId: creator.id
+        });
+
+        await editMessage(
+          token,
+          chatId,
+          messageId,
+          "<b>➕ Dodaj kanał lub grupę</b>\n\n1. Dodaj tego bota jako administratora kanału/grupy.\n2. Daj mu prawo zapraszania użytkowników i blokowania/usuwania członków.\n3. Przekaż tutaj dowolną wiadomość z tego kanału lub grupy.\n\nWpisz /cancel, aby anulować.",
+          {
+            inline_keyboard: [
+              [{ text: "✖️ Anuluj", callback_data: "home" }]
+            ]
+          }
+        );
+
+        return res.status(200).json({ ok: true });
+      }
+
+      if (action.startsWith("plan_access:")) {
+        const planId = action.split(":")[1];
+        const view = await renderPlanAccess(callback.from, planId);
+
+        await editMessage(
+          token,
+          chatId,
+          messageId,
+          view.text,
+          view.reply_markup
+        );
+
+        return res.status(200).json({ ok: true });
+      }
+
+      if (action.startsWith("pc:")) {
+        const session = await getSession(callback.from.id);
+
+        if (!session || session.state !== "plan_access" || !session.data?.planId) {
+          const view = await renderCreatorPlans(callback.from);
+          await editMessage(
+            token,
+            chatId,
+            messageId,
+            "Sesja przypisywania dostępu wygasła. Otwórz plan ponownie.\n\n" + view.text,
+            view.reply_markup
+          );
+          return res.status(200).json({ ok: true });
+        }
+
+        const communityId = action.split(":")[1];
+        const links = await getPlanCommunities(session.data.planId);
+        const enabled = !(links || []).some(
+          (item) => item.community_id === communityId
+        );
+
+        await setPlanCommunity(
+          session.data.planId,
+          communityId,
+          enabled
+        );
+
+        const view = await renderPlanAccess(
+          callback.from,
+          session.data.planId
+        );
+
+        await editMessage(
+          token,
+          chatId,
+          messageId,
+          view.text,
+          view.reply_markup
+        );
+
+        return res.status(200).json({ ok: true });
+      }
+
       if (action === "plan_create") {
         const creator = await ensureCreator(callback.from);
         await setSession(callback.from.id, "plan_name", {
