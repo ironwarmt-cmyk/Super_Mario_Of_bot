@@ -757,6 +757,134 @@ Deno.serve(async (req) => {
       return json({ ok: true, data: data || [] });
     }
 
+    if (action === "get_quality_wallet") {
+      const telegramUserId = body?.telegram_user_id;
+
+      const { data, error } = await supabase
+        .from("quality_wallets")
+        .select("telegram_user_id,token_balance,updated_at")
+        .eq("telegram_user_id", telegramUserId)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      return json({
+        ok: true,
+        data: data || {
+          telegram_user_id: telegramUserId,
+          token_balance: 0
+        }
+      });
+    }
+
+    if (action === "get_quality_token_pack") {
+      const tokens = Number(body?.tokens || 0);
+
+      const { data, error } = await supabase
+        .from("quality_token_packs")
+        .select("*")
+        .eq("tokens", tokens)
+        .eq("active", true)
+        .maybeSingle();
+
+      if (error) throw error;
+      return json({ ok: true, data: data || null });
+    }
+
+    if (action === "record_quality_token_payment") {
+      const user = body?.user;
+      const payment = body?.payment || {};
+
+      if (!user?.id || !payment?.telegram_payment_charge_id) {
+        return json({ ok: false, error: "Incomplete token payment" }, 400);
+      }
+
+      const match = /^qa_token:(\d+)$/.exec(String(payment.invoice_payload || ""));
+      if (!match) {
+        return json({ ok: false, error: "Invalid token invoice payload" }, 400);
+      }
+
+      const tokens = Number(match[1]);
+
+      const { data: pack, error: packError } = await supabase
+        .from("quality_token_packs")
+        .select("*")
+        .eq("tokens", tokens)
+        .eq("active", true)
+        .maybeSingle();
+
+      if (packError) throw packError;
+      if (!pack) {
+        return json({ ok: false, error: "Token pack not found" }, 404);
+      }
+
+      if (
+        payment.currency !== "XTR" ||
+        Number(payment.total_amount) !== Number(pack.price_stars)
+      ) {
+        return json({ ok: false, error: "Token payment amount mismatch" }, 400);
+      }
+
+      await upsertTelegramUser(supabase, user);
+
+      const { data: existing, error: existingError } = await supabase
+        .from("quality_token_purchases")
+        .select("id")
+        .eq("telegram_payment_charge_id", payment.telegram_payment_charge_id)
+        .maybeSingle();
+
+      if (existingError) throw existingError;
+
+      if (!existing) {
+        const { error: purchaseError } = await supabase
+          .from("quality_token_purchases")
+          .insert({
+            telegram_user_id: user.id,
+            tokens,
+            stars_paid: payment.total_amount,
+            telegram_payment_charge_id: payment.telegram_payment_charge_id
+          });
+
+        if (purchaseError) throw purchaseError;
+
+        const { data: balance, error: creditError } = await supabase.rpc(
+          "credit_quality_tokens",
+          {
+            p_user: user.id,
+            p_tokens: tokens
+          }
+        );
+
+        if (creditError) throw creditError;
+
+        return json({
+          ok: true,
+          data: {
+            tokens_added: tokens,
+            token_balance: Number(balance || 0),
+            duplicate: false
+          }
+        });
+      }
+
+      const { data: wallet, error: walletError } = await supabase
+        .from("quality_wallets")
+        .select("token_balance")
+        .eq("telegram_user_id", user.id)
+        .maybeSingle();
+
+      if (walletError) throw walletError;
+
+      return json({
+        ok: true,
+        data: {
+          tokens_added: 0,
+          token_balance: Number(wallet?.token_balance || 0),
+          duplicate: true
+        }
+      });
+    }
+
     if (action === "get_quality_membership") {
       const telegramUserId = body?.telegram_user_id;
 
