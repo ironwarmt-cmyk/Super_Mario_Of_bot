@@ -76,7 +76,17 @@ async function configureBotProfile(token) {
     commands: plCommands
   });
 
-  return { ok: true };
+  await telegramCall(token, "setChatMenuButton", {
+    menu_button: {
+      type: "web_app",
+      text: "Quality Hub",
+      web_app: {
+        url: "https://supermarioofbot-iron-war.vercel.app/quality/"
+      }
+    }
+  });
+
+  return { ok: true, menu: "Quality Hub" };
 }
 
 function webhookSecret(token) {
