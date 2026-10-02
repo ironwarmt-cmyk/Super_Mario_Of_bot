@@ -1,35 +1,26 @@
-# Zarządzanie incydentami i sytuacjami kryzysowymi
+# PRO — Zarządzanie incydentami i sytuacjami kryzysowymi
 
-> Edytowalny szablon wdrożeniowy. Uzupełnij parametry zakładu, produktu, procesu i wymagania prawne.
+## Cel
+Zapewnienie szybkiej, skoordynowanej reakcji na zdarzenia mogące wpływać na bezpieczeństwo, legalność, autentyczność, jakość lub ciągłość produkcji.
 
-## 1. Cel
-Zapewnienie kontrolowanego i udokumentowanego sposobu postępowania w tym obszarze.
+## Przykładowe zdarzenia
+- brak wody, energii, chłodzenia, transportu lub personelu,
+- pożar, zalanie, awaria techniczna,
+- cyberatak,
+- celowe zanieczyszczenie lub sabotaż,
+- poważne zanieczyszczenie produktu,
+- informacja od urzędu lub klienta o zagrożeniu.
 
-## 2. Zakres
-Wszystkie produkty, procesy, lokalizacje i osoby, dla których obszar ma zastosowanie.
+## Postępowanie
+1. Zgłoś zdarzenie do lidera kryzysowego.
+2. Zabezpiecz ludzi, produkt, dane i obszar.
+3. Powołaj zespół kryzysowy i przypisz role.
+4. Oceń partie potencjalnie dotknięte zdarzeniem.
+5. Zablokuj produkt do czasu decyzji.
+6. Oceń obowiązki informacyjne wobec klientów i organów.
+7. Jeżeli konieczne, uruchom wycofanie/odzyskanie.
+8. Prowadź chronologiczny dziennik decyzji.
+9. Po zdarzeniu wykonaj analizę przyczyny i plan działań.
 
-## 3. Odpowiedzialności
-- Kierownik Jakości: nadzór systemowy, zatwierdzenie i analiza skuteczności.
-- Właściciel procesu: wdrożenie wymagań operacyjnych.
-- Pracownicy: wykonywanie zatwierdzonych działań i zgłaszanie odchyleń.
-
-## 4. Sposób postępowania
-1. Utrzymuj aktualną listę zdarzeń wymagających eskalacji oraz dane kontaktowe zespołu kryzysowego.
-2. Po zdarzeniu określ lidera, zakres problemu i priorytety bezpieczeństwa produktu.
-3. Zabezpiecz produkt, proces, systemy IT i dowody.
-4. Oceń obowiązki prawne, klientów i potrzebę komunikacji zewnętrznej.
-5. Prowadź dziennik decyzji, czasu i odpowiedzialności.
-6. Po zakończeniu wykonaj analizę przyczyny, skuteczności reakcji i plan doskonalenia.
-7. Testuj gotowość systemu w zaplanowanych ćwiczeniach.
-
-## 5. Zapisy
-- Rejestr / formularz właściwy dla procesu
-- Dowody weryfikacji
-- Niezgodności i działania
-- Przegląd trendów / wyników
-
-## 6. Weryfikacja skuteczności
-Skuteczność oceniaj przez wyniki audytów, odchylenia, reklamacje, badania, KPI i przegląd trendów odpowiednich do obszaru.
-
-## 7. Przegląd
-Co najmniej raz w roku oraz po istotnej zmianie lub zdarzeniu.
+## Zapisy
+Lista kontaktów, log kryzysowy, decyzje, komunikaty, raport końcowy, CAPA.
