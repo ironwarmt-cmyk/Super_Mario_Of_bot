@@ -1,35 +1,21 @@
-# Incident and Crisis Management
+# PRO — Incident and Crisis Management
 
-> Editable implementation template. Complete site, product, process and applicable legal parameters.
+## Purpose
+Provide fast, coordinated response to events that can affect safety, legality, authenticity, quality or business continuity.
 
-## 1. Purpose
-Provide a controlled and documented method for this management-system area.
+## Example events
+Loss of water, power, refrigeration, transport or staff; fire or flood; engineering failure; cyberattack; intentional contamination; serious product contamination; authority or customer alerts.
 
-## 2. Scope
-All products, processes, locations and people to which this area applies.
+## Procedure
+1. Escalate to the crisis leader.
+2. Protect people, product, information and area.
+3. Activate crisis team and assign roles.
+4. Identify potentially affected lots.
+5. Hold product pending decision.
+6. Assess notification duties to customers and authorities.
+7. Activate withdrawal/recall where necessary.
+8. Maintain chronological decision log.
+9. Complete root-cause analysis and action plan after the event.
 
-## 3. Responsibilities
-- Quality Manager: system oversight, approval and effectiveness review.
-- Process owner: implementation of operational requirements.
-- Employees: follow approved controls and report deviations.
-
-## 4. Procedure
-1. Maintain escalation scenarios and current crisis-team contacts.
-2. At activation define leader, scope and product-safety priorities.
-3. Secure product, process, IT systems and evidence.
-4. Assess legal duties, customers and external communication needs.
-5. Maintain a decision, timeline and responsibility log.
-6. After closure complete root-cause, response-effectiveness and improvement review.
-7. Test preparedness through planned exercises.
-
-## 5. Records
-- Relevant process register / form
-- Verification evidence
-- Nonconformities and actions
-- Trend / performance review
-
-## 6. Effectiveness verification
-Evaluate effectiveness through audits, deviations, complaints, testing, KPIs and relevant trend review.
-
-## 7. Review
-At least annually and after significant change or event.
+## Records
+Contact list, crisis log, decisions, communications, final report and CAPA.
