@@ -18,31 +18,61 @@ async function telegramCall(token, method, payload = {}) {
 }
 
 async function configureBotProfile(token) {
-  await telegramCall(token, "setMyName", {
+  const results = [];
+
+  async function safe(method, payload) {
+    try {
+      const result = await telegramCall(token, method, payload);
+      results.push({ method, ok: true });
+      return result;
+    } catch (error) {
+      results.push({
+        method,
+        ok: false,
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+      return null;
+    }
+  }
+
+  await safe("setMyName", {
     name: "Quality Assurance Support"
   });
 
-  await telegramCall(token, "setMyDescription", {
-    description:
-      "Quality Assurance Support — dwujęzyczna społeczność dla jakości i bezpieczeństwa żywności. Procedury, analiza zagrożeń, szkolenia, biblioteka dokumentów i wsparcie QA.",
+  const plDescription =
+    "Quality Assurance Support — centrum jakości i bezpieczeństwa żywności. Pakiety BASIC/PRO/VIP, edytowalne procedury, analiza zagrożeń, szkolenia, asystent Quality, tokeny oraz fizyczny segregator dokumentacji.";
+
+  const enDescription =
+    "Quality Assurance Support — food quality and safety hub. BASIC/PRO/VIP plans, editable procedures, hazard analysis, training, Quality Assistant, tokens and a printed documentation binder.";
+
+  await safe("setMyDescription", {
+    description: plDescription
+  });
+
+  await safe("setMyDescription", {
+    description: plDescription,
     language_code: "pl"
   });
 
-  await telegramCall(token, "setMyDescription", {
-    description:
-      "Quality Assurance Support — bilingual community for food quality and food safety. Procedures, hazard analysis, training, document library and QA support.",
+  await safe("setMyDescription", {
+    description: enDescription,
     language_code: "en"
   });
 
-  await telegramCall(token, "setMyShortDescription", {
+  await safe("setMyShortDescription", {
     short_description:
-      "Jakość i bezpieczeństwo żywności: dokumenty, szkolenia i wsparcie QA.",
+      "Quality Assurance Support: dokumenty, szkolenia, asystent i narzędzia QA."
+  });
+
+  await safe("setMyShortDescription", {
+    short_description:
+      "Dokumenty, szkolenia, asystent i narzędzia dla jakości żywności.",
     language_code: "pl"
   });
 
-  await telegramCall(token, "setMyShortDescription", {
+  await safe("setMyShortDescription", {
     short_description:
-      "Food quality & safety: documents, training and QA support.",
+      "Documents, training, assistant and tools for food quality professionals.",
     language_code: "en"
   });
 
@@ -62,21 +92,21 @@ async function configureBotProfile(token) {
     { command: "admin", description: "Owner panel" }
   ];
 
-  await telegramCall(token, "setMyCommands", {
+  await safe("setMyCommands", {
     commands: plCommands,
     language_code: "pl"
   });
 
-  await telegramCall(token, "setMyCommands", {
+  await safe("setMyCommands", {
     commands: enCommands,
     language_code: "en"
   });
 
-  await telegramCall(token, "setMyCommands", {
+  await safe("setMyCommands", {
     commands: plCommands
   });
 
-  await telegramCall(token, "setChatMenuButton", {
+  await safe("setChatMenuButton", {
     menu_button: {
       type: "web_app",
       text: "Quality Hub",
@@ -86,7 +116,7 @@ async function configureBotProfile(token) {
     }
   });
 
-  return { ok: true, menu: "Quality Hub" };
+  return { ok: true, results, menu: "Quality Hub" };
 }
 
 function webhookSecret(token) {
