@@ -1,35 +1,18 @@
-# Nadzór nad produktem niezgodnym
+# PRO — Nadzór nad produktem niezgodnym
 
-> Edytowalny szablon wdrożeniowy. Uzupełnij parametry zakładu, produktu, procesu i wymagania prawne.
+## Cel
+Zapobieganie niezamierzonemu użyciu, zwolnieniu lub wysyłce produktu, który nie spełnia wymagań.
 
-## 1. Cel
-Zapewnienie kontrolowanego i udokumentowanego sposobu postępowania w tym obszarze.
+## Zasady
+1. Natychmiast zidentyfikuj i odseparuj produkt.
+2. Oznacz status: BLOKADA / OCZEKUJE NA DECYZJĘ / ODRZUT / ZWOLNIONY WARUNKOWO / PRZERÓB.
+3. Zapisz ilość, partię, powód i miejsce składowania.
+4. Oceń wpływ na bezpieczeństwo, legalność, autentyczność, jakość i specyfikację.
+5. Decyzję o zwolnieniu podejmuje osoba upoważniona.
+6. Rework wymaga oceny bezpieczeństwa, identyfikowalności i zgodności z recepturą/alergenami.
+7. Utylizacja lub przeklasyfikowanie musi być udokumentowane.
+8. Jeżeli produkt mógł opuścić zakład, uruchom procedurę incydentu/wycofania.
+9. Powtarzalne przyczyny podlegają CAPA.
 
-## 2. Zakres
-Wszystkie produkty, procesy, lokalizacje i osoby, dla których obszar ma zastosowanie.
-
-## 3. Odpowiedzialności
-- Kierownik Jakości: nadzór systemowy, zatwierdzenie i analiza skuteczności.
-- Właściciel procesu: wdrożenie wymagań operacyjnych.
-- Pracownicy: wykonywanie zatwierdzonych działań i zgłaszanie odchyleń.
-
-## 4. Sposób postępowania
-1. Natychmiast zidentyfikuj i fizycznie lub systemowo zablokuj produkt.
-2. Określ przyczynę blokady, partie, ilość i lokalizację.
-3. Oceń ryzyko oraz zgodność z prawem i specyfikacją.
-4. Podejmij udokumentowaną decyzję: zwolnienie, przerób, przeklasyfikowanie, zwrot lub utylizacja.
-5. Jeżeli produkt był już wysłany, uruchom ocenę potrzeby odzyskania lub wycofania.
-6. Zapisz decyzję osoby uprawnionej i końcowy bilans ilości.
-7. Analizuj powtarzalne przypadki w systemie CAPA.
-
-## 5. Zapisy
-- Rejestr / formularz właściwy dla procesu
-- Dowody weryfikacji
-- Niezgodności i działania
-- Przegląd trendów / wyników
-
-## 6. Weryfikacja skuteczności
-Skuteczność oceniaj przez wyniki audytów, odchylenia, reklamacje, badania, KPI i przegląd trendów odpowiednich do obszaru.
-
-## 7. Przegląd
-Co najmniej raz w roku oraz po istotnej zmianie lub zdarzeniu.
+## Zapisy
+Rejestr blokad, karta decyzji, protokół zniszczenia, karta rework, zgoda na zwolnienie, CAPA.
