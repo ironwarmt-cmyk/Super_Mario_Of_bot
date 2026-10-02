@@ -1,32 +1,29 @@
-# Training, Personal Hygiene and Protective Clothing
+# PRO — Training, Personal Hygiene and Protective Clothing
 
-> Editable implementation template. Complete site, product, process and applicable legal parameters.
+## Purpose
+Ensure personnel competence and reduce contamination risk arising from behaviour, health status or unsuitable protective clothing.
 
-## 1. Purpose
-Ensure that people performing work affecting food safety and quality are competent, follow hygiene rules and use suitable protective clothing.
+## Competence and training
+1. Define required competence for every role.
+2. Provide induction and role-specific training before unsupervised work.
+3. Assign critical tasks only to suitably trained people.
+4. Verify training effectiveness through observation, testing, audit or performance results.
+5. Maintain a competence matrix and refresher-training plan.
 
-## 2. Scope
-Employees, temporary workers, visitors, contractors and all relevant site areas.
+## Personal hygiene
+- hand washing and disinfection according to area rules,
+- restrictions on jewellery, phones and personal items,
+- wound and dressing rules,
+- eating, drinking and smoking only in designated areas.
 
-## 3. Responsibilities
-- HR / line managers: plan training and confirm competence.
-- Quality: hygiene rules and technical training content.
-- Employees: follow rules and report issues.
+## Health status
+Employees and visitors report symptoms or illness that may create product risk. The site defines rules for exclusion from product handling or temporary reassignment.
 
-## 4. Procedure
-1. Define competence requirements for roles affecting product safety and quality.
-2. Complete induction and role training before unsupervised work.
-3. Evaluate training effectiveness and maintain a competence matrix.
-4. Define handwashing, jewellery, eating, smoking and area behaviour rules.
-5. Define reporting of illness and health restrictions in line with applicable law.
-6. Provide suitable protective clothing with change and laundering rules.
-7. Control visitors and contractors before entry to production areas.
+## Protective clothing
+Clothing type depends on zone and risk. It must be clean, correctly stored, donned/doffed in the required sequence and replaced at defined frequency.
 
-## 5. Records
-- Competence matrix
-- Training register
-- Training effectiveness evaluation
-- Protective clothing / visitor control records
+## Visitors and contractors
+Receive site instruction before entry and comply with the requirements of the area visited.
 
-## 6. Review
-At least annually and after role, process or requirement changes.
+## Records
+Competence matrix, training plan, attendance, effectiveness checks, health declarations, clothing issue and visitor induction.
