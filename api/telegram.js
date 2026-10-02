@@ -11,7 +11,7 @@ import {
   getSectionMessage,
   sendMessage,
   sendStarsInvoice,
-  sendTokenPackInvoice,
+  sendStarsTokenInvoice,
   unbanChatMember
 } from "../lib/telegram.js";
 import {
@@ -47,8 +47,7 @@ import {
   listQualityTokenPacks,
   getQualityTokenPack,
   getQualityWallet,
-  creditQualityTokenPack,
-  getQualityPhysicalProduct,
+  recordQualityTokenPayment,
   getQualityMembership,
   isDatabaseConfigured,
   listCommunities,
@@ -556,9 +555,9 @@ export default async function handler(req, res) {
       const query = update.pre_checkout_query;
       const payload = String(query.invoice_payload || "");
 
-      const tokenMatch = /^qa_tokens:([0-9a-f-]{36})$/i.exec(payload);
+      const tokenMatch = /^qa_token:(\d+)$/.exec(payload);
       if (tokenMatch) {
-        const pack = await getQualityTokenPack(tokenMatch[1]);
+        const pack = await getQualityTokenPack(Number(tokenMatch[1]));
         const valid =
           pack &&
           query.currency === "XTR" &&
@@ -568,13 +567,16 @@ export default async function handler(req, res) {
           token,
           query.id,
           Boolean(valid),
-          valid ? undefined : "Pakiet tokenów jest niedostępny albo cena się zmieniła."
+          valid
+            ? undefined
+            : "Pakiet tokenów jest niedostępny albo jego cena się zmieniła."
         );
 
         return res.status(200).json({ ok: true });
       }
 
       const planMatch = /^plan:([0-9a-f-]{36})$/i.exec(payload);
+
       if (!planMatch) {
         await answerPreCheckoutQuery(
           token,
@@ -618,8 +620,11 @@ export default async function handler(req, res) {
         const locale = action.split(":")[1] === "en" ? "en" : "pl";
         await upsertTelegramUser(callback.from);
         await setUserLocale(callback.from.id, locale);
-        const profile = await getUserProfile(callback.from.id);
-        const view = qualityHome(locale, Boolean(profile?.is_admin));
+        const [profile, plans] = await Promise.all([
+          getUserProfile(callback.from.id),
+          listQualityPlans()
+        ]);
+        const view = qualityHome(locale, Boolean(profile?.is_admin), plans);
         await editMessage(token, chatId, messageId, view.text, view.reply_markup);
         return res.status(200).json({ ok: true });
       }
@@ -631,9 +636,12 @@ export default async function handler(req, res) {
       }
 
       if (action === "qa:home") {
-        const profile = await getUserProfile(callback.from.id);
+        const [profile, plans] = await Promise.all([
+          getUserProfile(callback.from.id),
+          listQualityPlans()
+        ]);
         const locale = profile?.locale || "pl";
-        const view = qualityHome(locale, Boolean(profile?.is_admin));
+        const view = qualityHome(locale, Boolean(profile?.is_admin), plans);
         await editMessage(token, chatId, messageId, view.text, view.reply_markup);
         return res.status(200).json({ ok: true });
       }
@@ -740,8 +748,8 @@ export default async function handler(req, res) {
       }
 
       if (action === "qa:tokens") {
-        const profile = await getUserProfile(callback.from.id);
-        const [packs, wallet] = await Promise.all([
+        const [profile, packs, wallet] = await Promise.all([
+          getUserProfile(callback.from.id),
           listQualityTokenPacks(),
           getQualityWallet(callback.from.id)
         ]);
@@ -750,35 +758,39 @@ export default async function handler(req, res) {
         return res.status(200).json({ ok: true });
       }
 
-      if (action.startsWith("qa:buy_tokens:")) {
-        const packId = action.slice("qa:buy_tokens:".length);
-        const pack = await getQualityTokenPack(packId);
+      if (action.startsWith("qa:token:")) {
+        const tokensToBuy = Number(action.split(":")[2]);
+        const pack = await getQualityTokenPack(tokensToBuy);
 
         if (!pack) {
-          await sendMessage(token, chatId, "Ten pakiet tokenów jest niedostępny.");
+          const profile = await getUserProfile(callback.from.id);
+          await editMessage(
+            token,
+            chatId,
+            messageId,
+            profile?.locale === "en"
+              ? "This token pack is no longer available."
+              : "Ten pakiet tokenów nie jest już dostępny.",
+            {
+              inline_keyboard: [[
+                { text: profile?.locale === "en" ? "⬅️ Back" : "⬅️ Wróć", callback_data: "qa:tokens" }
+              ]]
+            }
+          );
           return res.status(200).json({ ok: true });
         }
 
-        await sendTokenPackInvoice(token, chatId, pack);
+        await sendStarsTokenInvoice(token, chatId, pack);
         return res.status(200).json({ ok: true });
       }
 
       if (action === "qa:physical") {
         const profile = await getUserProfile(callback.from.id);
-        const locale = profile?.locale || "pl";
-        const product = await getQualityPhysicalProduct("qa-master-binder");
-        const checkoutUrl = product
-          ? `https://supermarioofbot-iron-war.vercel.app/api/physical-checkout?product=${encodeURIComponent(product.slug)}&u=${callback.from.id}`
-          : null;
-        const view = renderPhysicalProduct(product, locale, checkoutUrl);
-
-        await editMessage(
-          token,
-          chatId,
-          messageId,
-          view.text,
-          view.reply_markup
+        const view = renderPhysicalProduct(
+          profile?.locale || "pl",
+          callback.from.id
         );
+        await editMessage(token, chatId, messageId, view.text, view.reply_markup);
         return res.status(200).json({ ok: true });
       }
 
@@ -790,8 +802,8 @@ export default async function handler(req, res) {
       }
 
       if (action === "qa:membership") {
-        const profile = await getUserProfile(callback.from.id);
-        const [membership, wallet] = await Promise.all([
+        const [profile, membership, wallet] = await Promise.all([
+          getUserProfile(callback.from.id),
           getQualityMembership(callback.from.id),
           getQualityWallet(callback.from.id)
         ]);
@@ -1142,24 +1154,26 @@ export default async function handler(req, res) {
     if (message.successful_payment) {
       const payment = message.successful_payment;
       const payload = String(payment.invoice_payload || "");
-      const tokenMatch = /^qa_tokens:([0-9a-f-]{36})$/i.exec(payload);
 
-      if (tokenMatch) {
-        const result = await creditQualityTokenPack(
+      if (/^qa_token:\d+$/.test(payload)) {
+        const result = await recordQualityTokenPayment(
           message.from,
-          tokenMatch[1],
           payment
         );
+
+        const profile = await getUserProfile(message.from.id);
+        const pl = (profile?.locale || "pl") !== "en";
 
         await sendMessage(
           token,
           chatId,
-          `✅ Tokeny zostały dodane do konta.\n\nDodano: <b>${result?.credited_tokens || 0} 🪙</b>\nSaldo: <b>${result?.token_balance || 0} 🪙</b>`,
+          pl
+            ? `✅ Tokeny zostały dodane.\n\nDodano: <b>${result.tokens_added}</b>\nTwoje saldo: <b>${result.token_balance} tokenów</b>\n\nMożesz je wykorzystać na dodatkowe generowanie dokumentów po wykorzystaniu limitu pakietu.`
+            : `✅ Tokens added.\n\nAdded: <b>${result.tokens_added}</b>\nYour balance: <b>${result.token_balance} tokens</b>\n\nYou can use them for extra document generation after your plan allowance is used.`,
           {
-            inline_keyboard: [
-              [{ text: "🪙 Tokeny", callback_data: "qa:tokens" }],
-              [{ text: "⬅️ Menu Quality", callback_data: "qa:home" }]
-            ]
+            inline_keyboard: [[
+              { text: pl ? "🪙 Portfel tokenów" : "🪙 Token wallet", callback_data: "qa:tokens" }
+            ]]
           }
         );
 
@@ -1189,6 +1203,27 @@ export default async function handler(req, res) {
           : undefined
       );
 
+      return res.status(200).json({ ok: true });
+    }
+
+    if (/^\/start\s+tokens$/i.test(text)) {
+      const [profile, packs, wallet] = await Promise.all([
+        getUserProfile(message.from.id),
+        listQualityTokenPacks(),
+        getQualityWallet(message.from.id)
+      ]);
+      const view = renderTokens(packs, profile?.locale || "pl", wallet);
+      await sendMessage(token, chatId, view.text, view.reply_markup);
+      return res.status(200).json({ ok: true });
+    }
+
+    if (/^\/start\s+physical$/i.test(text)) {
+      const profile = await getUserProfile(message.from.id);
+      const view = renderPhysicalProduct(
+        profile?.locale || "pl",
+        message.from.id
+      );
+      await sendMessage(token, chatId, view.text, view.reply_markup);
       return res.status(200).json({ ok: true });
     }
 
@@ -1343,7 +1378,12 @@ export default async function handler(req, res) {
         return res.status(200).json({ ok: true });
       }
 
-      const view = qualityHome(profile.locale, Boolean(profile.is_admin));
+      const plans = await listQualityPlans();
+      const view = qualityHome(
+        profile.locale,
+        Boolean(profile.is_admin),
+        plans
+      );
       await sendMessage(token, chatId, view.text, view.reply_markup);
       return res.status(200).json({ ok: true });
     }
