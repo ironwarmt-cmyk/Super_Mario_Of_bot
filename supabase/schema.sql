@@ -68,6 +68,7 @@ create table if not exists subscriptions (
   ends_at timestamptz not null,
   is_recurring boolean not null default false,
   telegram_subscription_charge_id text,
+  auto_renew boolean not null default true,
   created_at timestamptz not null default now()
 );
 
