@@ -414,6 +414,120 @@ Deno.serve(async (req) => {
       return json({ ok: true, data });
     }
 
+    if (action === "get_plan_communities") {
+      const { data, error } = await supabase
+        .from("plan_communities")
+        .select("community_id,communities(id,telegram_chat_id,title,chat_type,active)")
+        .eq("plan_id", body?.plan_id);
+
+      if (error) throw error;
+      return json({ ok: true, data: data || [] });
+    }
+
+    if (action === "set_plan_community") {
+      const planId = body?.plan_id;
+      const communityId = body?.community_id;
+      const enabled = Boolean(body?.enabled);
+
+      const { data: plan, error: planError } = await supabase
+        .from("plans")
+        .select("id,creator_id")
+        .eq("id", planId)
+        .maybeSingle();
+
+      if (planError) throw planError;
+
+      const { data: community, error: communityError } = await supabase
+        .from("communities")
+        .select("id,creator_id")
+        .eq("id", communityId)
+        .maybeSingle();
+
+      if (communityError) throw communityError;
+
+      if (!plan || !community || plan.creator_id !== community.creator_id) {
+        return json({ ok: false, error: "Plan and community do not belong to the same creator" }, 403);
+      }
+
+      if (enabled) {
+        const { error } = await supabase
+          .from("plan_communities")
+          .upsert(
+            { plan_id: planId, community_id: communityId },
+            { onConflict: "plan_id,community_id" }
+          );
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("plan_communities")
+          .delete()
+          .eq("plan_id", planId)
+          .eq("community_id", communityId);
+
+        if (error) throw error;
+      }
+
+      return json({ ok: true, data: { enabled } });
+    }
+
+    if (action === "expire_due_subscriptions") {
+      const now = new Date().toISOString();
+
+      const { data: due, error: dueError } = await supabase
+        .from("subscriptions")
+        .select("id,telegram_user_id,plan_id,ends_at")
+        .eq("status", "active")
+        .lt("ends_at", now)
+        .limit(500);
+
+      if (dueError) throw dueError;
+
+      if (!due?.length) {
+        return json({ ok: true, data: [] });
+      }
+
+      const ids = due.map((item) => item.id);
+
+      const { error: updateError } = await supabase
+        .from("subscriptions")
+        .update({ status: "expired" })
+        .in("id", ids);
+
+      if (updateError) throw updateError;
+
+      const planIds = [...new Set(due.map((item) => item.plan_id))];
+
+      const { data: links, error: linkError } = await supabase
+        .from("plan_communities")
+        .select("plan_id,communities(id,telegram_chat_id,title,chat_type,active)")
+        .in("plan_id", planIds);
+
+      if (linkError) throw linkError;
+
+      const targets = [];
+
+      for (const subscription of due) {
+        for (const link of links || []) {
+          const community = link.communities;
+          if (
+            link.plan_id === subscription.plan_id &&
+            community?.active &&
+            community.telegram_chat_id
+          ) {
+            targets.push({
+              subscription_id: subscription.id,
+              telegram_user_id: subscription.telegram_user_id,
+              telegram_chat_id: community.telegram_chat_id,
+              community_title: community.title
+            });
+          }
+        }
+      }
+
+      return json({ ok: true, data: targets });
+    }
+
     if (action === "get_subscription") {
       const { data, error } = await supabase
         .from("subscriptions")
