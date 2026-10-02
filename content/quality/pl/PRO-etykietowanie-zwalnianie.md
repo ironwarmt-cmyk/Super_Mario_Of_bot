@@ -1,34 +1,17 @@
-# Kontrola etykietowania, opakowań i zwalniania produktu
+# PRO — Kontrola etykietowania, opakowań i zwalniania produktu
 
-> Edytowalny szablon wdrożeniowy. Uzupełnij parametry zakładu, produktu, procesu i wymagania prawne.
+## Cel
+Zapewnienie użycia prawidłowego opakowania i etykiety oraz zwolnienia tylko produktu spełniającego wymagania.
 
-## 1. Cel
-Zapewnienie kontrolowanego i udokumentowanego sposobu postępowania w tym obszarze.
+## Kontrola
+1. Utrzymuj zatwierdzone wzorce etykiet.
+2. Każda zmiana podlega formalnemu zatwierdzeniu.
+3. Na starcie i po zmianie asortymentu weryfikuj kod produktu, etykietę, datę, partię i elementy prawne.
+4. Kontroluj usuwanie nieaktualnych opakowań.
+5. Ustal częstotliwość kontroli na linii.
+6. Przed zwolnieniem sprawdź wymagane wyniki jakościowe, procesowe i laboratoryjne.
+7. Zwolnienia dokonuje osoba upoważniona.
+8. Odchylenie uruchamia blokadę i ocenę zakresu problemu.
 
-## 2. Zakres
-Wszystkie produkty, procesy, lokalizacje i osoby, dla których obszar ma zastosowanie.
-
-## 3. Odpowiedzialności
-- Kierownik Jakości: nadzór systemowy, zatwierdzenie i analiza skuteczności.
-- Właściciel procesu: wdrożenie wymagań operacyjnych.
-- Pracownicy: wykonywanie zatwierdzonych działań i zgłaszanie odchyleń.
-
-## 4. Sposób postępowania
-1. Utrzymuj zatwierdzone wzorce etykiet i opakowań z kontrolą wersji.
-2. Przed uruchomieniem linii zweryfikuj właściwy materiał, kod, datę i deklaracje.
-3. Kontroluj usunięcie pozostałości materiałów z poprzedniej produkcji.
-4. Wykonuj kontrole w trakcie produkcji z ustaloną częstotliwością.
-5. Zwolnienie partii opieraj na wymaganych zapisach procesu, badań i kontroli.
-6. Nie zwalniaj partii przy brakujących lub nieakceptowalnych dowodach bez zatwierdzonej decyzji i oceny ryzyka.
-
-## 5. Zapisy
-- Rejestr / formularz właściwy dla procesu
-- Dowody weryfikacji
-- Niezgodności i działania
-- Przegląd trendów / wyników
-
-## 6. Weryfikacja skuteczności
-Skuteczność oceniaj przez wyniki audytów, odchylenia, reklamacje, badania, KPI i przegląd trendów odpowiednich do obszaru.
-
-## 7. Przegląd
-Co najmniej raz w roku oraz po istotnej zmianie lub zdarzeniu.
+## Zapisy
+Wzorzec etykiety, karta startowa, kontrola linii, rejestr zmian, karta zwolnienia produktu.
