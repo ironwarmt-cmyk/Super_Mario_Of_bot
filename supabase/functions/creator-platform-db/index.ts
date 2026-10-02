@@ -553,6 +553,101 @@ Deno.serve(async (req) => {
       return json({ ok: true, data: data || null });
     }
 
+    if (action === "list_creator_customers") {
+      const creatorId = body?.creator_id;
+
+      const { data: creatorPlans, error: planError } = await supabase
+        .from("plans")
+        .select("id")
+        .eq("creator_id", creatorId);
+
+      if (planError) throw planError;
+
+      const planIds = (creatorPlans || []).map((plan) => plan.id);
+
+      if (!planIds.length) {
+        return json({ ok: true, data: [] });
+      }
+
+      const { data, error } = await supabase
+        .from("subscriptions")
+        .select(
+          "id,telegram_user_id,plan_id,status,starts_at,ends_at,is_recurring,auto_renew,telegram_users(username,first_name,last_name),plans(name)"
+        )
+        .in("plan_id", planIds)
+        .order("created_at", { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+      return json({ ok: true, data: data || [] });
+    }
+
+    if (action === "get_creator_stats") {
+      const creatorId = body?.creator_id;
+
+      const { data: creatorPlans, error: planError } = await supabase
+        .from("plans")
+        .select("id")
+        .eq("creator_id", creatorId);
+
+      if (planError) throw planError;
+
+      const planIds = (creatorPlans || []).map((plan) => plan.id);
+
+      const { data: payments, error: paymentError } = await supabase
+        .from("payments")
+        .select("amount,status,telegram_user_id,created_at")
+        .eq("creator_id", creatorId)
+        .eq("status", "paid");
+
+      if (paymentError) throw paymentError;
+
+      let activeSubscriptions = [];
+      if (planIds.length) {
+        const { data, error } = await supabase
+          .from("subscriptions")
+          .select("id,telegram_user_id")
+          .in("plan_id", planIds)
+          .eq("status", "active")
+          .gt("ends_at", new Date().toISOString());
+
+        if (error) throw error;
+        activeSubscriptions = data || [];
+      }
+
+      const paidPayments = payments || [];
+      const grossStars = paidPayments.reduce(
+        (sum, payment) => sum + Number(payment.amount || 0),
+        0
+      );
+
+      const buyerIds = new Set(
+        paidPayments.map((payment) => String(payment.telegram_user_id))
+      );
+
+      const thirtyDaysAgo = Date.now() - 30 * 86400000;
+      const payments30d = paidPayments.filter(
+        (payment) => new Date(payment.created_at).getTime() >= thirtyDaysAgo
+      );
+
+      const grossStars30d = payments30d.reduce(
+        (sum, payment) => sum + Number(payment.amount || 0),
+        0
+      );
+
+      return json({
+        ok: true,
+        data: {
+          gross_stars: grossStars,
+          gross_stars_30d: grossStars30d,
+          payment_count: paidPayments.length,
+          payment_count_30d: payments30d.length,
+          unique_buyers: buyerIds.size,
+          active_subscriptions: activeSubscriptions.length
+        }
+      });
+    }
+
     if (action === "get_session") {
       const { data, error } = await supabase
         .from("bot_sessions")

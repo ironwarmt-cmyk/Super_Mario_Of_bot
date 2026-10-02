@@ -17,12 +17,14 @@ import {
   createCommunity,
   createPlan,
   ensureCreator,
+  getCreatorStats,
   getPlan,
   getPlanCommunities,
   getSession,
   getUserSubscriptions,
   isDatabaseConfigured,
   listCommunities,
+  listCreatorCustomers,
   listPlans,
   setPlanCommunity,
   recordSuccessfulPayment,
@@ -174,6 +176,58 @@ async function renderCreatorCommunities(user) {
   const creator = await ensureCreator(user);
   const items = await listCommunities(creator.id);
   return renderCommunities(items);
+}
+
+async function renderCreatorCustomers(user) {
+  const creator = await ensureCreator(user);
+  const items = await listCreatorCustomers(creator.id);
+
+  const rows = items.slice(0, 20).map((item, index) => {
+    const customer = item.telegram_users || {};
+    const plan = item.plans || {};
+    const name =
+      [customer.first_name, customer.last_name].filter(Boolean).join(" ").trim() ||
+      (customer.username ? `@${customer.username}` : `ID ${item.telegram_user_id}`);
+
+    const end = item.ends_at
+      ? new Date(item.ends_at).toLocaleDateString("pl-PL")
+      : "—";
+
+    return (
+      `${index + 1}. <b>${escapeHtml(name)}</b>\n` +
+      `Plan: ${escapeHtml(plan.name || "—")}\n` +
+      `Status: ${escapeHtml(item.status)} · do ${end}`
+    );
+  });
+
+  return {
+    text:
+      "<b>👥 Klienci</b>\n\n" +
+      (rows.length ? rows.join("\n\n") : "Nie ma jeszcze klientów.") +
+      (items.length > 20 ? `\n\nPokazano 20 z ${items.length} rekordów.` : ""),
+    reply_markup: {
+      inline_keyboard: [[{ text: "⬅️ Menu", callback_data: "home" }]]
+    }
+  };
+}
+
+async function renderCreatorStats(user) {
+  const creator = await ensureCreator(user);
+  const stats = await getCreatorStats(creator.id);
+
+  return {
+    text:
+      "<b>📊 Statystyki</b>\n\n" +
+      `Przychód brutto: <b>${stats.gross_stars || 0} ⭐</b>\n` +
+      `Ostatnie 30 dni: <b>${stats.gross_stars_30d || 0} ⭐</b>\n` +
+      `Płatności łącznie: <b>${stats.payment_count || 0}</b>\n` +
+      `Płatności 30 dni: <b>${stats.payment_count_30d || 0}</b>\n` +
+      `Unikalni kupujący: <b>${stats.unique_buyers || 0}</b>\n` +
+      `Aktywne dostępy: <b>${stats.active_subscriptions || 0}</b>`,
+    reply_markup: {
+      inline_keyboard: [[{ text: "⬅️ Menu", callback_data: "home" }]]
+    }
+  };
 }
 
 async function renderPlanAccess(user, planId) {
@@ -487,6 +541,30 @@ export default async function handler(req, res) {
 
       if (action === "communities") {
         const view = await renderCreatorCommunities(callback.from);
+        await editMessage(
+          token,
+          chatId,
+          messageId,
+          view.text,
+          view.reply_markup
+        );
+        return res.status(200).json({ ok: true });
+      }
+
+      if (action === "customers") {
+        const view = await renderCreatorCustomers(callback.from);
+        await editMessage(
+          token,
+          chatId,
+          messageId,
+          view.text,
+          view.reply_markup
+        );
+        return res.status(200).json({ ok: true });
+      }
+
+      if (action === "stats") {
+        const view = await renderCreatorStats(callback.from);
         await editMessage(
           token,
           chatId,
