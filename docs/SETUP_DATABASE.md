@@ -1,60 +1,49 @@
 # Podłączenie bazy danych
 
-Kod MVP jest przygotowany pod Supabase/PostgreSQL.
+Projekt Supabase jest już utworzony i schemat bazy został wdrożony.
 
-## 1. Utwórz projekt Supabase
+## Architektura
 
-Po utworzeniu projektu uruchom zawartość pliku:
+Vercel nie potrzebuje klucza `service_role`.
 
-`supabase/schema.sql`
+Backend bota łączy się z bezpieczną funkcją Supabase Edge Function:
 
-w SQL Editor.
+`https://ixivedtgqgryawxsxnqd.supabase.co/functions/v1/creator-platform-db`
 
-## 2. Dodaj zmienne środowiskowe w Vercel
+Edge Function ma serwerowy dostęp do bazy i weryfikuje żądania skrótem pochodzącym z istniejącego `TELEGRAM_BOT_TOKEN`.
 
-W projekcie Vercel dodaj:
+## Wymagane zmienne w Vercel
 
-- `SUPABASE_URL`
-- `SUPABASE_SERVICE_ROLE_KEY`
+Wystarczy istniejąca zmienna:
+
+- `TELEGRAM_BOT_TOKEN`
 
 Opcjonalnie:
 
 - `PUBLIC_BASE_URL=https://supermarioofbot-iron-war.vercel.app`
+- `SUPABASE_EDGE_URL=https://ixivedtgqgryawxsxnqd.supabase.co/functions/v1/creator-platform-db`
 
-Istniejący token Telegrama pozostaje jako:
+Jeśli `SUPABASE_EDGE_URL` nie jest ustawione, kod używa powyższego adresu domyślnie.
 
-- `TELEGRAM_BOT_TOKEN`
+## Pierwsza inicjalizacja
 
-## 3. Bezpieczeństwo
+Po wdrożeniu otwórz:
 
-`SUPABASE_SERVICE_ROLE_KEY` jest sekretem serwerowym.
+`/api/setup`
 
-Nie wolno:
-- wpisywać go do kodu,
-- wrzucać go do GitHuba,
-- wysyłać go użytkownikom,
-- używać go w kodzie klienta / przeglądarce.
+Endpoint:
 
-## 4. Co zacznie działać po podłączeniu
+1. potwierdzi token bota z Telegramem,
+2. zainicjalizuje bezpieczne połączenie z bazą,
+3. ustawi webhook Telegrama.
 
-Po dodaniu bazy:
+## Test
 
-1. użytkownik otwierający bota zostanie zapisany,
-2. twórca dostanie własny rekord,
-3. przycisk „Plany” pobierze jego realne plany,
-4. „Dodaj plan” uruchomi kreator:
-   - nazwa,
-   - cena w Telegram Stars,
-   - liczba dni dostępu,
-5. plan zostanie zapisany w PostgreSQL.
-
-## 5. Test
-
-Po wdrożeniu endpoint:
+Endpoint:
 
 `/api/telegram`
 
-powinien pokazywać:
+powinien zwrócić między innymi:
 
 ```json
 {
@@ -62,3 +51,14 @@ powinien pokazywać:
   "databaseConfigured": true
 }
 ```
+
+Po tym:
+
+1. wpisz w bocie `/start`,
+2. kliknij „Plany”,
+3. kliknij „Dodaj plan”,
+4. podaj nazwę,
+5. podaj cenę w Stars,
+6. podaj liczbę dni.
+
+Plan zostanie zapisany w Supabase.
