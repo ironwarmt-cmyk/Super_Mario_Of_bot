@@ -1,34 +1,18 @@
-# Maintenance and Calibration
+# PRO — Maintenance and Calibration
 
-> Editable implementation template. Complete site, product, process and applicable legal parameters.
+## Maintenance
+1. Maintain critical-equipment register.
+2. Define preventive maintenance schedule.
+3. Engineering work in production requires product protection and tool/part control.
+4. After work, verify cleanliness, completeness and readiness.
+5. Temporary repairs must be safe and have a permanent-fix deadline.
 
-## 1. Purpose
-Provide a controlled and documented method for this management-system area.
+## Calibration
+1. Maintain measuring-equipment register.
+2. Define range, tolerance and interval.
+3. Use suitable traceable standards.
+4. Identify calibration status.
+5. Out-of-tolerance results require assessment of previously released product.
 
-## 2. Scope
-All products, processes, locations and people to which this area applies.
-
-## 3. Responsibilities
-- Quality Manager: system oversight, approval and effectiveness review.
-- Process owner: implementation of operational requirements.
-- Employees: follow approved controls and report deviations.
-
-## 4. Procedure
-1. Maintain a register of critical equipment and measuring devices.
-2. Plan maintenance and calibration based on risk, recommendations and history.
-3. Control engineering work in production areas, tools, parts and lubricants.
-4. After work verify cleanliness, completeness and safety before release.
-5. For out-of-tolerance calibration assess impact on previous measurements and product.
-6. Record breakdowns, repairs, calibrations and deviation actions.
-
-## 5. Records
-- Relevant process register / form
-- Verification evidence
-- Nonconformities and actions
-- Trend / performance review
-
-## 6. Effectiveness verification
-Evaluate effectiveness through audits, deviations, complaints, testing, KPIs and relevant trend review.
-
-## 7. Review
-At least annually and after significant change or event.
+## Records
+Maintenance plan, work orders, post-maintenance release, calibration register, certificates and impact assessment.
