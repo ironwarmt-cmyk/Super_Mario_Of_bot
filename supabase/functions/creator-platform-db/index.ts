@@ -104,6 +104,26 @@ async function bootstrap(reqBody, supabase) {
   return json({ ok: true, initialized: true, bot_username: EXPECTED_BOT_USERNAME });
 }
 
+async function upsertTelegramUser(supabase, user) {
+  const payload = {
+    telegram_user_id: user.id,
+    username: user.username || null,
+    first_name: user.first_name || null,
+    last_name: user.last_name || null,
+    language_code: user.language_code || null,
+    updated_at: new Date().toISOString()
+  };
+
+  const { data, error } = await supabase
+    .from("telegram_users")
+    .upsert(payload, { onConflict: "telegram_user_id" })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
 Deno.serve(async (req) => {
   if (req.method !== "POST") {
     return json({ ok: false, error: "Method not allowed" }, 405);
@@ -125,45 +145,14 @@ Deno.serve(async (req) => {
     if (action === "upsert_user") {
       const user = body?.user;
       if (!user?.id) return json({ ok: false, error: "user.id is required" }, 400);
-
-      const payload = {
-        telegram_user_id: user.id,
-        username: user.username || null,
-        first_name: user.first_name || null,
-        last_name: user.last_name || null,
-        language_code: user.language_code || null,
-        updated_at: new Date().toISOString()
-      };
-
-      const { data, error } = await supabase
-        .from("telegram_users")
-        .upsert(payload, { onConflict: "telegram_user_id" })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return json({ ok: true, data });
+      return json({ ok: true, data: await upsertTelegramUser(supabase, user) });
     }
 
     if (action === "ensure_creator") {
       const user = body?.user;
       if (!user?.id) return json({ ok: false, error: "user.id is required" }, 400);
 
-      const { error: userError } = await supabase
-        .from("telegram_users")
-        .upsert(
-          {
-            telegram_user_id: user.id,
-            username: user.username || null,
-            first_name: user.first_name || null,
-            last_name: user.last_name || null,
-            language_code: user.language_code || null,
-            updated_at: new Date().toISOString()
-          },
-          { onConflict: "telegram_user_id" }
-        );
-
-      if (userError) throw userError;
+      await upsertTelegramUser(supabase, user);
 
       const { data: existing, error: existingError } = await supabase
         .from("creators")
@@ -207,7 +196,7 @@ Deno.serve(async (req) => {
     if (action === "list_plans") {
       const { data, error } = await supabase
         .from("plans")
-        .select("id,name,price_stars,duration_days,active,created_at")
+        .select("id,name,price_stars,duration_days,billing_mode,active,created_at")
         .eq("creator_id", body?.creator_id)
         .order("created_at", { ascending: true });
 
@@ -215,15 +204,42 @@ Deno.serve(async (req) => {
       return json({ ok: true, data: data || [] });
     }
 
+    if (action === "list_public_plans") {
+      const { data, error } = await supabase
+        .from("plans")
+        .select("id,name,price_stars,duration_days,billing_mode,active,created_at")
+        .eq("creator_id", body?.creator_id)
+        .eq("active", true)
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+      return json({ ok: true, data: data || [] });
+    }
+
+    if (action === "get_plan") {
+      const { data, error } = await supabase
+        .from("plans")
+        .select("id,creator_id,name,price_stars,duration_days,billing_mode,active,created_at")
+        .eq("id", body?.plan_id)
+        .maybeSingle();
+
+      if (error) throw error;
+      return json({ ok: true, data: data || null });
+    }
+
     if (action === "create_plan") {
       const plan = body?.plan || {};
+      const billingMode = plan.billingMode === "monthly" ? "monthly" : "one_time";
+      const durationDays = billingMode === "monthly" ? 30 : plan.durationDays;
+
       const { data, error } = await supabase
         .from("plans")
         .insert({
           creator_id: body?.creator_id,
           name: plan.name,
           price_stars: plan.priceStars,
-          duration_days: plan.durationDays,
+          duration_days: durationDays,
+          billing_mode: billingMode,
           active: true
         })
         .select()
@@ -231,6 +247,134 @@ Deno.serve(async (req) => {
 
       if (error) throw error;
       return json({ ok: true, data });
+    }
+
+    if (action === "record_successful_payment") {
+      const user = body?.user;
+      const payment = body?.payment;
+
+      if (!user?.id || !payment?.invoice_payload || !payment?.telegram_payment_charge_id) {
+        return json({ ok: false, error: "Incomplete payment payload" }, 400);
+      }
+
+      await upsertTelegramUser(supabase, user);
+
+      const payload = String(payment.invoice_payload);
+      const match = /^plan:([0-9a-f-]{36})$/i.exec(payload);
+      if (!match) {
+        return json({ ok: false, error: "Unsupported invoice payload" }, 400);
+      }
+
+      const planId = match[1];
+
+      const { data: plan, error: planError } = await supabase
+        .from("plans")
+        .select("*")
+        .eq("id", planId)
+        .maybeSingle();
+
+      if (planError) throw planError;
+      if (!plan || !plan.active) {
+        return json({ ok: false, error: "Plan not available" }, 404);
+      }
+
+      if (payment.currency !== "XTR" || Number(payment.total_amount) !== Number(plan.price_stars)) {
+        return json({ ok: false, error: "Payment amount mismatch" }, 400);
+      }
+
+      const { data: existingPayment, error: existingPaymentError } = await supabase
+        .from("payments")
+        .select("*")
+        .eq("telegram_payment_charge_id", payment.telegram_payment_charge_id)
+        .maybeSingle();
+
+      if (existingPaymentError) throw existingPaymentError;
+
+      if (!existingPayment) {
+        const expiration = payment.subscription_expiration_date
+          ? new Date(Number(payment.subscription_expiration_date) * 1000).toISOString()
+          : null;
+
+        const { error: paymentError } = await supabase
+          .from("payments")
+          .insert({
+            telegram_user_id: user.id,
+            creator_id: plan.creator_id,
+            plan_id: plan.id,
+            amount: payment.total_amount,
+            currency: payment.currency,
+            telegram_payment_charge_id: payment.telegram_payment_charge_id,
+            provider_payment_charge_id: payment.provider_payment_charge_id || null,
+            is_recurring: Boolean(payment.is_recurring),
+            is_first_recurring: Boolean(payment.is_first_recurring),
+            subscription_expiration_date: expiration,
+            status: "paid"
+          });
+
+        if (paymentError) throw paymentError;
+      }
+
+      const { data: existingSubscription, error: subscriptionReadError } = await supabase
+        .from("subscriptions")
+        .select("*")
+        .eq("telegram_user_id", user.id)
+        .eq("plan_id", plan.id)
+        .maybeSingle();
+
+      if (subscriptionReadError) throw subscriptionReadError;
+
+      let endsAt;
+      if (payment.subscription_expiration_date) {
+        endsAt = new Date(Number(payment.subscription_expiration_date) * 1000);
+      } else {
+        const now = new Date();
+        const existingEnd = existingSubscription?.ends_at
+          ? new Date(existingSubscription.ends_at)
+          : null;
+        const base = existingEnd && existingEnd > now ? existingEnd : now;
+        endsAt = new Date(base.getTime() + Number(plan.duration_days) * 86400000);
+      }
+
+      const subscriptionPayload = {
+        telegram_user_id: user.id,
+        plan_id: plan.id,
+        status: "active",
+        ends_at: endsAt.toISOString(),
+        is_recurring: Boolean(payment.is_recurring || plan.billing_mode === "monthly"),
+        telegram_subscription_charge_id:
+          existingSubscription?.telegram_subscription_charge_id ||
+          payment.telegram_payment_charge_id
+      };
+
+      const { data: subscription, error: subscriptionError } = await supabase
+        .from("subscriptions")
+        .upsert(subscriptionPayload, {
+          onConflict: "telegram_user_id,plan_id"
+        })
+        .select()
+        .single();
+
+      if (subscriptionError) throw subscriptionError;
+
+      return json({
+        ok: true,
+        data: {
+          plan,
+          subscription,
+          duplicate: Boolean(existingPayment)
+        }
+      });
+    }
+
+    if (action === "get_user_subscriptions") {
+      const { data, error } = await supabase
+        .from("subscriptions")
+        .select("id,status,starts_at,ends_at,is_recurring,plans(id,name,price_stars,duration_days,billing_mode)")
+        .eq("telegram_user_id", body?.telegram_user_id)
+        .order("ends_at", { ascending: false });
+
+      if (error) throw error;
+      return json({ ok: true, data: data || [] });
     }
 
     if (action === "get_session") {
