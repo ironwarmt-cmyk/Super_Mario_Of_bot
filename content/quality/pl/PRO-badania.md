@@ -1,34 +1,29 @@
-# Plan badań i nadzór laboratoryjny
+# PRO — Plan badań i nadzór laboratoryjny
 
-> Edytowalny szablon wdrożeniowy. Uzupełnij parametry zakładu, produktu, procesu i wymagania prawne.
+## Cel
+Potwierdzanie bezpieczeństwa, legalności, autentyczności i jakości na podstawie zaplanowanych badań.
 
-## 1. Cel
-Zapewnienie kontrolowanego i udokumentowanego sposobu postępowania w tym obszarze.
+## Plan
+Dla każdego produktu/surowca określ:
+- parametr,
+- metodę,
+- próbkę i sposób pobrania,
+- częstotliwość,
+- laboratorium,
+- limit/specyfikację,
+- odpowiedzialność,
+- działanie po wyniku niezgodnym.
 
-## 2. Zakres
-Wszystkie produkty, procesy, lokalizacje i osoby, dla których obszar ma zastosowanie.
+## Obszary
+Mikrobiologia, chemia, fizyka, sensoryka, alergeny, autentyczność, środowisko produkcyjne — zależnie od ryzyka.
 
-## 3. Odpowiedzialności
-- Kierownik Jakości: nadzór systemowy, zatwierdzenie i analiza skuteczności.
-- Właściciel procesu: wdrożenie wymagań operacyjnych.
-- Pracownicy: wykonywanie zatwierdzonych działań i zgłaszanie odchyleń.
+## Zasady
+1. Dobieraj częstotliwość na podstawie ryzyka i trendów.
+2. Używaj kompetentnych laboratoriów.
+3. Przeglądaj wyniki pod kątem trendów.
+4. Wyniki poza limitem eskaluj natychmiast.
+5. Oceń wpływ niepewności pomiaru, jeżeli istotna.
+6. Okresowo weryfikuj trwałość produktu.
 
-## 4. Sposób postępowania
-1. Zbuduj plan badań na podstawie ryzyka produktu, procesu, prawa, klienta i historii wyników.
-2. Określ parametr, metodę, miejsce poboru, częstotliwość, liczbę próbek i kryterium akceptacji.
-3. Korzystaj z laboratoriów i metod odpowiednich do celu badania.
-4. Utrzymuj identyfikowalność próbki i wyników.
-5. Natychmiast oceniaj wyniki poza kryterium, produkt i przyczynę.
-6. Analizuj trendy oraz okresowo przeglądaj adekwatność planu.
-
-## 5. Zapisy
-- Rejestr / formularz właściwy dla procesu
-- Dowody weryfikacji
-- Niezgodności i działania
-- Przegląd trendów / wyników
-
-## 6. Weryfikacja skuteczności
-Skuteczność oceniaj przez wyniki audytów, odchylenia, reklamacje, badania, KPI i przegląd trendów odpowiednich do obszaru.
-
-## 7. Przegląd
-Co najmniej raz w roku oraz po istotnej zmianie lub zdarzeniu.
+## Zapisy
+Harmonogram badań, raporty laboratoryjne, trend, odchylenia, CAPA, przegląd trwałości.
