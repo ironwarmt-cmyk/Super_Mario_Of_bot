@@ -11,6 +11,7 @@ import {
   getSectionMessage,
   sendMessage,
   sendStarsInvoice,
+  sendStarsTokenInvoice,
   unbanChatMember
 } from "../lib/telegram.js";
 import {
@@ -22,6 +23,7 @@ import {
   renderProductDetail,
   renderTraining,
   renderTokens,
+  renderPhysicalProduct,
   renderAssistant,
   renderMembership
 } from "../lib/quality-ui.js";
@@ -43,6 +45,9 @@ import {
   getQualityProduct,
   listQualityProducts,
   listQualityTokenPacks,
+  getQualityTokenPack,
+  getQualityWallet,
+  recordQualityTokenPayment,
   getQualityMembership,
   isDatabaseConfigured,
   listCommunities,
