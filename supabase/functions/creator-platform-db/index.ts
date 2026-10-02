@@ -757,158 +757,132 @@ Deno.serve(async (req) => {
       return json({ ok: true, data: data || [] });
     }
 
-    if (action === "get_quality_token_pack") {
-      const { data, error } = await supabase
-        .from("quality_token_packs")
-        .select("*")
-        .eq("id", body?.pack_id)
-        .eq("active", true)
-        .maybeSingle();
-
-      if (error) throw error;
-      return json({ ok: true, data: data || null });
-    }
-
     if (action === "get_quality_wallet") {
       const telegramUserId = body?.telegram_user_id;
 
-      const { data: existing, error: existingError } = await supabase
-        .from("quality_wallets")
-        .select("*")
-        .eq("telegram_user_id", telegramUserId)
-        .maybeSingle();
-
-      if (existingError) throw existingError;
-
-      if (existing) {
-        return json({ ok: true, data: existing });
-      }
-
       const { data, error } = await supabase
         .from("quality_wallets")
-        .insert({
-          telegram_user_id: telegramUserId,
-          token_balance: 0
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return json({ ok: true, data });
-    }
-
-    if (action === "credit_quality_token_pack") {
-      const user = body?.user;
-      const packId = body?.pack_id;
-      const payment = body?.payment;
-
-      if (!user?.id || !packId || !payment?.telegram_payment_charge_id) {
-        return json({ ok: false, error: "Incomplete token payment data" }, 400);
-      }
-
-      await upsertTelegramUser(supabase, user);
-
-      if (payment.currency !== "XTR") {
-        return json({ ok: false, error: "Token packs require XTR" }, 400);
-      }
-
-      const { data, error } = await supabase.rpc("credit_quality_token_pack", {
-        p_telegram_user_id: user.id,
-        p_pack_id: packId,
-        p_charge_id: payment.telegram_payment_charge_id,
-        p_paid_stars: Number(payment.total_amount)
-      });
+        .select("telegram_user_id,token_balance,updated_at")
+        .eq("telegram_user_id", telegramUserId)
+        .maybeSingle();
 
       if (error) throw error;
 
       return json({
         ok: true,
-        data: Array.isArray(data) ? data[0] : data
+        data: data || {
+          telegram_user_id: telegramUserId,
+          token_balance: 0
+        }
       });
     }
 
-    if (action === "list_quality_physical_products") {
+    if (action === "get_quality_token_pack") {
+      const tokens = Number(body?.tokens || 0);
+
       const { data, error } = await supabase
-        .from("quality_physical_products")
+        .from("quality_token_packs")
         .select("*")
+        .eq("tokens", tokens)
         .eq("active", true)
-        .order("created_at", { ascending: true });
-
-      if (error) throw error;
-      return json({ ok: true, data: data || [] });
-    }
-
-    if (action === "get_quality_physical_product") {
-      const query = supabase
-        .from("quality_physical_products")
-        .select("*")
-        .eq("active", true);
-
-      const { data, error } = body?.slug
-        ? await query.eq("slug", body.slug).maybeSingle()
-        : await query.eq("id", body?.product_id).maybeSingle();
+        .maybeSingle();
 
       if (error) throw error;
       return json({ ok: true, data: data || null });
     }
 
-    if (action === "create_quality_physical_order") {
-      const product = body?.product;
-      const sessionId = String(body?.stripe_checkout_session_id || "");
+    if (action === "record_quality_token_payment") {
+      const user = body?.user;
+      const payment = body?.payment || {};
 
-      if (!product?.id || !sessionId) {
-        return json({ ok: false, error: "Incomplete physical order data" }, 400);
+      if (!user?.id || !payment?.telegram_payment_charge_id) {
+        return json({ ok: false, error: "Incomplete token payment" }, 400);
       }
 
-      const { data: dbProduct, error: productError } = await supabase
-        .from("quality_physical_products")
+      const match = /^qa_token:(\d+)$/.exec(String(payment.invoice_payload || ""));
+      if (!match) {
+        return json({ ok: false, error: "Invalid token invoice payload" }, 400);
+      }
+
+      const tokens = Number(match[1]);
+
+      const { data: pack, error: packError } = await supabase
+        .from("quality_token_packs")
         .select("*")
-        .eq("id", product.id)
+        .eq("tokens", tokens)
         .eq("active", true)
         .maybeSingle();
 
-      if (productError) throw productError;
-      if (!dbProduct) return json({ ok: false, error: "Physical product unavailable" }, 404);
+      if (packError) throw packError;
+      if (!pack) {
+        return json({ ok: false, error: "Token pack not found" }, 404);
+      }
 
-      const { data, error } = await supabase
-        .from("quality_physical_orders")
-        .insert({
-          telegram_user_id: body?.telegram_user_id || null,
-          product_id: dbProduct.id,
-          quantity: 1,
-          amount_pln: dbProduct.price_pln,
-          shipping_pln: dbProduct.shipping_pln,
-          stripe_checkout_session_id: sessionId,
-          status: "pending"
-        })
-        .select()
-        .single();
+      if (
+        payment.currency !== "XTR" ||
+        Number(payment.total_amount) !== Number(pack.price_stars)
+      ) {
+        return json({ ok: false, error: "Token payment amount mismatch" }, 400);
+      }
 
-      if (error) throw error;
-      return json({ ok: true, data });
-    }
+      await upsertTelegramUser(supabase, user);
 
-    if (action === "mark_quality_physical_order_paid") {
-      const sessionId = String(body?.stripe_checkout_session_id || "");
-
-      const { data, error } = await supabase
-        .from("quality_physical_orders")
-        .update({
-          status: "paid",
-          stripe_payment_intent_id: body?.stripe_payment_intent_id || null,
-          customer_email: body?.customer_email || null,
-          customer_name: body?.customer_name || null,
-          customer_phone: body?.customer_phone || null,
-          shipping_details: body?.shipping_details || null,
-          paid_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .eq("stripe_checkout_session_id", sessionId)
-        .select()
+      const { data: existing, error: existingError } = await supabase
+        .from("quality_token_purchases")
+        .select("id")
+        .eq("telegram_payment_charge_id", payment.telegram_payment_charge_id)
         .maybeSingle();
 
-      if (error) throw error;
-      return json({ ok: true, data: data || null });
+      if (existingError) throw existingError;
+
+      if (!existing) {
+        const { error: purchaseError } = await supabase
+          .from("quality_token_purchases")
+          .insert({
+            telegram_user_id: user.id,
+            tokens,
+            stars_paid: payment.total_amount,
+            telegram_payment_charge_id: payment.telegram_payment_charge_id
+          });
+
+        if (purchaseError) throw purchaseError;
+
+        const { data: balance, error: creditError } = await supabase.rpc(
+          "credit_quality_tokens",
+          {
+            p_user: user.id,
+            p_tokens: tokens
+          }
+        );
+
+        if (creditError) throw creditError;
+
+        return json({
+          ok: true,
+          data: {
+            tokens_added: tokens,
+            token_balance: Number(balance || 0),
+            duplicate: false
+          }
+        });
+      }
+
+      const { data: wallet, error: walletError } = await supabase
+        .from("quality_wallets")
+        .select("token_balance")
+        .eq("telegram_user_id", user.id)
+        .maybeSingle();
+
+      if (walletError) throw walletError;
+
+      return json({
+        ok: true,
+        data: {
+          tokens_added: 0,
+          token_balance: Number(wallet?.token_balance || 0),
+          duplicate: true
+        }
+      });
     }
 
     if (action === "get_quality_membership") {
