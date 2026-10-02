@@ -1,35 +1,30 @@
-# Complaints and Trend Analysis
+# PRO — Complaints and Trend Analysis
 
-> Editable implementation template. Complete site, product, process and applicable legal parameters.
+## Purpose
+Ensure every complaint affecting product safety, legality, authenticity or quality is recorded, assessed, investigated and used to reduce recurrence.
 
-## 1. Purpose
-Provide a controlled and documented method for this management-system area.
+## Scope
+Consumer and customer complaints, returns, quality notifications and market feedback.
 
-## 2. Scope
-All products, processes, locations and people to which this area applies.
+## Responsibilities
+- Quality: classification, root cause, trending and CAPA.
+- Customer service/Sales: complete intake data.
+- Production/Warehouse/Engineering: investigation support.
+- Management: trend and resource review.
 
-## 3. Responsibilities
-- Quality Manager: system oversight, approval and effectiveness review.
-- Process owner: implementation of operational requirements.
-- Employees: follow approved controls and report deviations.
+## Procedure
+1. Assign complaint number and record date, customer, product, lot, description and evidence.
+2. Classify urgency: safety, legality, allergen, foreign body, quality, packaging, quantity or other.
+3. Secure samples and relevant process records.
+4. Define potentially affected lots.
+5. Perform root-cause analysis proportionate to risk.
+6. Define immediate and permanent actions.
+7. Verify effectiveness.
+8. Trend complaints at least monthly by type, product, line, customer and cause.
+9. Escalate significant increases or serious complaints to management review.
 
-## 4. Procedure
-1. Register every complaint with date, customer, product, lot and problem category.
-2. Assess food safety, legal and quality risk and determine immediate escalation needs.
-3. Secure samples, production records, test results and traceability data.
-4. Perform root-cause analysis proportionate to risk.
-5. Define customer response, corrective actions and due date.
-6. Trend by product, cause, customer and frequency.
-7. Verify effectiveness and report significant trends in management review.
+## KPI
+Complaints per volume, closure on time, recurrence rate, closure time and CAPA effectiveness.
 
-## 5. Records
-- Relevant process register / form
-- Verification evidence
-- Nonconformities and actions
-- Trend / performance review
-
-## 6. Effectiveness verification
-Evaluate effectiveness through audits, deviations, complaints, testing, KPIs and relevant trend review.
-
-## 7. Review
-At least annually and after significant change or event.
+## Records
+Complaint log, investigation report, trend analysis, CAPA, customer response and effectiveness evidence.
