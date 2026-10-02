@@ -1138,17 +1138,56 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true });
     }
 
-    if (text === "/start" || text === "/menu" || text === "") {
+    if (text === "/admin") {
+      const profile = await getUserProfile(message.from.id);
+      if (!profile?.is_admin) {
+        const locale = profile?.locale || "pl";
+        const view = qualityHome(locale, false);
+        await sendMessage(
+          token,
+          chatId,
+          locale === "en" ? "This area is available to the owner only." : "Ten obszar jest dostępny tylko dla właściciela.",
+          view.reply_markup
+        );
+        return res.status(200).json({ ok: true });
+      }
+
       const menu = getMainMenu();
       await sendMessage(token, chatId, menu.text, menu.reply_markup);
       return res.status(200).json({ ok: true });
     }
 
+    if (text === "/language") {
+      const view = languageMenu();
+      await sendMessage(token, chatId, view.text, view.reply_markup);
+      return res.status(200).json({ ok: true });
+    }
+
+    if (text === "/start" || text === "/menu" || text === "") {
+      const profile = await getUserProfile(message.from.id);
+
+      if (!profile?.locale) {
+        const view = languageMenu();
+        await sendMessage(token, chatId, view.text, view.reply_markup);
+        return res.status(200).json({ ok: true });
+      }
+
+      const view = qualityHome(profile.locale, Boolean(profile.is_admin));
+      await sendMessage(token, chatId, view.text, view.reply_markup);
+      return res.status(200).json({ ok: true });
+    }
+
+    const profile = await getUserProfile(message.from.id);
+    const locale = profile?.locale || "pl";
+    const view = qualityHome(locale, Boolean(profile?.is_admin));
+
     await sendMessage(
       token,
       chatId,
-      "Użyj przycisków w menu. Wpisz /menu, aby wrócić do panelu.",
-      getMainMenu().reply_markup
+      locale === "en"
+        ? "Use the buttons below. Type /menu to return to Quality Assurance Support."
+        : "Użyj przycisków poniżej. Wpisz /menu, aby wrócić do Quality Assurance Support.",
+      view.reply_markup
     );
 
     return res.status(200).json({ ok: true });
