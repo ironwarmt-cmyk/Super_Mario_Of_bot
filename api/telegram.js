@@ -64,15 +64,23 @@ function renderPlans(plans = []) {
       )
     : ["Nie masz jeszcze żadnego planu."];
 
-  const planButtons = plans.map((plan) => [
-    {
-      text: `🧪 Kup: ${plan.name}`,
-      callback_data: `buy_plan:${plan.id}`
-    },
-    {
-      text: "🔗 Link",
-      url: `https://t.me/${BOT_USERNAME}?start=plan_${plan.id}`
-    }
+  const planButtons = plans.flatMap((plan) => [
+    [
+      {
+        text: `🧪 Kup: ${plan.name}`,
+        callback_data: `buy_plan:${plan.id}`
+      },
+      {
+        text: "🔗 Link",
+        url: `https://t.me/${BOT_USERNAME}?start=plan_${plan.id}`
+      }
+    ],
+    [
+      {
+        text: `🔐 Dostęp: ${plan.name}`,
+        callback_data: `plan_access:${plan.id}`
+      }
+    ]
   ]);
 
   return {
@@ -166,6 +174,89 @@ async function renderCreatorCommunities(user) {
   const creator = await ensureCreator(user);
   const items = await listCommunities(creator.id);
   return renderCommunities(items);
+}
+
+async function renderPlanAccess(user, planId) {
+  const creator = await ensureCreator(user);
+  const plan = await getPlan(planId);
+
+  if (!plan || plan.creator_id !== creator.id) {
+    return {
+      text: "<b>Nie znaleziono planu.</b>",
+      reply_markup: {
+        inline_keyboard: [[{ text: "⬅️ Plany", callback_data: "plans" }]]
+      }
+    };
+  }
+
+  const [communities, links] = await Promise.all([
+    listCommunities(creator.id),
+    getPlanCommunities(plan.id)
+  ]);
+
+  const assigned = new Set((links || []).map((item) => item.community_id));
+
+  await setSession(user.id, "plan_access", { planId: plan.id });
+
+  const buttons = communities.map((community) => [
+    {
+      text: `${assigned.has(community.id) ? "✅" : "⬜️"} ${community.title}`.slice(0, 60),
+      callback_data: `pc:${community.id}`
+    }
+  ]);
+
+  return {
+    text:
+      `<b>🔐 Dostęp dla planu: ${escapeHtml(plan.name)}</b>\n\n` +
+      (communities.length
+        ? "Kliknij kanał lub grupę, aby włączyć/wyłączyć dostęp po zakupie."
+        : "Najpierw dodaj kanał lub grupę w sekcji „Kanały i grupy”."),
+    reply_markup: {
+      inline_keyboard: [
+        ...buttons,
+        [{ text: "⬅️ Plany", callback_data: "plans" }]
+      ]
+    }
+  };
+}
+
+async function grantPlanAccess(token, telegramUserId, planId) {
+  const links = await getPlanCommunities(planId);
+  const buttons = [];
+
+  for (const row of links || []) {
+    const community = row.communities;
+    if (!community?.active || !community.telegram_chat_id) continue;
+
+    try {
+      const membership = await getChatMember(
+        token,
+        community.telegram_chat_id,
+        telegramUserId
+      );
+
+      if (membership?.status === "kicked") {
+        await unbanChatMember(token, community.telegram_chat_id, telegramUserId);
+      }
+    } catch {
+      // Continue with invite creation; Telegram will validate permissions.
+    }
+
+    const invite = await createChatInviteLink(
+      token,
+      community.telegram_chat_id,
+      `Paid access ${telegramUserId}`
+    );
+
+    buttons.push([
+      {
+        text: `➡️ ${community.title}`.slice(0, 60),
+        url: invite.invite_link
+      }
+    ]);
+  }
+
+  return buttons;
 }
 
 function getForwardedChat(message) {
