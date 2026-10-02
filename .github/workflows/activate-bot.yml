@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Wait for Vercel production deployment
-        run: sleep 35
+        run: sleep 20
 
       - name: Initialize database bridge and Telegram webhook
         shell: bash
