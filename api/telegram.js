@@ -2,13 +2,15 @@ import crypto from "node:crypto";
 import {
   answerCallbackQuery,
   answerPreCheckoutQuery,
+  createChatInviteLink,
   editMessage,
   getChatMember,
   getMe,
   getMainMenu,
   getSectionMessage,
   sendMessage,
-  sendStarsInvoice
+  sendStarsInvoice,
+  unbanChatMember
 } from "../lib/telegram.js";
 import {
   clearSession,
@@ -16,11 +18,13 @@ import {
   createPlan,
   ensureCreator,
   getPlan,
+  getPlanCommunities,
   getSession,
   getUserSubscriptions,
   isDatabaseConfigured,
   listCommunities,
   listPlans,
+  setPlanCommunity,
   recordSuccessfulPayment,
   setSession,
   upsertTelegramUser
