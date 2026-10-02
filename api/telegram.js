@@ -14,6 +14,17 @@ import {
   unbanChatMember
 } from "../lib/telegram.js";
 import {
+  languageMenu,
+  qualityHome,
+  renderQualityPlans,
+  renderPlanDetails,
+  renderProducts,
+  renderTraining,
+  renderTokens,
+  renderAssistant,
+  renderMembership
+} from "../lib/quality-ui.js";
+import {
   clearSession,
   createCommunity,
   createPlan,
@@ -24,6 +35,13 @@ import {
   getSession,
   getSubscription,
   getUserSubscriptions,
+  getUserProfile,
+  setUserLocale,
+  listQualityPlans,
+  getQualityPlan,
+  listQualityProducts,
+  listQualityTokenPacks,
+  getQualityMembership,
   isDatabaseConfigured,
   listCommunities,
   listCreatorCustomers,
@@ -550,6 +568,97 @@ export default async function handler(req, res) {
         return res.status(200).json({ ok: true, ignored: true });
       }
 
+      if (action.startsWith("lang:")) {
+        const locale = action.split(":")[1] === "en" ? "en" : "pl";
+        await upsertTelegramUser(callback.from);
+        await setUserLocale(callback.from.id, locale);
+        const profile = await getUserProfile(callback.from.id);
+        const view = qualityHome(locale, Boolean(profile?.is_admin));
+        await editMessage(token, chatId, messageId, view.text, view.reply_markup);
+        return res.status(200).json({ ok: true });
+      }
+
+      if (action === "qa:language") {
+        const view = languageMenu();
+        await editMessage(token, chatId, messageId, view.text, view.reply_markup);
+        return res.status(200).json({ ok: true });
+      }
+
+      if (action === "qa:home") {
+        const profile = await getUserProfile(callback.from.id);
+        const locale = profile?.locale || "pl";
+        const view = qualityHome(locale, Boolean(profile?.is_admin));
+        await editMessage(token, chatId, messageId, view.text, view.reply_markup);
+        return res.status(200).json({ ok: true });
+      }
+
+      if (action === "qa:plans") {
+        const profile = await getUserProfile(callback.from.id);
+        const plans = await listQualityPlans();
+        const view = renderQualityPlans(plans, profile?.locale || "pl");
+        await editMessage(token, chatId, messageId, view.text, view.reply_markup);
+        return res.status(200).json({ ok: true });
+      }
+
+      if (action.startsWith("qa:plan:")) {
+        const profile = await getUserProfile(callback.from.id);
+        const slug = action.split(":")[2];
+        const [plan, products] = await Promise.all([
+          getQualityPlan(slug),
+          listQualityProducts(3)
+        ]);
+        if (!plan) {
+          const view = qualityHome(profile?.locale || "pl", Boolean(profile?.is_admin));
+          await editMessage(token, chatId, messageId, profile?.locale === "en" ? "Plan not found." : "Nie znaleziono planu.", view.reply_markup);
+          return res.status(200).json({ ok: true });
+        }
+        const view = renderPlanDetails(plan, products, profile?.locale || "pl");
+        await editMessage(token, chatId, messageId, view.text, view.reply_markup);
+        return res.status(200).json({ ok: true });
+      }
+
+      if (action === "qa:products" || action.startsWith("qa:products:tier:")) {
+        const profile = await getUserProfile(callback.from.id);
+        const tier = action.startsWith("qa:products:tier:")
+          ? Number(action.split(":")[3])
+          : null;
+        const products = await listQualityProducts(tier || 3);
+        const view = renderProducts(products, profile?.locale || "pl", tier);
+        await editMessage(token, chatId, messageId, view.text, view.reply_markup);
+        return res.status(200).json({ ok: true });
+      }
+
+      if (action === "qa:training") {
+        const profile = await getUserProfile(callback.from.id);
+        const products = await listQualityProducts(3);
+        const view = renderTraining(products, profile?.locale || "pl");
+        await editMessage(token, chatId, messageId, view.text, view.reply_markup);
+        return res.status(200).json({ ok: true });
+      }
+
+      if (action === "qa:tokens") {
+        const profile = await getUserProfile(callback.from.id);
+        const packs = await listQualityTokenPacks();
+        const view = renderTokens(packs, profile?.locale || "pl");
+        await editMessage(token, chatId, messageId, view.text, view.reply_markup);
+        return res.status(200).json({ ok: true });
+      }
+
+      if (action === "qa:assistant") {
+        const profile = await getUserProfile(callback.from.id);
+        const view = renderAssistant(profile?.locale || "pl");
+        await editMessage(token, chatId, messageId, view.text, view.reply_markup);
+        return res.status(200).json({ ok: true });
+      }
+
+      if (action === "qa:membership") {
+        const profile = await getUserProfile(callback.from.id);
+        const membership = await getQualityMembership(callback.from.id);
+        const view = renderMembership(membership, profile?.locale || "pl");
+        await editMessage(token, chatId, messageId, view.text, view.reply_markup);
+        return res.status(200).json({ ok: true });
+      }
+
       if (action === "home") {
         if (isDatabaseConfigured()) {
           await clearSession(callback.from.id);
@@ -1029,17 +1138,56 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true });
     }
 
-    if (text === "/start" || text === "/menu" || text === "") {
+    if (text === "/admin") {
+      const profile = await getUserProfile(message.from.id);
+      if (!profile?.is_admin) {
+        const locale = profile?.locale || "pl";
+        const view = qualityHome(locale, false);
+        await sendMessage(
+          token,
+          chatId,
+          locale === "en" ? "This area is available to the owner only." : "Ten obszar jest dostępny tylko dla właściciela.",
+          view.reply_markup
+        );
+        return res.status(200).json({ ok: true });
+      }
+
       const menu = getMainMenu();
       await sendMessage(token, chatId, menu.text, menu.reply_markup);
       return res.status(200).json({ ok: true });
     }
 
+    if (text === "/language") {
+      const view = languageMenu();
+      await sendMessage(token, chatId, view.text, view.reply_markup);
+      return res.status(200).json({ ok: true });
+    }
+
+    if (text === "/start" || text === "/menu" || text === "") {
+      const profile = await getUserProfile(message.from.id);
+
+      if (!profile?.locale) {
+        const view = languageMenu();
+        await sendMessage(token, chatId, view.text, view.reply_markup);
+        return res.status(200).json({ ok: true });
+      }
+
+      const view = qualityHome(profile.locale, Boolean(profile.is_admin));
+      await sendMessage(token, chatId, view.text, view.reply_markup);
+      return res.status(200).json({ ok: true });
+    }
+
+    const profile = await getUserProfile(message.from.id);
+    const locale = profile?.locale || "pl";
+    const view = qualityHome(locale, Boolean(profile?.is_admin));
+
     await sendMessage(
       token,
       chatId,
-      "Użyj przycisków w menu. Wpisz /menu, aby wrócić do panelu.",
-      getMainMenu().reply_markup
+      locale === "en"
+        ? "Use the buttons below. Type /menu to return to Quality Assurance Support."
+        : "Użyj przycisków poniżej. Wpisz /menu, aby wrócić do Quality Assurance Support.",
+      view.reply_markup
     );
 
     return res.status(200).json({ ok: true });

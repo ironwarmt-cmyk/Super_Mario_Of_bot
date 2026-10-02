@@ -648,6 +648,128 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (action === "get_user_profile") {
+      const telegramUserId = body?.telegram_user_id;
+
+      const { data: user, error: userError } = await supabase
+        .from("telegram_users")
+        .select("telegram_user_id,username,first_name,last_name,language_code,locale")
+        .eq("telegram_user_id", telegramUserId)
+        .maybeSingle();
+
+      if (userError) throw userError;
+
+      const { data: admin, error: adminError } = await supabase
+        .from("platform_admins")
+        .select("telegram_user_id")
+        .eq("telegram_user_id", telegramUserId)
+        .maybeSingle();
+
+      if (adminError) throw adminError;
+
+      return json({
+        ok: true,
+        data: {
+          ...(user || { telegram_user_id: telegramUserId, locale: null }),
+          is_admin: Boolean(admin)
+        }
+      });
+    }
+
+    if (action === "set_user_locale") {
+      const telegramUserId = body?.telegram_user_id;
+      const locale = body?.locale === "en" ? "en" : "pl";
+
+      const { data, error } = await supabase
+        .from("telegram_users")
+        .update({
+          locale,
+          updated_at: new Date().toISOString()
+        })
+        .eq("telegram_user_id", telegramUserId)
+        .select("telegram_user_id,locale")
+        .maybeSingle();
+
+      if (error) throw error;
+      return json({ ok: true, data: data || null });
+    }
+
+    if (action === "list_quality_plans") {
+      const { data, error } = await supabase
+        .from("quality_plans")
+        .select("*")
+        .eq("active", true)
+        .order("sort_order", { ascending: true });
+
+      if (error) throw error;
+      return json({ ok: true, data: data || [] });
+    }
+
+    if (action === "get_quality_plan") {
+      const query = supabase
+        .from("quality_plans")
+        .select("*")
+        .eq("active", true);
+
+      const { data, error } = body?.slug
+        ? await query.eq("slug", body.slug).maybeSingle()
+        : await query.eq("id", body?.plan_id).maybeSingle();
+
+      if (error) throw error;
+      return json({ ok: true, data: data || null });
+    }
+
+    if (action === "list_quality_products") {
+      let maxTier = Number(body?.max_tier_rank || 3);
+      if (!Number.isFinite(maxTier)) maxTier = 3;
+
+      const { data, error } = await supabase
+        .from("quality_products")
+        .select("*")
+        .eq("active", true)
+        .lte("minimum_tier_rank", maxTier)
+        .order("sort_order", { ascending: true });
+
+      if (error) throw error;
+      return json({ ok: true, data: data || [] });
+    }
+
+    if (action === "get_quality_product") {
+      const { data, error } = await supabase
+        .from("quality_products")
+        .select("*")
+        .eq("slug", body?.slug)
+        .eq("active", true)
+        .maybeSingle();
+
+      if (error) throw error;
+      return json({ ok: true, data: data || null });
+    }
+
+    if (action === "list_quality_token_packs") {
+      const { data, error } = await supabase
+        .from("quality_token_packs")
+        .select("*")
+        .eq("active", true)
+        .order("sort_order", { ascending: true });
+
+      if (error) throw error;
+      return json({ ok: true, data: data || [] });
+    }
+
+    if (action === "get_quality_membership") {
+      const telegramUserId = body?.telegram_user_id;
+
+      const { data, error } = await supabase
+        .from("quality_memberships")
+        .select("*,quality_plans(*)")
+        .eq("telegram_user_id", telegramUserId)
+        .maybeSingle();
+
+      if (error) throw error;
+      return json({ ok: true, data: data || null });
+    }
+
     if (action === "get_session") {
       const { data, error } = await supabase
         .from("bot_sessions")

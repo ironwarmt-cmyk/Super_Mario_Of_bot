@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quality Assurance Support</title>
+<style>
+:root{--bg:#07111c;--panel:#0d1b2a;--panel2:#10263a;--text:#f5f7fa;--muted:#a8b6c6;--line:#203b54;--accent:#3bd6a2;--accent2:#54a7ff;--warn:#ffd166}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:radial-gradient(circle at 15% 0,#123858 0,transparent 34%),radial-gradient(circle at 90% 10%,#124938 0,transparent 30%),var(--bg);color:var(--text)}
+.wrap{max-width:1100px;margin:auto;padding:24px}.top{display:flex;justify-content:space-between;align-items:center;gap:16px}.brand{font-weight:800;letter-spacing:.05em}.lang button{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:12px;padding:9px 12px;margin-left:6px}.hero{padding:70px 0 36px;display:grid;grid-template-columns:1.2fr .8fr;gap:28px;align-items:center}.eyebrow{color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:13px}.hero h1{font-size:clamp(38px,7vw,72px);line-height:.95;margin:14px 0}.hero p{font-size:18px;line-height:1.6;color:var(--muted);max-width:760px}.visual{min-height:360px;border:1px solid var(--line);border-radius:28px;background:linear-gradient(145deg,#143a55,#0f2a35 55%,#153f33);position:relative;overflow:hidden;box-shadow:0 24px 80px #0008}.visual:before,.visual:after{content:"";position:absolute;border-radius:50%;filter:blur(2px)}.visual:before{width:190px;height:190px;background:#54a7ff33;right:40px;top:30px}.visual:after{width:260px;height:260px;background:#3bd6a233;left:-50px;bottom:-50px}.screen{position:absolute;left:42px;right:42px;top:70px;padding:22px;border:1px solid #ffffff22;border-radius:20px;background:#08131dcc;backdrop-filter:blur(8px)}.screen b{font-size:22px}.metric{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}.metric div{padding:14px;border:1px solid #ffffff16;border-radius:14px;background:#ffffff08}.section{padding:34px 0}.section h2{font-size:34px;margin:0 0 8px}.section>p{color:var(--muted);line-height:1.6;max-width:820px}.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:24px}.card{border:1px solid var(--line);border-radius:22px;padding:24px;background:linear-gradient(180deg,#0d1b2a,#09141f);position:relative}.card.featured{border-color:#3bd6a288;box-shadow:0 0 0 1px #3bd6a222,0 22px 60px #0006}.tag{display:inline-block;font-size:12px;font-weight:700;padding:6px 9px;border-radius:999px;background:#3bd6a21a;color:var(--accent);border:1px solid #3bd6a244}.price{font-size:31px;font-weight:800;margin:18px 0 8px}.small{color:var(--muted);font-size:14px}.card ul{padding-left:20px;color:#dce6ef;line-height:1.55}.library{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:22px}.doc{padding:18px;border:1px solid var(--line);border-radius:16px;background:var(--panel)}.doc span{display:block;color:var(--muted);font-size:13px;margin-top:6px}.tokens{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-top:22px}.token{padding:15px 8px;text-align:center;border-radius:14px;background:var(--panel);border:1px solid var(--line)}.token b{display:block;font-size:18px}.token small{color:var(--muted)}.note{padding:18px 20px;border-left:3px solid var(--warn);background:#ffd16612;border-radius:12px;color:#e9e2c8}.footer{padding:45px 0;color:var(--muted);font-size:13px}
+@media(max-width:850px){.hero{grid-template-columns:1fr}.plans{grid-template-columns:1fr}.library{grid-template-columns:1fr}.tokens{grid-template-columns:repeat(2,1fr)}.visual{min-height:300px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><div class="brand">QUALITY ASSURANCE SUPPORT</div><div class="lang"><button onclick="setLang('pl')">PL</button><button onclick="setLang('en')">EN</button></div></div>
+
+  <section class="hero">
+    <div>
+      <div class="eyebrow" data-pl="Jakość żywności. Dokumenty. Wiedza. Wsparcie." data-en="Food quality. Documents. Knowledge. Support.">Jakość żywności. Dokumenty. Wiedza. Wsparcie.</div>
+      <h1 data-pl="System jakości, który da się naprawdę wdrożyć." data-en="A quality system you can actually implement.">System jakości, który da się naprawdę wdrożyć.</h1>
+      <p data-pl="Dwujęzyczna społeczność i biblioteka dla specjalistów jakości i bezpieczeństwa żywności. Edytowalne procedury, analiza zagrożeń, szkolenia, dokumenty firmowe oraz asystent." data-en="A bilingual community and working library for food quality and safety professionals. Editable procedures, hazard analysis, training, company documents and an assistant.">Dwujęzyczna społeczność i biblioteka dla specjalistów jakości i bezpieczeństwa żywności. Edytowalne procedury, analiza zagrożeń, szkolenia, dokumenty firmowe oraz asystent.</p>
+    </div>
+    <div class="visual">
+      <div class="screen">
+        <b>Quality Control Hub</b>
+        <div class="small" data-pl="Przykładowy ekran użytkownika" data-en="Example member dashboard">Przykładowy ekran użytkownika</div>
+        <div class="metric"><div><b>30</b><br><span class="small" data-pl="dokumentów VIP" data-en="VIP documents">dokumentów VIP</span></div><div><b>30 h</b><br><span class="small" data-pl="asystenta" data-en="assistant">asystenta</span></div><div><b>PL/EN</b><br><span class="small" data-pl="język" data-en="language">język</span></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2 data-pl="Wybierz poziom" data-en="Choose your level">Wybierz poziom</h2>
+    <p data-pl="Każdy wyższy plan zawiera zasoby planów niższych. Ceny PRO i VIP pozostają w wersji roboczej do zatwierdzenia przed uruchomieniem płatności." data-en="Each higher plan includes the lower plan resources. PRO and VIP pricing remains draft until approved before checkout activation.">Każdy wyższy plan zawiera zasoby planów niższych. Ceny PRO i VIP pozostają w wersji roboczej do zatwierdzenia przed uruchomieniem płatności.</p>
+    <div class="plans">
+      <div class="card"><span class="tag">BASIC</span><div class="price">49,99 zł</div><div class="small" data-pl="/ miesiąc" data-en="/ month">/ miesiąc</div><ul><li data-pl="Podstawowa procedura systemu jakości" data-en="Core quality-management procedure">Podstawowa procedura systemu jakości</li><li data-pl="Podstawowa analiza zagrożeń" data-en="Basic hazard analysis">Podstawowa analiza zagrożeń</li><li data-pl="7 praktycznych procedur i instrukcji" data-en="7 practical procedures and instructions">7 praktycznych procedur i instrukcji</li><li data-pl="1 szkolenie do wyboru" data-en="1 training option">1 szkolenie do wyboru</li></ul></div>
+      <div class="card featured"><span class="tag">PRO</span><div class="price" data-pl="Cena do ustalenia" data-en="Price to confirm">Cena do ustalenia</div><ul><li data-pl="Wszystko z BASIC" data-en="Everything in BASIC">Wszystko z BASIC</li><li data-pl="Pełniejsza struktura dokumentacji zakładu" data-en="Expanded site documentation structure">Pełniejsza struktura dokumentacji zakładu</li><li data-pl="Zaawansowane procedury produktowe, procesowe i zakładowe" data-en="Advanced product, process and site procedures">Zaawansowane procedury produktowe, procesowe i zakładowe</li><li data-pl="5 dedykowanych dokumentów / miesiąc" data-en="5 tailored documents / month">5 dedykowanych dokumentów / miesiąc</li></ul></div>
+      <div class="card"><span class="tag">VIP</span><div class="price" data-pl="Cena do ustalenia" data-en="Price to confirm">Cena do ustalenia</div><ul><li data-pl="Wszystko z PRO" data-en="Everything in PRO">Wszystko z PRO</li><li data-pl="Pełny szkielet systemu zarządzania" data-en="Complete management-system framework">Pełny szkielet systemu zarządzania</li><li data-pl="30 dedykowanych dokumentów / miesiąc" data-en="30 tailored documents / month">30 dedykowanych dokumentów / miesiąc</li><li data-pl="30 godzin asystenta / miesiąc" data-en="30 assistant hours / month">30 godzin asystenta / miesiąc</li></ul></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2 data-pl="Przykładowe zasoby" data-en="Example resources">Przykładowe zasoby</h2>
+    <div class="library">
+      <div class="doc"><b data-pl="Procedura zarządzania jakością" data-en="Quality Management Procedure">Procedura zarządzania jakością</b><span data-pl="Polityka, odpowiedzialności, cele, przeglądy i doskonalenie." data-en="Policy, responsibilities, objectives, reviews and improvement.">Polityka, odpowiedzialności, cele, przeglądy i doskonalenie.</span></div>
+      <div class="doc"><b data-pl="Analiza zagrożeń" data-en="Hazard Analysis">Analiza zagrożeń</b><span data-pl="Biologiczne, chemiczne, fizyczne, alergeny i zagrożenia intencjonalne." data-en="Biological, chemical, physical, allergen and intentional hazards.">Biologiczne, chemiczne, fizyczne, alergeny i zagrożenia intencjonalne.</span></div>
+      <div class="doc"><b data-pl="Mycie i dezynfekcja" data-en="Cleaning and Disinfection">Mycie i dezynfekcja</b><span data-pl="Parametry, kolejność, odpowiedzialność, weryfikacja i zapisy." data-en="Parameters, sequence, responsibility, verification and records.">Parametry, kolejność, odpowiedzialność, weryfikacja i zapisy.</span></div>
+      <div class="doc"><b data-pl="CAPA i przyczyna źródłowa" data-en="CAPA and Root Cause">CAPA i przyczyna źródłowa</b><span data-pl="Od zabezpieczenia problemu do sprawdzenia skuteczności działań." data-en="From containment to effectiveness verification.">Od zabezpieczenia problemu do sprawdzenia skuteczności działań.</span></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2 data-pl="Tokeny dodatkowe" data-en="Extra tokens">Tokeny dodatkowe</h2>
+    <p data-pl="35 tokenów = 10,00 zł wartości referencyjnej. Jeden dedykowany dokument po wyczerpaniu limitu kosztuje 35 tokenów." data-en="35 tokens = PLN 10.00 reference value. One tailored document after the plan allowance is exhausted costs 35 tokens.">35 tokenów = 10,00 zł wartości referencyjnej. Jeden dedykowany dokument po wyczerpaniu limitu kosztuje 35 tokenów.</p>
+    <div class="tokens"><div class="token"><b>5</b><small>1,43 zł</small></div><div class="token"><b>15</b><small>4,29 zł</small></div><div class="token"><b>25</b><small>7,14 zł</small></div><div class="token"><b>50</b><small>14,29 zł</small></div><div class="token"><b>75</b><small>21,43 zł</small></div><div class="token"><b>95</b><small>27,14 zł</small></div><div class="token"><b>150</b><small>42,86 zł</small></div></div>
+  </section>
+
+  <section class="section"><div class="note" data-pl="Materiały są narzędziami wdrożeniowymi. Muszą zostać dostosowane do konkretnego zakładu, produktu, procesu i obowiązującego prawa. Nie stanowią certyfikacji ani gwarancji zgodności audytowej." data-en="The materials are implementation tools. They must be adapted to the specific site, product, process and applicable law. They do not constitute certification or a guarantee of audit compliance.">Materiały są narzędziami wdrożeniowymi. Muszą zostać dostosowane do konkretnego zakładu, produktu, procesu i obowiązującego prawa. Nie stanowią certyfikacji ani gwarancji zgodności audytowej.</div></section>
+  <div class="footer">Quality Assurance Support · PL / EN</div>
+</div>
+<script>
+function setLang(lang){
+ document.documentElement.lang=lang;
+ document.querySelectorAll('[data-'+lang+']').forEach(el=>{el.textContent=el.getAttribute('data-'+lang)});
+ localStorage.setItem('qa_lang',lang);
+}
+setLang(localStorage.getItem('qa_lang')||new URLSearchParams(location.search).get('lang')||'pl');
+</script>
+</body>
+</html>
