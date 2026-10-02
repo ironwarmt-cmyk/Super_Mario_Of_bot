@@ -1,35 +1,18 @@
-# Nonconforming Product Control
+# PRO — Nonconforming Product Control
 
-> Editable implementation template. Complete site, product, process and applicable legal parameters.
+## Purpose
+Prevent unintended use, release or dispatch of product that does not meet requirements.
 
-## 1. Purpose
-Provide a controlled and documented method for this management-system area.
+## Rules
+1. Identify and physically/systemically segregate affected product.
+2. Clearly mark status: HOLD / PENDING DECISION / REJECTED / CONDITIONALLY RELEASED / REWORK.
+3. Record quantity, lot, reason and location.
+4. Assess impact on safety, legality, authenticity, quality and specification.
+5. Release decisions require authorised personnel.
+6. Rework requires safety, traceability, recipe and allergen review.
+7. Disposal or reclassification must be documented.
+8. If product may have left the site, activate incident/withdrawal procedure.
+9. Recurrent causes require CAPA.
 
-## 2. Scope
-All products, processes, locations and people to which this area applies.
-
-## 3. Responsibilities
-- Quality Manager: system oversight, approval and effectiveness review.
-- Process owner: implementation of operational requirements.
-- Employees: follow approved controls and report deviations.
-
-## 4. Procedure
-1. Immediately identify and physically or electronically hold the product.
-2. Define the reason, affected lots, quantity and location.
-3. Assess risk and compliance with law and specification.
-4. Document disposition: release, rework, downgrade, return or disposal.
-5. If dispatched, assess withdrawal or recall needs.
-6. Record authorised disposition and final quantity reconciliation.
-7. Trend recurring cases through CAPA.
-
-## 5. Records
-- Relevant process register / form
-- Verification evidence
-- Nonconformities and actions
-- Trend / performance review
-
-## 6. Effectiveness verification
-Evaluate effectiveness through audits, deviations, complaints, testing, KPIs and relevant trend review.
-
-## 7. Review
-At least annually and after significant change or event.
+## Records
+Hold log, disposition record, destruction evidence, rework record, release authorisation and CAPA.
