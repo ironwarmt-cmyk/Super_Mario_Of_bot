@@ -1,32 +1,29 @@
-# Szkolenia, higiena osobista i odzież ochronna
+# PRO — Szkolenia, higiena osobista i odzież ochronna
 
-> Edytowalny szablon wdrożeniowy. Uzupełnij parametry zakładu, produktu, procesu i wymagania prawne.
+## Cel
+Zapewnienie kompetencji personelu oraz ograniczenie ryzyka zanieczyszczenia produktu wynikającego z zachowania, stanu zdrowia lub niewłaściwej odzieży.
 
-## 1. Cel
-Zapewnienie, że osoby wykonujące pracę wpływającą na bezpieczeństwo i jakość posiadają kompetencje, przestrzegają zasad higieny i używają właściwej odzieży ochronnej.
+## Kompetencje i szkolenia
+1. Ustal wymagane kompetencje dla każdego stanowiska.
+2. Przed samodzielną pracą zapewnij szkolenie wstępne i stanowiskowe.
+3. Zadania krytyczne powierzaj osobom odpowiednio przeszkolonym.
+4. Oceniaj skuteczność szkolenia przez obserwację, test, audyt lub wyniki pracy.
+5. Utrzymuj matrycę kompetencji i plan szkoleń odświeżających.
 
-## 2. Zakres
-Pracownicy, pracownicy tymczasowi, goście, wykonawcy i wszystkie obszary zakładu.
+## Higiena osobista
+- mycie i dezynfekcja rąk zgodnie z instrukcją strefy,
+- ograniczenie biżuterii, telefonów i przedmiotów osobistych,
+- zasady dotyczące ran, opatrunków i skaleczeń,
+- jedzenie, picie i palenie wyłącznie w wyznaczonych miejscach.
 
-## 3. Odpowiedzialności
-- HR / przełożeni: planowanie szkoleń i potwierdzenie kompetencji.
-- Jakość: wymagania higieniczne i merytoryczna zawartość szkoleń.
-- Pracownicy: stosowanie zasad i zgłaszanie problemów.
+## Stan zdrowia
+Pracownicy i goście zgłaszają objawy lub choroby mogące stanowić zagrożenie dla produktu. Zakład definiuje zasady odsunięcia od pracy z produktem lub czasowej zmiany stanowiska.
 
-## 4. Sposób postępowania
-1. Zdefiniuj wymagane kompetencje dla stanowisk wpływających na bezpieczeństwo i jakość.
-2. Przed samodzielną pracą przeprowadź szkolenie wstępne i stanowiskowe.
-3. Oceniaj skuteczność szkolenia i utrzymuj matrycę kompetencji.
-4. Ustal zasady mycia rąk, biżuterii, jedzenia, palenia i zachowania w strefach.
-5. Ustal sposób zgłaszania chorób i ograniczeń zdrowotnych zgodnie z prawem.
-6. Zapewnij właściwą odzież ochronną, zasady jej zmiany i prania.
-7. Kontroluj gości i wykonawców przed wejściem do obszarów produkcyjnych.
+## Odzież ochronna
+Rodzaj odzieży zależy od strefy i ryzyka. Odzież musi być czysta, właściwie przechowywana, zakładana i zdejmowana w określonej kolejności oraz wymieniana z ustaloną częstotliwością.
 
-## 5. Zapisy
-- Matryca kompetencji
-- Rejestr szkoleń
-- Ocena skuteczności szkolenia
-- Rejestr wydania odzieży / zasad dla gości
+## Goście i wykonawcy
+Przed wejściem otrzymują instruktaż i stosują wymagania właściwe dla odwiedzanego obszaru.
 
-## 6. Przegląd
-Co najmniej raz w roku oraz po zmianie stanowiska, procesu lub wymagań.
+## Zapisy
+Matryca kompetencji, plan szkoleń, listy obecności, weryfikacja skuteczności, deklaracje zdrowotne, wydanie odzieży, instruktaż gości.
