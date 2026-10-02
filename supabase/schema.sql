@@ -116,3 +116,34 @@ alter table bot_sessions enable row level security;
 
 -- Backend uses SUPABASE_SERVICE_ROLE_KEY on the server.
 -- Do not expose that key in Telegram, browser code or public repositories.
+
+create index if not exists idx_payments_plan on payments(plan_id);
+create index if not exists idx_payments_product on payments(product_id);
+create index if not exists idx_plan_communities_community on plan_communities(community_id);
+create index if not exists idx_products_creator on products(creator_id);
+create index if not exists idx_referrals_creator on referrals(creator_id);
+create index if not exists idx_referrals_owner on referrals(owner_telegram_user_id);
+
+revoke all on table telegram_users, creators, plans, communities, plan_communities, products, subscriptions, payments, referrals, bot_sessions from anon, authenticated;
+grant select, insert, update, delete on table telegram_users, creators, plans, communities, plan_communities, products, subscriptions, payments, referrals, bot_sessions to service_role;
+
+create policy deny_anon_auth_telegram_users on telegram_users
+  for all to anon, authenticated using (false) with check (false);
+create policy deny_anon_auth_creators on creators
+  for all to anon, authenticated using (false) with check (false);
+create policy deny_anon_auth_plans on plans
+  for all to anon, authenticated using (false) with check (false);
+create policy deny_anon_auth_communities on communities
+  for all to anon, authenticated using (false) with check (false);
+create policy deny_anon_auth_plan_communities on plan_communities
+  for all to anon, authenticated using (false) with check (false);
+create policy deny_anon_auth_products on products
+  for all to anon, authenticated using (false) with check (false);
+create policy deny_anon_auth_subscriptions on subscriptions
+  for all to anon, authenticated using (false) with check (false);
+create policy deny_anon_auth_payments on payments
+  for all to anon, authenticated using (false) with check (false);
+create policy deny_anon_auth_referrals on referrals
+  for all to anon, authenticated using (false) with check (false);
+create policy deny_anon_auth_bot_sessions on bot_sessions
+  for all to anon, authenticated using (false) with check (false);
