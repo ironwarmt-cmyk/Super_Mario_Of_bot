@@ -378,6 +378,42 @@ Deno.serve(async (req) => {
       return json({ ok: true, data: data || [] });
     }
 
+    if (action === "list_communities") {
+      const { data, error } = await supabase
+        .from("communities")
+        .select("id,telegram_chat_id,title,chat_type,active,created_at")
+        .eq("creator_id", body?.creator_id)
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+      return json({ ok: true, data: data || [] });
+    }
+
+    if (action === "create_community") {
+      const community = body?.community || {};
+      if (!body?.creator_id || !community.telegramChatId || !community.title || !community.chatType) {
+        return json({ ok: false, error: "Incomplete community data" }, 400);
+      }
+
+      const { data, error } = await supabase
+        .from("communities")
+        .upsert(
+          {
+            creator_id: body.creator_id,
+            telegram_chat_id: community.telegramChatId,
+            title: community.title,
+            chat_type: community.chatType,
+            active: true
+          },
+          { onConflict: "creator_id,telegram_chat_id" }
+        )
+        .select()
+        .single();
+
+      if (error) throw error;
+      return json({ ok: true, data });
+    }
+
     if (action === "get_subscription") {
       const { data, error } = await supabase
         .from("subscriptions")
