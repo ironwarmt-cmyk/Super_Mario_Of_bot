@@ -620,8 +620,11 @@ export default async function handler(req, res) {
         const locale = action.split(":")[1] === "en" ? "en" : "pl";
         await upsertTelegramUser(callback.from);
         await setUserLocale(callback.from.id, locale);
-        const profile = await getUserProfile(callback.from.id);
-        const view = qualityHome(locale, Boolean(profile?.is_admin));
+        const [profile, plans] = await Promise.all([
+          getUserProfile(callback.from.id),
+          listQualityPlans()
+        ]);
+        const view = qualityHome(locale, Boolean(profile?.is_admin), plans);
         await editMessage(token, chatId, messageId, view.text, view.reply_markup);
         return res.status(200).json({ ok: true });
       }
@@ -633,9 +636,12 @@ export default async function handler(req, res) {
       }
 
       if (action === "qa:home") {
-        const profile = await getUserProfile(callback.from.id);
+        const [profile, plans] = await Promise.all([
+          getUserProfile(callback.from.id),
+          listQualityPlans()
+        ]);
         const locale = profile?.locale || "pl";
-        const view = qualityHome(locale, Boolean(profile?.is_admin));
+        const view = qualityHome(locale, Boolean(profile?.is_admin), plans);
         await editMessage(token, chatId, messageId, view.text, view.reply_markup);
         return res.status(200).json({ ok: true });
       }
@@ -1351,7 +1357,12 @@ export default async function handler(req, res) {
         return res.status(200).json({ ok: true });
       }
 
-      const view = qualityHome(profile.locale, Boolean(profile.is_admin));
+      const plans = await listQualityPlans();
+      const view = qualityHome(
+        profile.locale,
+        Boolean(profile.is_admin),
+        plans
+      );
       await sendMessage(token, chatId, view.text, view.reply_markup);
       return res.status(200).json({ ok: true });
     }
