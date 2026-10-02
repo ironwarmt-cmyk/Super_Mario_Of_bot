@@ -11,6 +11,7 @@ import {
   getSectionMessage,
   sendMessage,
   sendStarsInvoice,
+  sendTokenPackInvoice,
   unbanChatMember
 } from "../lib/telegram.js";
 import {
@@ -22,6 +23,7 @@ import {
   renderProductDetail,
   renderTraining,
   renderTokens,
+  renderPhysicalProduct,
   renderAssistant,
   renderMembership
 } from "../lib/quality-ui.js";
@@ -43,6 +45,10 @@ import {
   getQualityProduct,
   listQualityProducts,
   listQualityTokenPacks,
+  getQualityTokenPack,
+  getQualityWallet,
+  creditQualityTokenPack,
+  getQualityPhysicalProduct,
   getQualityMembership,
   isDatabaseConfigured,
   listCommunities,
@@ -549,9 +555,27 @@ export default async function handler(req, res) {
     if (update.pre_checkout_query) {
       const query = update.pre_checkout_query;
       const payload = String(query.invoice_payload || "");
-      const match = /^plan:([0-9a-f-]{36})$/i.exec(payload);
 
-      if (!match) {
+      const tokenMatch = /^qa_tokens:([0-9a-f-]{36})$/i.exec(payload);
+      if (tokenMatch) {
+        const pack = await getQualityTokenPack(tokenMatch[1]);
+        const valid =
+          pack &&
+          query.currency === "XTR" &&
+          Number(query.total_amount) === Number(pack.price_stars);
+
+        await answerPreCheckoutQuery(
+          token,
+          query.id,
+          Boolean(valid),
+          valid ? undefined : "Pakiet tokenów jest niedostępny albo cena się zmieniła."
+        );
+
+        return res.status(200).json({ ok: true });
+      }
+
+      const planMatch = /^plan:([0-9a-f-]{36})$/i.exec(payload);
+      if (!planMatch) {
         await answerPreCheckoutQuery(
           token,
           query.id,
@@ -561,7 +585,7 @@ export default async function handler(req, res) {
         return res.status(200).json({ ok: true });
       }
 
-      const plan = await getPlan(match[1]);
+      const plan = await getPlan(planMatch[1]);
       const valid =
         plan &&
         plan.active &&
@@ -717,9 +741,44 @@ export default async function handler(req, res) {
 
       if (action === "qa:tokens") {
         const profile = await getUserProfile(callback.from.id);
-        const packs = await listQualityTokenPacks();
-        const view = renderTokens(packs, profile?.locale || "pl");
+        const [packs, wallet] = await Promise.all([
+          listQualityTokenPacks(),
+          getQualityWallet(callback.from.id)
+        ]);
+        const view = renderTokens(packs, profile?.locale || "pl", wallet);
         await editMessage(token, chatId, messageId, view.text, view.reply_markup);
+        return res.status(200).json({ ok: true });
+      }
+
+      if (action.startsWith("qa:buy_tokens:")) {
+        const packId = action.slice("qa:buy_tokens:".length);
+        const pack = await getQualityTokenPack(packId);
+
+        if (!pack) {
+          await sendMessage(token, chatId, "Ten pakiet tokenów jest niedostępny.");
+          return res.status(200).json({ ok: true });
+        }
+
+        await sendTokenPackInvoice(token, chatId, pack);
+        return res.status(200).json({ ok: true });
+      }
+
+      if (action === "qa:physical") {
+        const profile = await getUserProfile(callback.from.id);
+        const locale = profile?.locale || "pl";
+        const product = await getQualityPhysicalProduct("qa-master-binder");
+        const checkoutUrl = product
+          ? `https://supermarioofbot-iron-war.vercel.app/api/physical-checkout?product=${encodeURIComponent(product.slug)}&u=${callback.from.id}`
+          : null;
+        const view = renderPhysicalProduct(product, locale, checkoutUrl);
+
+        await editMessage(
+          token,
+          chatId,
+          messageId,
+          view.text,
+          view.reply_markup
+        );
         return res.status(200).json({ ok: true });
       }
 
@@ -732,8 +791,15 @@ export default async function handler(req, res) {
 
       if (action === "qa:membership") {
         const profile = await getUserProfile(callback.from.id);
-        const membership = await getQualityMembership(callback.from.id);
-        const view = renderMembership(membership, profile?.locale || "pl");
+        const [membership, wallet] = await Promise.all([
+          getQualityMembership(callback.from.id),
+          getQualityWallet(callback.from.id)
+        ]);
+        const view = renderMembership(
+          membership,
+          profile?.locale || "pl",
+          wallet
+        );
         await editMessage(token, chatId, messageId, view.text, view.reply_markup);
         return res.status(200).json({ ok: true });
       }
@@ -1074,9 +1140,35 @@ export default async function handler(req, res) {
     await upsertTelegramUser(message.from);
 
     if (message.successful_payment) {
+      const payment = message.successful_payment;
+      const payload = String(payment.invoice_payload || "");
+      const tokenMatch = /^qa_tokens:([0-9a-f-]{36})$/i.exec(payload);
+
+      if (tokenMatch) {
+        const result = await creditQualityTokenPack(
+          message.from,
+          tokenMatch[1],
+          payment
+        );
+
+        await sendMessage(
+          token,
+          chatId,
+          `✅ Tokeny zostały dodane do konta.\n\nDodano: <b>${result?.credited_tokens || 0} 🪙</b>\nSaldo: <b>${result?.token_balance || 0} 🪙</b>`,
+          {
+            inline_keyboard: [
+              [{ text: "🪙 Tokeny", callback_data: "qa:tokens" }],
+              [{ text: "⬅️ Menu Quality", callback_data: "qa:home" }]
+            ]
+          }
+        );
+
+        return res.status(200).json({ ok: true });
+      }
+
       const result = await recordSuccessfulPayment(
         message.from,
-        message.successful_payment
+        payment
       );
 
       const accessButtons = await grantPlanAccess(
