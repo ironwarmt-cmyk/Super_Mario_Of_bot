@@ -1146,9 +1146,37 @@ export default async function handler(req, res) {
     await upsertTelegramUser(message.from);
 
     if (message.successful_payment) {
+      const payment = message.successful_payment;
+      const payload = String(payment.invoice_payload || "");
+
+      if (/^qa_token:\d+$/.test(payload)) {
+        const result = await recordQualityTokenPayment(
+          message.from,
+          payment
+        );
+
+        const profile = await getUserProfile(message.from.id);
+        const pl = (profile?.locale || "pl") !== "en";
+
+        await sendMessage(
+          token,
+          chatId,
+          pl
+            ? `✅ Tokeny zostały dodane.\n\nDodano: <b>${result.tokens_added}</b>\nTwoje saldo: <b>${result.token_balance} tokenów</b>\n\nMożesz je wykorzystać na dodatkowe generowanie dokumentów po wykorzystaniu limitu pakietu.`
+            : `✅ Tokens added.\n\nAdded: <b>${result.tokens_added}</b>\nYour balance: <b>${result.token_balance} tokens</b>\n\nYou can use them for extra document generation after your plan allowance is used.`,
+          {
+            inline_keyboard: [[
+              { text: pl ? "🪙 Portfel tokenów" : "🪙 Token wallet", callback_data: "qa:tokens" }
+            ]]
+          }
+        );
+
+        return res.status(200).json({ ok: true });
+      }
+
       const result = await recordSuccessfulPayment(
         message.from,
-        message.successful_payment
+        payment
       );
 
       const accessButtons = await grantPlanAccess(
