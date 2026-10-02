@@ -1,34 +1,13 @@
-# Pest, Waste, Storage and Transport Controls
+# PRO — Pest, Waste, Storage and Transport Controls
 
-> Editable implementation template. Complete site, product, process and applicable legal parameters.
+## Pest
+Device map, inspection frequency, activity trending, corrective actions and contractor control.
 
-## 1. Purpose
-Provide a controlled and documented method for this management-system area.
+## Waste
+Clearly identified containers, frequent removal, pest protection, segregation from product and controlled destruction of branded materials.
 
-## 2. Scope
-All products, processes, locations and people to which this area applies.
+## Storage
+FIFO/FEFO, status identification, allergen/chemical segregation, temperature/humidity control and held-product rules.
 
-## 3. Responsibilities
-- Quality Manager: system oversight, approval and effectiveness review.
-- Process owner: implementation of operational requirements.
-- Employees: follow approved controls and report deviations.
-
-## 4. Procedure
-1. Define pest-monitoring programme, device map, frequencies and responsibility.
-2. Trend activity and respond to evidence of infestation.
-3. Segregate waste and control containers and removal frequency.
-4. Apply FIFO/FEFO, status identification, temperature and material segregation.
-5. Check vehicle cleanliness, condition, temperature and load security.
-6. Maintain inspection, deviation and action records.
-
-## 5. Records
-- Relevant process register / form
-- Verification evidence
-- Nonconformities and actions
-- Trend / performance review
-
-## 6. Effectiveness verification
-Evaluate effectiveness through audits, deviations, complaints, testing, KPIs and relevant trend review.
-
-## 7. Review
-At least annually and after significant change or event.
+## Transport
+Vehicle condition and cleanliness, temperature, load protection, incompatible-load rules and pre-loading inspection records.
