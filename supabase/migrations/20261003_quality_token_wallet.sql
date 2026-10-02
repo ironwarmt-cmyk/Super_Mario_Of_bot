@@ -33,3 +33,32 @@ create policy deny_public_quality_wallets on quality_wallets
   for all to anon, authenticated using (false) with check (false);
 create policy deny_public_quality_token_purchases on quality_token_purchases
   for all to anon, authenticated using (false) with check (false);
+
+
+create or replace function credit_quality_tokens(p_user bigint, p_tokens integer)
+returns integer
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  new_balance integer;
+begin
+  if p_tokens <= 0 then
+    raise exception 'p_tokens must be positive';
+  end if;
+
+  insert into quality_wallets (telegram_user_id, token_balance, updated_at)
+  values (p_user, p_tokens, now())
+  on conflict (telegram_user_id)
+  do update set
+    token_balance = quality_wallets.token_balance + excluded.token_balance,
+    updated_at = now()
+  returning token_balance into new_balance;
+
+  return new_balance;
+end;
+$$;
+
+revoke all on function credit_quality_tokens(bigint, integer) from public, anon, authenticated;
+grant execute on function credit_quality_tokens(bigint, integer) to service_role;
