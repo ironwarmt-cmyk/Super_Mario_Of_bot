@@ -1206,6 +1206,27 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true });
     }
 
+    if (/^\/start\s+tokens$/i.test(text)) {
+      const [profile, packs, wallet] = await Promise.all([
+        getUserProfile(message.from.id),
+        listQualityTokenPacks(),
+        getQualityWallet(message.from.id)
+      ]);
+      const view = renderTokens(packs, profile?.locale || "pl", wallet);
+      await sendMessage(token, chatId, view.text, view.reply_markup);
+      return res.status(200).json({ ok: true });
+    }
+
+    if (/^\/start\s+physical$/i.test(text)) {
+      const profile = await getUserProfile(message.from.id);
+      const view = renderPhysicalProduct(
+        profile?.locale || "pl",
+        message.from.id
+      );
+      await sendMessage(token, chatId, view.text, view.reply_markup);
+      return res.status(200).json({ ok: true });
+    }
+
     const startMatch = /^\/start(?:\s+plan_([0-9a-f-]{36}))?$/i.exec(text);
 
     if (startMatch?.[1]) {
