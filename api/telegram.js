@@ -791,8 +791,15 @@ export default async function handler(req, res) {
 
       if (action === "qa:membership") {
         const profile = await getUserProfile(callback.from.id);
-        const membership = await getQualityMembership(callback.from.id);
-        const view = renderMembership(membership, profile?.locale || "pl");
+        const [membership, wallet] = await Promise.all([
+          getQualityMembership(callback.from.id),
+          getQualityWallet(callback.from.id)
+        ]);
+        const view = renderMembership(
+          membership,
+          profile?.locale || "pl",
+          wallet
+        );
         await editMessage(token, chatId, messageId, view.text, view.reply_markup);
         return res.status(200).json({ ok: true });
       }
