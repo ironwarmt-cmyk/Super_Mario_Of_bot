@@ -3,6 +3,8 @@ import {
   answerCallbackQuery,
   answerPreCheckoutQuery,
   editMessage,
+  getChatMember,
+  getMe,
   getMainMenu,
   getSectionMessage,
   sendMessage,
@@ -10,12 +12,14 @@ import {
 } from "../lib/telegram.js";
 import {
   clearSession,
+  createCommunity,
   createPlan,
   ensureCreator,
   getPlan,
   getSession,
   getUserSubscriptions,
   isDatabaseConfigured,
+  listCommunities,
   listPlans,
   recordSuccessfulPayment,
   setSession,
@@ -130,6 +134,42 @@ async function renderCreatorPlans(user) {
   const creator = await ensureCreator(user);
   const plans = await listPlans(creator.id);
   return renderPlans(plans);
+}
+
+function renderCommunities(items = []) {
+  const lines = items.length
+    ? items.map(
+        (item, index) =>
+          `${index + 1}. <b>${escapeHtml(item.title)}</b> — ${escapeHtml(item.chat_type)}`
+      )
+    : ["Nie masz jeszcze podpiętego kanału ani grupy."];
+
+  return {
+    text:
+      "<b>📣 Kanały i grupy</b>\n\n" +
+      lines.join("\n") +
+      "\n\nAby dodać miejsce sprzedażowe, bot musi być jego administratorem.",
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: "➕ Dodaj kanał / grupę", callback_data: "community_add" }],
+        [{ text: "⬅️ Menu", callback_data: "home" }]
+      ]
+    }
+  };
+}
+
+async function renderCreatorCommunities(user) {
+  const creator = await ensureCreator(user);
+  const items = await listCommunities(creator.id);
+  return renderCommunities(items);
+}
+
+function getForwardedChat(message) {
+  const origin = message?.forward_origin;
+  if (origin?.type === "channel" && origin.chat) return origin.chat;
+  if (origin?.type === "chat" && origin.sender_chat) return origin.sender_chat;
+  if (message?.forward_from_chat) return message.forward_from_chat;
+  return null;
 }
 
 async function handlePlanWizard(token, message, session) {
