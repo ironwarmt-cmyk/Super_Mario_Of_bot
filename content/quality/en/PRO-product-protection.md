@@ -1,34 +1,17 @@
-# Product Protection and Site Security
+# PRO — Product Protection and Site Security
 
-> Editable implementation template. Complete site, product, process and applicable legal parameters.
+## Purpose
+Reduce risk of intentional contamination, tampering or unauthorised access.
 
-## 1. Purpose
-Provide a controlled and documented method for this management-system area.
+## Procedure
+1. Identify vulnerable areas and steps.
+2. Assess potential attacker, accessibility, detectability and impact.
+3. Control entrances, identification, visitors and contractors.
+4. Restrict access to high-risk materials, chemicals, water systems, servers and key equipment.
+5. Control keys, badges and permissions.
+6. Provide a route for reporting suspicious behaviour.
+7. Test the plan at least annually.
+8. Review after changes, incidents and new threat information.
 
-## 2. Scope
-All products, processes, locations and people to which this area applies.
-
-## 3. Responsibilities
-- Quality Manager: system oversight, approval and effectiveness review.
-- Process owner: implementation of operational requirements.
-- Employees: follow approved controls and report deviations.
-
-## 4. Procedure
-1. Identify areas, materials and steps vulnerable to deliberate interference.
-2. Assess likelihood, accessibility and potential impact.
-3. Control entrances, badges, visitors, contractors, keys and restricted zones.
-4. Secure chemical stores, utilities and other critical points.
-5. Define reporting of suspicious behaviour and breaches.
-6. Review after site changes, incidents or new threat information.
-
-## 5. Records
-- Relevant process register / form
-- Verification evidence
-- Nonconformities and actions
-- Trend / performance review
-
-## 6. Effectiveness verification
-Evaluate effectiveness through audits, deviations, complaints, testing, KPIs and relevant trend review.
-
-## 7. Review
-At least annually and after significant change or event.
+## Records
+Threat assessment, vulnerable-area map, access list, visitor log, exercise records and incidents.
