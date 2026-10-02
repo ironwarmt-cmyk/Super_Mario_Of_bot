@@ -1,34 +1,23 @@
-# Food Fraud Vulnerability and Authenticity
+# PRO — Food Fraud Vulnerability and Authenticity
 
-> Editable implementation template. Complete site, product, process and applicable legal parameters.
+## Purpose
+Reduce the risk of purchasing adulterated, substituted or misrepresented materials.
 
-## 1. Purpose
-Provide a controlled and documented method for this management-system area.
+## Method
+Assess for each material/group:
+- fraud history,
+- economic pressure and price volatility,
+- supply-chain complexity,
+- ease of substitution,
+- detection capability,
+- geographic origin,
+- strength of supplier approval.
 
-## 2. Scope
-All products, processes, locations and people to which this area applies.
+## Outcome
+High risk requires mitigation such as additional testing, shorter supply chains, audit, source documentation or origin verification.
 
-## 3. Responsibilities
-- Quality Manager: system oversight, approval and effectiveness review.
-- Process owner: implementation of operational requirements.
-- Employees: follow approved controls and report deviations.
+## Review
+At least annually and after significant market, price, supplier or source changes, or any detected fraud.
 
-## 4. Procedure
-1. List materials requiring vulnerability assessment.
-2. Consider fraud history, economic pressure, supply-chain complexity, availability and detectability.
-3. Assign risk using an approved method.
-4. For significant risk implement supplier, testing, certification, provenance or audit controls.
-5. Monitor industry intelligence and market/price changes.
-6. Review at least annually and after significant intelligence.
-
-## 5. Records
-- Relevant process register / form
-- Verification evidence
-- Nonconformities and actions
-- Trend / performance review
-
-## 6. Effectiveness verification
-Evaluate effectiveness through audits, deviations, complaints, testing, KPIs and relevant trend review.
-
-## 7. Review
-At least annually and after significant change or event.
+## Records
+Vulnerability assessment, intelligence sources, mitigation plan, test results and annual review.
