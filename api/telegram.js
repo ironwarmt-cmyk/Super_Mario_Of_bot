@@ -568,6 +568,97 @@ export default async function handler(req, res) {
         return res.status(200).json({ ok: true, ignored: true });
       }
 
+      if (action.startsWith("lang:")) {
+        const locale = action.split(":")[1] === "en" ? "en" : "pl";
+        await upsertTelegramUser(callback.from);
+        await setUserLocale(callback.from.id, locale);
+        const profile = await getUserProfile(callback.from.id);
+        const view = qualityHome(locale, Boolean(profile?.is_admin));
+        await editMessage(token, chatId, messageId, view.text, view.reply_markup);
+        return res.status(200).json({ ok: true });
+      }
+
+      if (action === "qa:language") {
+        const view = languageMenu();
+        await editMessage(token, chatId, messageId, view.text, view.reply_markup);
+        return res.status(200).json({ ok: true });
+      }
+
+      if (action === "qa:home") {
+        const profile = await getUserProfile(callback.from.id);
+        const locale = profile?.locale || "pl";
+        const view = qualityHome(locale, Boolean(profile?.is_admin));
+        await editMessage(token, chatId, messageId, view.text, view.reply_markup);
+        return res.status(200).json({ ok: true });
+      }
+
+      if (action === "qa:plans") {
+        const profile = await getUserProfile(callback.from.id);
+        const plans = await listQualityPlans();
+        const view = renderQualityPlans(plans, profile?.locale || "pl");
+        await editMessage(token, chatId, messageId, view.text, view.reply_markup);
+        return res.status(200).json({ ok: true });
+      }
+
+      if (action.startsWith("qa:plan:")) {
+        const profile = await getUserProfile(callback.from.id);
+        const slug = action.split(":")[2];
+        const [plan, products] = await Promise.all([
+          getQualityPlan(slug),
+          listQualityProducts(3)
+        ]);
+        if (!plan) {
+          const view = qualityHome(profile?.locale || "pl", Boolean(profile?.is_admin));
+          await editMessage(token, chatId, messageId, profile?.locale === "en" ? "Plan not found." : "Nie znaleziono planu.", view.reply_markup);
+          return res.status(200).json({ ok: true });
+        }
+        const view = renderPlanDetails(plan, products, profile?.locale || "pl");
+        await editMessage(token, chatId, messageId, view.text, view.reply_markup);
+        return res.status(200).json({ ok: true });
+      }
+
+      if (action === "qa:products" || action.startsWith("qa:products:tier:")) {
+        const profile = await getUserProfile(callback.from.id);
+        const tier = action.startsWith("qa:products:tier:")
+          ? Number(action.split(":")[3])
+          : null;
+        const products = await listQualityProducts(tier || 3);
+        const view = renderProducts(products, profile?.locale || "pl", tier);
+        await editMessage(token, chatId, messageId, view.text, view.reply_markup);
+        return res.status(200).json({ ok: true });
+      }
+
+      if (action === "qa:training") {
+        const profile = await getUserProfile(callback.from.id);
+        const products = await listQualityProducts(3);
+        const view = renderTraining(products, profile?.locale || "pl");
+        await editMessage(token, chatId, messageId, view.text, view.reply_markup);
+        return res.status(200).json({ ok: true });
+      }
+
+      if (action === "qa:tokens") {
+        const profile = await getUserProfile(callback.from.id);
+        const packs = await listQualityTokenPacks();
+        const view = renderTokens(packs, profile?.locale || "pl");
+        await editMessage(token, chatId, messageId, view.text, view.reply_markup);
+        return res.status(200).json({ ok: true });
+      }
+
+      if (action === "qa:assistant") {
+        const profile = await getUserProfile(callback.from.id);
+        const view = renderAssistant(profile?.locale || "pl");
+        await editMessage(token, chatId, messageId, view.text, view.reply_markup);
+        return res.status(200).json({ ok: true });
+      }
+
+      if (action === "qa:membership") {
+        const profile = await getUserProfile(callback.from.id);
+        const membership = await getQualityMembership(callback.from.id);
+        const view = renderMembership(membership, profile?.locale || "pl");
+        await editMessage(token, chatId, messageId, view.text, view.reply_markup);
+        return res.status(200).json({ ok: true });
+      }
+
       if (action === "home") {
         if (isDatabaseConfigured()) {
           await clearSession(callback.from.id);
