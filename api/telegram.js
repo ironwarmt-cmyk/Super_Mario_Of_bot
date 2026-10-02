@@ -4,6 +4,7 @@ import {
   answerPreCheckoutQuery,
   createChatInviteLink,
   editMessage,
+  editUserStarSubscription,
   getChatMember,
   getMe,
   getMainMenu,
@@ -21,6 +22,7 @@ import {
   getPlan,
   getPlanCommunities,
   getSession,
+  getSubscription,
   getUserSubscriptions,
   isDatabaseConfigured,
   listCommunities,
@@ -29,6 +31,7 @@ import {
   setPlanCommunity,
   recordSuccessfulPayment,
   setSession,
+  setSubscriptionAutoRenew,
   upsertTelegramUser
 } from "../lib/db.js";
 
@@ -124,24 +127,61 @@ function renderPlanCheckout(plan) {
 
 function renderSubscriptions(items = []) {
   if (!items.length) {
-    return "Nie masz jeszcze aktywnych ani historycznych subskrypcji.";
+    return {
+      text: "Nie masz jeszcze aktywnych ani historycznych subskrypcji.",
+      reply_markup: {
+        inline_keyboard: [[{ text: "⬅️ Menu", callback_data: "home" }]]
+      }
+    };
   }
 
-  return items
+  const text = items
     .map((item, index) => {
       const plan = item.plans;
       const end = item.ends_at
         ? new Date(item.ends_at).toLocaleDateString("pl-PL")
         : "—";
 
+      const renewal = item.is_recurring
+        ? item.auto_renew
+          ? "włączone"
+          : "wyłączone"
+        : "nie dotyczy";
+
       return (
         `${index + 1}. <b>${escapeHtml(plan?.name || "Plan")}</b>\n` +
         `Status: ${escapeHtml(item.status)}\n` +
-        `Ważne do: ${end}` +
-        (item.is_recurring ? "\nOdnowienie: automatyczne" : "")
+        `Ważne do: ${end}\n` +
+        `Odnowienie: ${renewal}`
       );
     })
     .join("\n\n");
+
+  const buttons = items
+    .filter(
+      (item) =>
+        item.is_recurring &&
+        item.status === "active" &&
+        item.telegram_subscription_charge_id
+    )
+    .map((item) => [
+      {
+        text: item.auto_renew
+          ? `⏹ Wyłącz: ${item.plans?.name || "subskrypcję"}`
+          : `▶️ Włącz: ${item.plans?.name || "subskrypcję"}`,
+        callback_data: `${item.auto_renew ? "cancel_sub" : "resume_sub"}:${item.id}`
+      }
+    ]);
+
+  return {
+    text,
+    reply_markup: {
+      inline_keyboard: [
+        ...buttons,
+        [{ text: "⬅️ Menu", callback_data: "home" }]
+      ]
+    }
+  };
 }
 
 async function renderCreatorPlans(user) {
@@ -551,6 +591,72 @@ export default async function handler(req, res) {
         return res.status(200).json({ ok: true });
       }
 
+      if (action === "my_subscriptions") {
+        const items = await getUserSubscriptions(callback.from.id);
+        const view = renderSubscriptions(items);
+        await editMessage(
+          token,
+          chatId,
+          messageId,
+          "<b>🧾 Moje subskrypcje</b>\n\n" + view.text,
+          view.reply_markup
+        );
+        return res.status(200).json({ ok: true });
+      }
+
+      if (action.startsWith("cancel_sub:") || action.startsWith("resume_sub:")) {
+        const subscriptionId = action.split(":")[1];
+        const subscription = await getSubscription(
+          subscriptionId,
+          callback.from.id
+        );
+
+        if (
+          !subscription ||
+          !subscription.is_recurring ||
+          !subscription.telegram_subscription_charge_id
+        ) {
+          const items = await getUserSubscriptions(callback.from.id);
+          const view = renderSubscriptions(items);
+          await editMessage(
+            token,
+            chatId,
+            messageId,
+            "<b>🧾 Moje subskrypcje</b>\n\nNie znaleziono aktywnej subskrypcji.\n\n" + view.text,
+            view.reply_markup
+          );
+          return res.status(200).json({ ok: true });
+        }
+
+        const isCancel = action.startsWith("cancel_sub:");
+
+        await editUserStarSubscription(
+          token,
+          callback.from.id,
+          subscription.telegram_subscription_charge_id,
+          isCancel
+        );
+
+        await setSubscriptionAutoRenew(
+          subscription.id,
+          callback.from.id,
+          !isCancel
+        );
+
+        const items = await getUserSubscriptions(callback.from.id);
+        const view = renderSubscriptions(items);
+
+        await editMessage(
+          token,
+          chatId,
+          messageId,
+          `<b>🧾 Moje subskrypcje</b>\n\n${isCancel ? "✅ Automatyczne odnowienie zostało wyłączone. Dostęp pozostaje aktywny do końca opłaconego okresu." : "✅ Automatyczne odnowienie zostało ponownie włączone."}\n\n${view.text}`,
+          view.reply_markup
+        );
+
+        return res.status(200).json({ ok: true });
+      }
+
       if (action === "customers") {
         const view = await renderCreatorCustomers(callback.from);
         await editMessage(
@@ -904,10 +1010,12 @@ export default async function handler(req, res) {
 
     if (text === "/mysubscriptions") {
       const items = await getUserSubscriptions(message.from.id);
+      const view = renderSubscriptions(items);
       await sendMessage(
         token,
         chatId,
-        "<b>Moje subskrypcje</b>\n\n" + renderSubscriptions(items)
+        "<b>🧾 Moje subskrypcje</b>\n\n" + view.text,
+        view.reply_markup
       );
       return res.status(200).json({ ok: true });
     }
