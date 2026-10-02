@@ -707,10 +707,22 @@ export default async function handler(req, res) {
         message.successful_payment
       );
 
+      const accessButtons = await grantPlanAccess(
+        token,
+        message.from.id,
+        result.plan.id
+      );
+
       await sendMessage(
         token,
         chatId,
-        `✅ Płatność przyjęta.\n\nPlan: <b>${escapeHtml(result.plan.name)}</b>\nDostęp aktywny do: <b>${new Date(result.subscription.ends_at).toLocaleDateString("pl-PL")}</b>`
+        `✅ Płatność przyjęta.\n\nPlan: <b>${escapeHtml(result.plan.name)}</b>\nDostęp aktywny do: <b>${new Date(result.subscription.ends_at).toLocaleDateString("pl-PL")}</b>` +
+          (accessButtons.length
+            ? "\n\nPoniżej masz prywatne linki dostępu. Każdy link wygasa po godzinie i jest przeznaczony dla jednej osoby."
+            : "\n\nDo tego planu nie przypisano jeszcze kanału ani grupy."),
+        accessButtons.length
+          ? { inline_keyboard: accessButtons }
+          : undefined
       );
 
       return res.status(200).json({ ok: true });
