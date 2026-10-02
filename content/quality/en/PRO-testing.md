@@ -1,34 +1,21 @@
-# Testing and Laboratory Control Plan
+# PRO — Testing and Laboratory Control Plan
 
-> Editable implementation template. Complete site, product, process and applicable legal parameters.
+## Purpose
+Confirm safety, legality, authenticity and quality through planned testing.
 
-## 1. Purpose
-Provide a controlled and documented method for this management-system area.
+## Plan fields
+Parameter, method, sample and sampling method, frequency, laboratory, limit/specification, responsibility and failure action.
 
-## 2. Scope
-All products, processes, locations and people to which this area applies.
+## Areas
+Microbiological, chemical, physical, sensory, allergen, authenticity and environmental testing depending on risk.
 
-## 3. Responsibilities
-- Quality Manager: system oversight, approval and effectiveness review.
-- Process owner: implementation of operational requirements.
-- Employees: follow approved controls and report deviations.
+## Rules
+1. Set frequency from risk and trends.
+2. Use competent laboratories.
+3. Review results for trends.
+4. Escalate out-of-limit results immediately.
+5. Consider measurement uncertainty where relevant.
+6. Periodically verify shelf life.
 
-## 4. Procedure
-1. Build a risk-based plan considering product, process, law, customer and history.
-2. Define parameter, method, sampling point, frequency, sample number and acceptance criterion.
-3. Use laboratories and methods suitable for the intended purpose.
-4. Maintain sample and result traceability.
-5. Assess out-of-specification results, product impact and cause promptly.
-6. Trend data and periodically review plan adequacy.
-
-## 5. Records
-- Relevant process register / form
-- Verification evidence
-- Nonconformities and actions
-- Trend / performance review
-
-## 6. Effectiveness verification
-Evaluate effectiveness through audits, deviations, complaints, testing, KPIs and relevant trend review.
-
-## 7. Review
-At least annually and after significant change or event.
+## Records
+Test schedule, laboratory reports, trends, deviations, CAPA and shelf-life review.
