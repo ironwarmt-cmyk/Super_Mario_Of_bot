@@ -1,21 +1,28 @@
 import crypto from "node:crypto";
 import {
   answerCallbackQuery,
+  answerPreCheckoutQuery,
   editMessage,
   getMainMenu,
   getSectionMessage,
-  sendMessage
+  sendMessage,
+  sendStarsInvoice
 } from "../lib/telegram.js";
 import {
   clearSession,
   createPlan,
   ensureCreator,
+  getPlan,
   getSession,
+  getUserSubscriptions,
   isDatabaseConfigured,
   listPlans,
+  recordSuccessfulPayment,
   setSession,
   upsertTelegramUser
 } from "../lib/db.js";
+
+const BOT_USERNAME = "Super_Mario_Official_bot";
 
 function webhookSecret(token) {
   return crypto.createHash("sha256").update(token).digest("hex");
@@ -31,31 +38,92 @@ function escapeHtml(value = "") {
 function parsePositiveInt(value) {
   const normalized = String(value || "").trim();
   if (!/^\d+$/.test(normalized)) return null;
-
   const number = Number(normalized);
   return Number.isSafeInteger(number) && number > 0 ? number : null;
+}
+
+function planLabel(plan) {
+  return plan.billing_mode === "monthly"
+    ? `${plan.price_stars} ⭐ / 30 dni (subskrypcja)`
+    : `${plan.price_stars} ⭐ / ${plan.duration_days} dni`;
 }
 
 function renderPlans(plans = []) {
   const lines = plans.length
     ? plans.map(
         (plan, index) =>
-          `${index + 1}. <b>${escapeHtml(plan.name)}</b> — ${plan.price_stars} ⭐ / ${plan.duration_days} dni`
+          `${index + 1}. <b>${escapeHtml(plan.name)}</b> — ${planLabel(plan)}`
       )
     : ["Nie masz jeszcze żadnego planu."];
+
+  const planButtons = plans.map((plan) => [
+    {
+      text: `🧪 Kup: ${plan.name}`,
+      callback_data: `buy_plan:${plan.id}`
+    },
+    {
+      text: "🔗 Link",
+      url: `https://t.me/${BOT_USERNAME}?start=plan_${plan.id}`
+    }
+  ]);
 
   return {
     text:
       "<b>💳 Plany subskrypcji</b>\n\n" +
       lines.join("\n") +
-      "\n\nDodaj pierwszy plan lub kolejny wariant cenowy.",
+      "\n\nKażdy plan ma własny link sprzedażowy.",
     reply_markup: {
       inline_keyboard: [
         [{ text: "➕ Dodaj plan", callback_data: "plan_create" }],
+        ...planButtons,
         [{ text: "⬅️ Menu", callback_data: "home" }]
       ]
     }
   };
+}
+
+function renderPlanCheckout(plan) {
+  return {
+    text:
+      `<b>${escapeHtml(plan.name)}</b>\n\n` +
+      `Cena: <b>${plan.price_stars} ⭐</b>\n` +
+      (plan.billing_mode === "monthly"
+        ? "Okres: <b>30 dni, automatyczne odnowienie</b>"
+        : `Dostęp: <b>${plan.duration_days} dni</b>`),
+    reply_markup: {
+      inline_keyboard: [
+        [
+          {
+            text: `⭐ Kup za ${plan.price_stars} Stars`,
+            callback_data: `buy_plan:${plan.id}`
+          }
+        ],
+        [{ text: "⬅️ Menu", callback_data: "home" }]
+      ]
+    }
+  };
+}
+
+function renderSubscriptions(items = []) {
+  if (!items.length) {
+    return "Nie masz jeszcze aktywnych ani historycznych subskrypcji.";
+  }
+
+  return items
+    .map((item, index) => {
+      const plan = item.plans;
+      const end = item.ends_at
+        ? new Date(item.ends_at).toLocaleDateString("pl-PL")
+        : "—";
+
+      return (
+        `${index + 1}. <b>${escapeHtml(plan?.name || "Plan")}</b>\n` +
+        `Status: ${escapeHtml(item.status)}\n` +
+        `Ważne do: ${end}` +
+        (item.is_recurring ? "\nOdnowienie: automatyczne" : "")
+      );
+    })
+    .join("\n\n");
 }
 
 async function renderCreatorPlans(user) {
@@ -72,7 +140,12 @@ async function handlePlanWizard(token, message, session) {
   if (text === "/cancel") {
     await clearSession(userId);
     const menu = getMainMenu();
-    await sendMessage(token, chatId, "Anulowano tworzenie planu.", menu.reply_markup);
+    await sendMessage(
+      token,
+      chatId,
+      "Anulowano tworzenie planu.",
+      menu.reply_markup
+    );
     return true;
   }
 
@@ -111,7 +184,7 @@ async function handlePlanWizard(token, message, session) {
       return true;
     }
 
-    await setSession(userId, "plan_duration", {
+    await setSession(userId, "plan_billing", {
       ...session.data,
       priceStars
     });
@@ -119,7 +192,16 @@ async function handlePlanWizard(token, message, session) {
     await sendMessage(
       token,
       chatId,
-      `Cena: <b>${priceStars} ⭐</b>\n\nNa ile dni ma być przyznawany dostęp? Np. <b>30</b>.\nWpisz /cancel, aby przerwać.`
+      `Cena: <b>${priceStars} ⭐</b>\n\nWybierz sposób sprzedaży:`,
+      {
+        inline_keyboard: [
+          [
+            { text: "1️⃣ Jednorazowo", callback_data: "billing:one_time" },
+            { text: "🔁 Co 30 dni", callback_data: "billing:monthly" }
+          ],
+          [{ text: "✖️ Anuluj", callback_data: "home" }]
+        ]
+      }
     );
     return true;
   }
@@ -140,7 +222,8 @@ async function handlePlanWizard(token, message, session) {
     const plan = await createPlan(creator.id, {
       name: session.data.name,
       priceStars: session.data.priceStars,
-      durationDays
+      durationDays,
+      billingMode: "one_time"
     });
 
     await clearSession(userId);
@@ -151,7 +234,7 @@ async function handlePlanWizard(token, message, session) {
     await sendMessage(
       token,
       chatId,
-      `✅ Utworzono plan <b>${escapeHtml(plan.name)}</b>: ${plan.price_stars} ⭐ / ${plan.duration_days} dni.`
+      `✅ Utworzono plan <b>${escapeHtml(plan.name)}</b>: ${planLabel(plan)}.`
     );
     await sendMessage(token, chatId, view.text, view.reply_markup);
     return true;
@@ -169,7 +252,7 @@ export default async function handler(req, res) {
       service: "Super_Mario_Official_bot",
       tokenConfigured: Boolean(token),
       databaseConfigured: isDatabaseConfigured(),
-      mode: "creator-platform-mvp"
+      mode: "creator-platform-stars"
     });
   }
 
@@ -194,6 +277,38 @@ export default async function handler(req, res) {
   const update = req.body || {};
 
   try {
+    if (update.pre_checkout_query) {
+      const query = update.pre_checkout_query;
+      const payload = String(query.invoice_payload || "");
+      const match = /^plan:([0-9a-f-]{36})$/i.exec(payload);
+
+      if (!match) {
+        await answerPreCheckoutQuery(
+          token,
+          query.id,
+          false,
+          "Nieprawidłowy produkt."
+        );
+        return res.status(200).json({ ok: true });
+      }
+
+      const plan = await getPlan(match[1]);
+      const valid =
+        plan &&
+        plan.active &&
+        query.currency === "XTR" &&
+        Number(query.total_amount) === Number(plan.price_stars);
+
+      await answerPreCheckoutQuery(
+        token,
+        query.id,
+        Boolean(valid),
+        valid ? undefined : "Plan jest niedostępny albo cena się zmieniła."
+      );
+
+      return res.status(200).json({ ok: true });
+    }
+
     if (update.callback_query) {
       const callback = update.callback_query;
       const chatId = callback.message?.chat?.id;
@@ -213,39 +328,29 @@ export default async function handler(req, res) {
         }
 
         const menu = getMainMenu();
-        await editMessage(token, chatId, messageId, menu.text, menu.reply_markup);
+        await editMessage(
+          token,
+          chatId,
+          messageId,
+          menu.text,
+          menu.reply_markup
+        );
         return res.status(200).json({ ok: true });
       }
 
       if (action === "plans") {
-        if (!isDatabaseConfigured()) {
-          await editMessage(
-            token,
-            chatId,
-            messageId,
-            "<b>💳 Plany</b>\n\nBaza danych nie jest jeszcze podłączona. Kod modułu jest gotowy — trzeba dodać połączenie z bazą.",
-            { inline_keyboard: [[{ text: "⬅️ Menu", callback_data: "home" }]] }
-          );
-          return res.status(200).json({ ok: true });
-        }
-
         const view = await renderCreatorPlans(callback.from);
-        await editMessage(token, chatId, messageId, view.text, view.reply_markup);
+        await editMessage(
+          token,
+          chatId,
+          messageId,
+          view.text,
+          view.reply_markup
+        );
         return res.status(200).json({ ok: true });
       }
 
       if (action === "plan_create") {
-        if (!isDatabaseConfigured()) {
-          await editMessage(
-            token,
-            chatId,
-            messageId,
-            "<b>Nie można jeszcze tworzyć planów.</b>\n\nNajpierw trzeba podłączyć bazę danych.",
-            { inline_keyboard: [[{ text: "⬅️ Menu", callback_data: "home" }]] }
-          );
-          return res.status(200).json({ ok: true });
-        }
-
         const creator = await ensureCreator(callback.from);
         await setSession(callback.from.id, "plan_name", {
           creatorId: creator.id
@@ -266,8 +371,97 @@ export default async function handler(req, res) {
         return res.status(200).json({ ok: true });
       }
 
+      if (action.startsWith("billing:")) {
+        const session = await getSession(callback.from.id);
+
+        if (!session || session.state !== "plan_billing") {
+          const menu = getMainMenu();
+          await editMessage(
+            token,
+            chatId,
+            messageId,
+            "Sesja tworzenia planu wygasła. Zacznij ponownie.",
+            menu.reply_markup
+          );
+          return res.status(200).json({ ok: true });
+        }
+
+        const billingMode = action.split(":")[1];
+
+        if (billingMode === "monthly") {
+          const creator = await ensureCreator(callback.from);
+          const plan = await createPlan(creator.id, {
+            name: session.data.name,
+            priceStars: session.data.priceStars,
+            durationDays: 30,
+            billingMode: "monthly"
+          });
+
+          await clearSession(callback.from.id);
+          const plans = await listPlans(creator.id);
+          const view = renderPlans(plans);
+
+          await editMessage(
+            token,
+            chatId,
+            messageId,
+            `✅ Utworzono plan <b>${escapeHtml(plan.name)}</b>: ${planLabel(plan)}.\n\n${view.text}`,
+            view.reply_markup
+          );
+          return res.status(200).json({ ok: true });
+        }
+
+        await setSession(callback.from.id, "plan_duration", {
+          ...session.data,
+          billingMode: "one_time"
+        });
+
+        await editMessage(
+          token,
+          chatId,
+          messageId,
+          "<b>Dostęp jednorazowy</b>\n\nWyślij teraz liczbę dni dostępu, np. <b>30</b>.\n\nWpisz /cancel, aby anulować.",
+          {
+            inline_keyboard: [
+              [{ text: "✖️ Anuluj", callback_data: "home" }]
+            ]
+          }
+        );
+
+        return res.status(200).json({ ok: true });
+      }
+
+      if (action.startsWith("buy_plan:")) {
+        const planId = action.split(":")[1];
+        const plan = await getPlan(planId);
+
+        if (!plan || !plan.active) {
+          await editMessage(
+            token,
+            chatId,
+            messageId,
+            "Ten plan nie jest już dostępny.",
+            {
+              inline_keyboard: [
+                [{ text: "⬅️ Menu", callback_data: "home" }]
+              ]
+            }
+          );
+          return res.status(200).json({ ok: true });
+        }
+
+        await sendStarsInvoice(token, chatId, plan);
+        return res.status(200).json({ ok: true });
+      }
+
       const section = getSectionMessage(action);
-      await editMessage(token, chatId, messageId, section.text, section.reply_markup);
+      await editMessage(
+        token,
+        chatId,
+        messageId,
+        section.text,
+        section.reply_markup
+      );
       return res.status(200).json({ ok: true });
     }
 
@@ -279,23 +473,71 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true, ignored: true });
     }
 
-    if (isDatabaseConfigured()) {
-      await upsertTelegramUser(message.from);
+    await upsertTelegramUser(message.from);
 
-      const session = await getSession(message.from.id);
-      if (session) {
-        const handled = await handlePlanWizard(token, message, session);
-        if (handled) {
-          return res.status(200).json({ ok: true });
-        }
+    if (message.successful_payment) {
+      const result = await recordSuccessfulPayment(
+        message.from,
+        message.successful_payment
+      );
+
+      await sendMessage(
+        token,
+        chatId,
+        `✅ Płatność przyjęta.\n\nPlan: <b>${escapeHtml(result.plan.name)}</b>\nDostęp aktywny do: <b>${new Date(result.subscription.ends_at).toLocaleDateString("pl-PL")}</b>`
+      );
+
+      return res.status(200).json({ ok: true });
+    }
+
+    const startMatch = /^\/start(?:\s+plan_([0-9a-f-]{36}))?$/i.exec(text);
+
+    if (startMatch?.[1]) {
+      const plan = await getPlan(startMatch[1]);
+
+      if (!plan || !plan.active) {
+        await sendMessage(token, chatId, "Ten plan nie jest już dostępny.");
+        return res.status(200).json({ ok: true });
+      }
+
+      const checkout = renderPlanCheckout(plan);
+      await sendMessage(
+        token,
+        chatId,
+        checkout.text,
+        checkout.reply_markup
+      );
+      return res.status(200).json({ ok: true });
+    }
+
+    const session = await getSession(message.from.id);
+    if (session) {
+      const handled = await handlePlanWizard(token, message, session);
+      if (handled) {
+        return res.status(200).json({ ok: true });
       }
     }
 
-    if (text === "/start" || text === "/menu" || text === "") {
-      if (isDatabaseConfigured()) {
-        await ensureCreator(message.from);
-      }
+    if (text === "/mysubscriptions") {
+      const items = await getUserSubscriptions(message.from.id);
+      await sendMessage(
+        token,
+        chatId,
+        "<b>Moje subskrypcje</b>\n\n" + renderSubscriptions(items)
+      );
+      return res.status(200).json({ ok: true });
+    }
 
+    if (text === "/paysupport") {
+      await sendMessage(
+        token,
+        chatId,
+        "<b>Pomoc dotycząca płatności</b>\n\nOpisz problem z płatnością i zachowaj wiadomość potwierdzającą zakup z Telegrama. W kolejnej wersji dodamy automatyczne zgłoszenia i refundy."
+      );
+      return res.status(200).json({ ok: true });
+    }
+
+    if (text === "/start" || text === "/menu" || text === "") {
       const menu = getMainMenu();
       await sendMessage(token, chatId, menu.text, menu.reply_markup);
       return res.status(200).json({ ok: true });
