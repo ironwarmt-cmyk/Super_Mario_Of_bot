@@ -1,35 +1,34 @@
-# Reklamacje i analiza trendów
+# PRO — Reklamacje i analiza trendów
 
-> Edytowalny szablon wdrożeniowy. Uzupełnij parametry zakładu, produktu, procesu i wymagania prawne.
+## Cel
+Zapewnienie, że każda reklamacja dotycząca bezpieczeństwa, legalności, jakości lub autentyczności produktu jest rejestrowana, oceniana, analizowana i wykorzystywana do ograniczania ponownego wystąpienia problemu.
 
-## 1. Cel
-Zapewnienie kontrolowanego i udokumentowanego sposobu postępowania w tym obszarze.
+## Zakres
+Dotyczy reklamacji konsumenckich, klientów handlowych, zwrotów, zgłoszeń jakościowych, niezgodności dostaw oraz informacji z rynku.
 
-## 2. Zakres
-Wszystkie produkty, procesy, lokalizacje i osoby, dla których obszar ma zastosowanie.
+## Odpowiedzialności
+- Jakość: klasyfikacja, analiza przyczyny, trendowanie, CAPA.
+- Sprzedaż/Obsługa klienta: rejestracja i kompletność danych.
+- Produkcja/Magazyn/Technika: wsparcie dochodzenia i działania.
+- Kierownictwo: przegląd trendów i zasobów.
 
-## 3. Odpowiedzialności
-- Kierownik Jakości: nadzór systemowy, zatwierdzenie i analiza skuteczności.
-- Właściciel procesu: wdrożenie wymagań operacyjnych.
-- Pracownicy: wykonywanie zatwierdzonych działań i zgłaszanie odchyleń.
+## Postępowanie
+1. Nadaj numer reklamacji i zapisz datę, klienta, produkt, partię, opis, zdjęcia i dostępne dowody.
+2. Oceń pilność: bezpieczeństwo, legalność, alergen, ciało obce, jakość, opakowanie, ilość, inne.
+3. Zabezpiecz próbki, zapisy procesu i materiał porównawczy.
+4. Ustal partie potencjalnie objęte problemem.
+5. Przeprowadź analizę przyczyny źródłowej adekwatną do znaczenia problemu.
+6. Ustal działania natychmiastowe i trwałe.
+7. Zweryfikuj skuteczność.
+8. Co najmniej miesięcznie analizuj trendy: liczba, typ, produkt, linia, klient, przyczyna.
+9. Wzrost liczby lub ciężaru reklamacji eskaluj do przeglądu zarządzania.
 
-## 4. Sposób postępowania
-1. Rejestruj każdą reklamację z datą, klientem, produktem, partią i kategorią problemu.
-2. Oceń ryzyko dla bezpieczeństwa, legalności i jakości oraz ustal potrzebę natychmiastowej eskalacji.
-3. Zabezpiecz próbki, zapisy produkcyjne, wyniki badań i dane identyfikowalności.
-4. Przeprowadź analizę przyczyny źródłowej proporcjonalną do ryzyka.
-5. Ustal odpowiedź klientowi, działania korygujące i termin.
-6. Analizuj trendy według produktu, przyczyny, klienta i częstotliwości.
-7. Weryfikuj skuteczność działań i raportuj istotne trendy w przeglądzie zarządzania.
+## KPI
+- reklamacje / mln sztuk lub tonę,
+- % reklamacji zamkniętych w terminie,
+- % reklamacji powtarzalnych,
+- czas zamknięcia,
+- skuteczność CAPA.
 
-## 5. Zapisy
-- Rejestr / formularz właściwy dla procesu
-- Dowody weryfikacji
-- Niezgodności i działania
-- Przegląd trendów / wyników
-
-## 6. Weryfikacja skuteczności
-Skuteczność oceniaj przez wyniki audytów, odchylenia, reklamacje, badania, KPI i przegląd trendów odpowiednich do obszaru.
-
-## 7. Przegląd
-Co najmniej raz w roku oraz po istotnej zmianie lub zdarzeniu.
+## Zapisy
+Rejestr reklamacji, raport dochodzenia, analiza trendów, CAPA, odpowiedź do klienta, dowód skuteczności.
