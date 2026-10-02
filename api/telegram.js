@@ -554,9 +554,30 @@ export default async function handler(req, res) {
     if (update.pre_checkout_query) {
       const query = update.pre_checkout_query;
       const payload = String(query.invoice_payload || "");
-      const match = /^plan:([0-9a-f-]{36})$/i.exec(payload);
 
-      if (!match) {
+      const tokenMatch = /^qa_token:(\d+)$/.exec(payload);
+      if (tokenMatch) {
+        const pack = await getQualityTokenPack(Number(tokenMatch[1]));
+        const valid =
+          pack &&
+          query.currency === "XTR" &&
+          Number(query.total_amount) === Number(pack.price_stars);
+
+        await answerPreCheckoutQuery(
+          token,
+          query.id,
+          Boolean(valid),
+          valid
+            ? undefined
+            : "Pakiet tokenów jest niedostępny albo jego cena się zmieniła."
+        );
+
+        return res.status(200).json({ ok: true });
+      }
+
+      const planMatch = /^plan:([0-9a-f-]{36})$/i.exec(payload);
+
+      if (!planMatch) {
         await answerPreCheckoutQuery(
           token,
           query.id,
@@ -566,7 +587,7 @@ export default async function handler(req, res) {
         return res.status(200).json({ ok: true });
       }
 
-      const plan = await getPlan(match[1]);
+      const plan = await getPlan(planMatch[1]);
       const valid =
         plan &&
         plan.active &&
