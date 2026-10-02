@@ -19,6 +19,7 @@ import {
   renderQualityPlans,
   renderPlanDetails,
   renderProducts,
+  renderProductDetail,
   renderTraining,
   renderTokens,
   renderAssistant,
@@ -39,6 +40,7 @@ import {
   setUserLocale,
   listQualityPlans,
   getQualityPlan,
+  getQualityProduct,
   listQualityProducts,
   listQualityTokenPacks,
   getQualityMembership,
@@ -57,6 +59,26 @@ const BOT_USERNAME = "Super_Mario_Official_bot";
 
 function webhookSecret(token) {
   return crypto.createHash("sha256").update(token).digest("hex");
+}
+
+
+function qualityDownloadUrl(token, telegramUserId, slug, locale = "pl") {
+  const expires = Math.floor(Date.now() / 1000) + 900;
+  const payload = `${telegramUserId}:${slug}:${locale}:${expires}`;
+  const sig = crypto
+    .createHmac("sha256", webhookSecret(token))
+    .update(payload)
+    .digest("hex");
+
+  const params = new URLSearchParams({
+    u: String(telegramUserId),
+    slug,
+    lang: locale === "en" ? "en" : "pl",
+    exp: String(expires),
+    sig
+  });
+
+  return `https://supermarioofbot-iron-war.vercel.app/api/quality-download?${params.toString()}`;
 }
 
 function escapeHtml(value = "") {
@@ -625,6 +647,63 @@ export default async function handler(req, res) {
         const products = await listQualityProducts(tier || 3);
         const view = renderProducts(products, profile?.locale || "pl", tier);
         await editMessage(token, chatId, messageId, view.text, view.reply_markup);
+        return res.status(200).json({ ok: true });
+      }
+
+      if (action.startsWith("qa:product:")) {
+        const profile = await getUserProfile(callback.from.id);
+        const locale = profile?.locale || "pl";
+        const slug = action.slice("qa:product:".length);
+        const [product, membership] = await Promise.all([
+          getQualityProduct(slug),
+          getQualityMembership(callback.from.id)
+        ]);
+
+        if (!product) {
+          const view = qualityHome(locale, Boolean(profile?.is_admin));
+          await editMessage(
+            token,
+            chatId,
+            messageId,
+            locale === "en" ? "Product not found." : "Nie znaleziono produktu.",
+            view.reply_markup
+          );
+          return res.status(200).json({ ok: true });
+        }
+
+        const tierRank = Number(membership?.quality_plans?.tier_rank || 0);
+        const membershipActive =
+          membership?.status === "active" &&
+          (!membership?.period_end || new Date(membership.period_end) > new Date());
+
+        const unlocked =
+          membershipActive &&
+          tierRank >= Number(product.minimum_tier_rank || 1);
+
+        const downloadUrl =
+          (unlocked || profile?.is_admin) &&
+          (product.asset_path_pl || product.asset_path_en)
+            ? qualityDownloadUrl(
+                token,
+                callback.from.id,
+                product.slug,
+                locale
+              )
+            : null;
+
+        const view = renderProductDetail(product, locale, {
+          unlocked,
+          isAdmin: Boolean(profile?.is_admin),
+          downloadUrl
+        });
+
+        await editMessage(
+          token,
+          chatId,
+          messageId,
+          view.text,
+          view.reply_markup
+        );
         return res.status(200).json({ ok: true });
       }
 
