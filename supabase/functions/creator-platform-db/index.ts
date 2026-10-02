@@ -343,7 +343,8 @@ Deno.serve(async (req) => {
         is_recurring: Boolean(payment.is_recurring || plan.billing_mode === "monthly"),
         telegram_subscription_charge_id:
           existingSubscription?.telegram_subscription_charge_id ||
-          payment.telegram_payment_charge_id
+          payment.telegram_payment_charge_id,
+        auto_renew: Boolean(payment.is_recurring || plan.billing_mode === "monthly")
       };
 
       const { data: subscription, error: subscriptionError } = await supabase
@@ -369,12 +370,37 @@ Deno.serve(async (req) => {
     if (action === "get_user_subscriptions") {
       const { data, error } = await supabase
         .from("subscriptions")
-        .select("id,status,starts_at,ends_at,is_recurring,plans(id,name,price_stars,duration_days,billing_mode)")
+        .select("id,status,starts_at,ends_at,is_recurring,auto_renew,telegram_subscription_charge_id,plans(id,name,price_stars,duration_days,billing_mode)")
         .eq("telegram_user_id", body?.telegram_user_id)
         .order("ends_at", { ascending: false });
 
       if (error) throw error;
       return json({ ok: true, data: data || [] });
+    }
+
+    if (action === "get_subscription") {
+      const { data, error } = await supabase
+        .from("subscriptions")
+        .select("id,telegram_user_id,plan_id,status,starts_at,ends_at,is_recurring,auto_renew,telegram_subscription_charge_id,plans(id,name,price_stars,duration_days,billing_mode)")
+        .eq("id", body?.subscription_id)
+        .eq("telegram_user_id", body?.telegram_user_id)
+        .maybeSingle();
+
+      if (error) throw error;
+      return json({ ok: true, data: data || null });
+    }
+
+    if (action === "set_subscription_auto_renew") {
+      const { data, error } = await supabase
+        .from("subscriptions")
+        .update({ auto_renew: Boolean(body?.auto_renew) })
+        .eq("id", body?.subscription_id)
+        .eq("telegram_user_id", body?.telegram_user_id)
+        .select()
+        .maybeSingle();
+
+      if (error) throw error;
+      return json({ ok: true, data: data || null });
     }
 
     if (action === "get_session") {
