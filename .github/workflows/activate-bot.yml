@@ -1,0 +1,33 @@
+name: Activate Telegram bot
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  activate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for Vercel production deployment
+        run: sleep 35
+
+      - name: Initialize database bridge and Telegram webhook
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL="https://supermarioofbot-iron-war.vercel.app/api/setup"
+
+          for attempt in {1..12}; do
+            echo "Activation attempt $attempt..."
+            if curl --fail --silent --show-error "$URL"; then
+              echo
+              echo "Bot activation succeeded."
+              exit 0
+            fi
+            sleep 10
+          done
+
+          echo "Bot activation failed after retries."
+          exit 1
