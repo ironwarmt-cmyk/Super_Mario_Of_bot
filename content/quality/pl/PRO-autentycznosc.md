@@ -1,34 +1,23 @@
-# Ocena podatności na zafałszowanie i autentyczność
+# PRO — Ocena podatności na zafałszowanie i autentyczność
 
-> Edytowalny szablon wdrożeniowy. Uzupełnij parametry zakładu, produktu, procesu i wymagania prawne.
+## Cel
+Zmniejszenie ryzyka zakupu surowców zafałszowanych, zastąpionych lub niezgodnych z deklaracją.
 
-## 1. Cel
-Zapewnienie kontrolowanego i udokumentowanego sposobu postępowania w tym obszarze.
+## Metoda
+Dla surowca lub grupy surowców oceń:
+- historię oszustw,
+- presję ekonomiczną i zmienność cen,
+- złożoność łańcucha dostaw,
+- łatwość zastąpienia,
+- dostępność metod wykrywania,
+- pochodzenie geograficzne,
+- siłę programu zatwierdzania dostawcy.
 
-## 2. Zakres
-Wszystkie produkty, procesy, lokalizacje i osoby, dla których obszar ma zastosowanie.
+## Wynik
+Wysokie ryzyko wymaga planu ograniczenia, np. dodatkowych badań, krótszego łańcucha dostaw, audytu, dokumentów źródłowych lub weryfikacji pochodzenia.
 
-## 3. Odpowiedzialności
-- Kierownik Jakości: nadzór systemowy, zatwierdzenie i analiza skuteczności.
-- Właściciel procesu: wdrożenie wymagań operacyjnych.
-- Pracownicy: wykonywanie zatwierdzonych działań i zgłaszanie odchyleń.
+## Przegląd
+Co najmniej raz w roku i po istotnej zmianie rynku, ceny, dostawcy, źródła lub wykryciu oszustwa.
 
-## 4. Sposób postępowania
-1. Utwórz listę surowców i materiałów wymagających oceny podatności.
-2. Uwzględnij historię zafałszowań, presję ekonomiczną, złożoność łańcucha, dostępność i wykrywalność.
-3. Nadaj poziom ryzyka według zatwierdzonej metody.
-4. Dla ryzyka istotnego wdroż środki: zatwierdzeni dostawcy, badania, certyfikaty, kontrola pochodzenia lub audyty.
-5. Monitoruj informacje branżowe i zmiany cen/rynku.
-6. Przeglądaj ocenę co najmniej raz w roku i po istotnych sygnałach.
-
-## 5. Zapisy
-- Rejestr / formularz właściwy dla procesu
-- Dowody weryfikacji
-- Niezgodności i działania
-- Przegląd trendów / wyników
-
-## 6. Weryfikacja skuteczności
-Skuteczność oceniaj przez wyniki audytów, odchylenia, reklamacje, badania, KPI i przegląd trendów odpowiednich do obszaru.
-
-## 7. Przegląd
-Co najmniej raz w roku oraz po istotnej zmianie lub zdarzeniu.
+## Zapisy
+Ocena podatności, źródła informacji, plan kontroli, wyniki badań, przegląd roczny.
