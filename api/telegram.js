@@ -737,6 +737,74 @@ export default async function handler(req, res) {
     }
 
     const session = await getSession(message.from.id);
+
+    if (session?.state === "community_wait_forward") {
+      if (text === "/cancel") {
+        await clearSession(message.from.id);
+        const menu = getMainMenu();
+        await sendMessage(
+          token,
+          chatId,
+          "Anulowano dodawanie kanału lub grupy.",
+          menu.reply_markup
+        );
+        return res.status(200).json({ ok: true });
+      }
+
+      const forwardedChat = getForwardedChat(message);
+
+      if (!forwardedChat?.id || !["channel", "group", "supergroup"].includes(forwardedChat.type)) {
+        await sendMessage(
+          token,
+          chatId,
+          "Przekaż tutaj wiadomość bezpośrednio z kanału albo grupy, którą chcesz podpiąć. Wpisz /cancel, aby anulować."
+        );
+        return res.status(200).json({ ok: true });
+      }
+
+      const me = await getMe(token);
+      const botMembership = await getChatMember(
+        token,
+        forwardedChat.id,
+        me.id
+      );
+
+      const isCreator = botMembership?.status === "creator";
+      const isAdmin = botMembership?.status === "administrator";
+      const canInvite = isCreator || Boolean(botMembership?.can_invite_users);
+      const canRestrict =
+        isCreator || Boolean(botMembership?.can_restrict_members);
+
+      if (!(isCreator || isAdmin) || !canInvite || !canRestrict) {
+        await sendMessage(
+          token,
+          chatId,
+          "Bot jest w tym miejscu, ale nie ma wszystkich wymaganych uprawnień administratora. Włącz mu zapraszanie użytkowników oraz blokowanie/usuwanie członków i przekaż wiadomość ponownie."
+        );
+        return res.status(200).json({ ok: true });
+      }
+
+      const creator = await ensureCreator(message.from);
+
+      await createCommunity(creator.id, {
+        telegramChatId: forwardedChat.id,
+        title: forwardedChat.title || "Kanał / grupa",
+        chatType: forwardedChat.type
+      });
+
+      await clearSession(message.from.id);
+
+      const view = await renderCreatorCommunities(message.from);
+      await sendMessage(
+        token,
+        chatId,
+        "✅ Kanał/grupa została podpięta."
+      );
+      await sendMessage(token, chatId, view.text, view.reply_markup);
+
+      return res.status(200).json({ ok: true });
+    }
+
     if (session) {
       const handled = await handlePlanWizard(token, message, session);
       if (handled) {
