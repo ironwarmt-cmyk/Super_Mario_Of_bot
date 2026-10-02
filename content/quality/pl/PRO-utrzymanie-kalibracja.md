@@ -1,34 +1,18 @@
-# Utrzymanie ruchu i kalibracja
+# PRO — Utrzymanie ruchu i kalibracja
 
-> Edytowalny szablon wdrożeniowy. Uzupełnij parametry zakładu, produktu, procesu i wymagania prawne.
+## Utrzymanie ruchu
+1. Utrzymuj rejestr krytycznego wyposażenia.
+2. Ustal plan przeglądów prewencyjnych.
+3. Prace techniczne w obszarze produkcji wymagają zabezpieczenia produktu i kontroli narzędzi/części.
+4. Po pracy wykonaj kontrolę czystości, kompletności i gotowości.
+5. Tymczasowe naprawy muszą być bezpieczne i mieć termin usunięcia.
 
-## 1. Cel
-Zapewnienie kontrolowanego i udokumentowanego sposobu postępowania w tym obszarze.
+## Kalibracja
+1. Utrzymuj rejestr urządzeń pomiarowych.
+2. Określ zakres, tolerancję i częstotliwość.
+3. Stosuj wzorce o odpowiedniej identyfikowalności.
+4. Oznacz status kalibracji.
+5. Wynik poza tolerancją wymaga oceny wpływu na wcześniej zwolniony produkt.
 
-## 2. Zakres
-Wszystkie produkty, procesy, lokalizacje i osoby, dla których obszar ma zastosowanie.
-
-## 3. Odpowiedzialności
-- Kierownik Jakości: nadzór systemowy, zatwierdzenie i analiza skuteczności.
-- Właściciel procesu: wdrożenie wymagań operacyjnych.
-- Pracownicy: wykonywanie zatwierdzonych działań i zgłaszanie odchyleń.
-
-## 4. Sposób postępowania
-1. Utrzymuj rejestr krytycznego wyposażenia i urządzeń pomiarowych.
-2. Planuj przeglądy i kalibracje na podstawie ryzyka, zaleceń i historii.
-3. Kontroluj prace techniczne w obszarach produkcyjnych, narzędzia, części i smary.
-4. Po pracy wykonaj kontrolę czystości, kompletności i bezpieczeństwa przed zwolnieniem.
-5. Dla wyniku kalibracji poza tolerancją oceń wpływ na wcześniejsze pomiary i produkt.
-6. Dokumentuj awarie, naprawy, wzorcowania i działania po odchyleniu.
-
-## 5. Zapisy
-- Rejestr / formularz właściwy dla procesu
-- Dowody weryfikacji
-- Niezgodności i działania
-- Przegląd trendów / wyników
-
-## 6. Weryfikacja skuteczności
-Skuteczność oceniaj przez wyniki audytów, odchylenia, reklamacje, badania, KPI i przegląd trendów odpowiednich do obszaru.
-
-## 7. Przegląd
-Co najmniej raz w roku oraz po istotnej zmianie lub zdarzeniu.
+## Zapisy
+Plan UR, zlecenia, kontrola po serwisie, rejestr kalibracji, certyfikaty, ocena wpływu.
