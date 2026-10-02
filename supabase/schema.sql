@@ -25,6 +25,8 @@ create table if not exists plans (
   name text not null check (char_length(name) between 2 and 80),
   price_stars integer not null check (price_stars > 0),
   duration_days integer not null check (duration_days between 1 and 3650),
+  billing_mode text not null default 'one_time'
+    check (billing_mode in ('one_time','monthly')),
   active boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -64,6 +66,9 @@ create table if not exists subscriptions (
   status text not null default 'active' check (status in ('active','expired','cancelled','refunded')),
   starts_at timestamptz not null default now(),
   ends_at timestamptz not null,
+  is_recurring boolean not null default false,
+  telegram_subscription_charge_id text,
+  auto_renew boolean not null default true,
   created_at timestamptz not null default now()
 );
 
@@ -77,6 +82,9 @@ create table if not exists payments (
   currency text not null default 'XTR',
   telegram_payment_charge_id text unique,
   provider_payment_charge_id text,
+  is_recurring boolean not null default false,
+  is_first_recurring boolean not null default false,
+  subscription_expiration_date timestamptz,
   status text not null default 'paid' check (status in ('pending','paid','refunded','failed')),
   created_at timestamptz not null default now()
 );
@@ -106,6 +114,8 @@ create table if not exists platform_config (
 create index if not exists idx_plans_creator on plans(creator_id);
 create index if not exists idx_subscriptions_user on subscriptions(telegram_user_id);
 create index if not exists idx_subscriptions_plan on subscriptions(plan_id);
+create unique index if not exists uq_subscriptions_user_plan on subscriptions(telegram_user_id, plan_id);
+create index if not exists idx_subscriptions_status_ends on subscriptions(status, ends_at);
 create index if not exists idx_payments_creator on payments(creator_id);
 create index if not exists idx_payments_user on payments(telegram_user_id);
 create index if not exists idx_payments_plan on payments(plan_id);
