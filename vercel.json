@@ -6,6 +6,10 @@
     "api/quality-download.js": {
       "maxDuration": 10,
       "includeFiles": "content/quality/**"
+    },
+    "api/quality-assistant.js": {
+      "maxDuration": 30,
+      "includeFiles": "content/quality/**"
     }
   }
 }
