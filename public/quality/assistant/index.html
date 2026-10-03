@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Quality Specialist AI</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{
+  --bg:#07111c;--panel:#0d1b2a;--panel2:#10263a;--line:#203b54;
+  --text:#f5f7fa;--muted:#9eb0c1;--accent:#3bd6a2;--blue:#54a7ff;
+  --warn:#ffd166;--danger:#ff6b6b
+}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 15% 0,#123858 0,transparent 34%),radial-gradient(circle at 90% 10%,#124938 0,transparent 30%),var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+.app{max-width:980px;margin:auto;padding:18px 16px 120px}.top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}.brand{font-weight:900;letter-spacing:.06em;font-size:13px;color:var(--accent)}h1{margin:7px 0 5px;font-size:30px}.sub{color:var(--muted);line-height:1.45}.badge{border:1px solid var(--line);border-radius:999px;padding:8px 11px;font-size:12px;color:var(--muted);white-space:nowrap}
+.specialists{display:flex;gap:8px;overflow:auto;padding:18px 0 10px}.specialist{border:1px solid var(--line);background:var(--panel);color:var(--text);padding:10px 13px;border-radius:999px;white-space:nowrap;font-weight:700}.specialist.active{border-color:var(--accent);background:#12352e;color:#dffff4}
+.timer{position:sticky;top:0;z-index:10;margin:12px 0 16px;padding:16px;border:1px solid var(--line);border-radius:20px;background:#08131df2;backdrop-filter:blur(12px);box-shadow:0 14px 50px #0007}.timer-grid{display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:center}.metric small{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em}.metric b{font-size:22px}.controls{display:flex;gap:8px}.btn{border:0;border-radius:13px;padding:12px 16px;font-weight:900}.btn.start{background:var(--accent);color:#04110c}.btn.stop{background:#442329;color:#ffd9df}.btn:disabled{opacity:.4}.status{margin-top:10px;font-size:13px;color:var(--muted)}.status strong.on{color:var(--accent)}.status strong.off{color:var(--warn)}
+.notice{margin:14px 0;padding:13px 14px;border:1px solid #54a7ff33;border-left:3px solid var(--blue);border-radius:12px;background:#54a7ff0c;color:#cbd9e6;font-size:13px;line-height:1.45}
+.chat{display:flex;flex-direction:column;gap:11px;min-height:260px}.msg{max-width:88%;padding:13px 14px;border-radius:17px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}.msg.user{align-self:flex-end;background:#1c4f78}.msg.ai{align-self:flex-start;background:var(--panel);border:1px solid var(--line)}.msg .who{font-size:11px;color:var(--muted);font-weight:800;margin-bottom:6px}.sources{margin-top:9px;padding-top:8px;border-top:1px solid #ffffff16;font-size:12px}.sources a{color:#8bc7ff;text-decoration:none;display:block;margin-top:5px}
+.composer{position:fixed;left:0;right:0;bottom:0;background:#07111cf2;backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:10px max(14px,env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left))}.composer-inner{max-width:980px;margin:auto;display:flex;gap:8px}.composer textarea{flex:1;min-height:48px;max-height:130px;resize:none;border:1px solid var(--line);border-radius:15px;background:var(--panel);color:var(--text);padding:13px;font:inherit}.send{width:58px;border:0;border-radius:15px;background:var(--blue);font-weight:900;color:#07111c}.locked{padding:24px;border:1px solid var(--line);border-radius:18px;background:var(--panel);text-align:center}.upgrade{display:inline-block;margin-top:12px;padding:12px 15px;border-radius:13px;background:var(--accent);color:#04110c;font-weight:900;text-decoration:none}
+@media(max-width:650px){.timer-grid{grid-template-columns:1fr 1fr}.controls{grid-column:1/-1}.controls .btn{flex:1}.msg{max-width:94%}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div>
+      <div class="brand">QUALITY ASSURANCE SUPPORT</div>
+      <h1 id="title">Quality Specialist AI</h1>
+      <div class="sub" id="subtitle">Wybierz specjalistę i uruchom sesję.</div>
+    </div>
+    <div class="badge" id="planBadge">Ładowanie…</div>
+  </div>
+
+  <div class="specialists" id="specialists"></div>
+
+  <div class="timer">
+    <div class="timer-grid">
+      <div class="metric"><small id="usedLabel">Wykorzystano</small><b id="used">00:00:00</b></div>
+      <div class="metric"><small id="leftLabel">Pozostało</small><b id="remaining">00:00:00</b></div>
+      <div class="controls">
+        <button class="btn start" id="startBtn">START</button>
+        <button class="btn stop" id="stopBtn">STOP</button>
+      </div>
+    </div>
+    <div class="status" id="statusText">Status: —</div>
+  </div>
+
+  <div class="notice" id="notice">
+    Agent pamięta historię rozmowy w wybranej specjalizacji. Przy aktualnych wymaganiach korzysta z bieżącego wyszukiwania i preferuje źródła oficjalne.
+  </div>
+
+  <div id="gate"></div>
+  <div class="chat" id="chat"></div>
+</div>
+
+<div class="composer">
+  <div class="composer-inner">
+    <textarea id="input" placeholder="Opisz problem, niezgodność, proces albo pytanie…" disabled></textarea>
+    <button class="send" id="sendBtn" disabled>➤</button>
+  </div>
+</div>
+
+<script>
+const tg = window.Telegram?.WebApp;
+tg?.ready();
+tg?.expand();
+
+const initData = tg?.initData || "";
+const params = new URLSearchParams(location.search);
+let specialist = params.get("specialist") || "brc";
+let locale = "pl";
+let serverState = null;
+let syncAt = Date.now();
+let heartbeatTimer = null;
+let ticker = null;
+
+const names = {
+  brc:{pl:"BRC",en:"BRC"},
+  ifs:{pl:"IFS",en:"IFS"},
+  haccp:{pl:"HACCP",en:"HACCP"},
+  complaints:{pl:"Analiza reklamacji",en:"Complaint analysis"},
+  capa:{pl:"CAPA",en:"CAPA"},
+  other:{pl:"Inne",en:"Other"}
+};
+
+function t(pl,en){ return locale==="en"?en:pl; }
+function fmt(sec){
+  sec=Math.max(0,Math.floor(Number(sec)||0));
+  const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;
+  return [h,m,s].map(v=>String(v).padStart(2,"0")).join(":");
+}
+function escapeHtml(v=""){
+  const d=document.createElement("div"); d.textContent=String(v); return d.innerHTML;
+}
+async function api(action, extra={}){
+  const r=await fetch("/api/quality-assistant",{
+    method:"POST",
+    headers:{"content-type":"application/json","x-telegram-init-data":initData},
+    body:JSON.stringify({action,specialist,...extra})
+  });
+  const data=await r.json().catch(()=>({ok:false,error:"Invalid server response"}));
+  if(!r.ok||!data.ok) throw new Error(data.error||("HTTP "+r.status));
+  return data;
+}
+function currentClock(){
+  if(!serverState) return {used:0,left:0};
+  let used=Number(serverState.used_seconds||0);
+  let left=Number(serverState.remaining_seconds||0);
+  if(serverState.session?.status==="active"){
+    const delta=Math.max(0,Math.floor((Date.now()-syncAt)/1000));
+    used+=delta; left=Math.max(0,left-delta);
+  }
+  return {used,left};
+}
+function paintTimer(){
+  const c=currentClock();
+  document.getElementById("used").textContent=fmt(c.used);
+  document.getElementById("remaining").textContent=fmt(c.left);
+  const active=serverState?.session?.status==="active";
+  document.getElementById("statusText").innerHTML=
+    t("Status: ","Status: ")+
+    (active?'<strong class="on">'+t("AKTYWNA — czas jest naliczany","ACTIVE — time is running")+'</strong>':'<strong class="off">'+t("ZATRZYMANA","STOPPED")+'</strong>');
+  document.getElementById("startBtn").disabled=active||c.left<=0;
+  document.getElementById("stopBtn").disabled=!active;
+  document.getElementById("input").disabled=!active;
+  document.getElementById("sendBtn").disabled=!active;
+}
+function renderSpecialists(){
+  const box=document.getElementById("specialists"); box.innerHTML="";
+  Object.keys(names).forEach(key=>{
+    const b=document.createElement("button");
+    b.className="specialist"+(key===specialist?" active":"");
+    b.textContent=names[key][locale];
+    b.onclick=async()=>{
+      specialist=key;
+      history.replaceState(null,"","?specialist="+encodeURIComponent(key));
+      renderSpecialists();
+      await load();
+    };
+    box.appendChild(b);
+  });
+}
+function renderHistory(history=[]){
+  const chat=document.getElementById("chat"); chat.innerHTML="";
+  history.forEach(m=>addMessage(m.role,m.content,m.source_meta?.sources||[]));
+}
+function addMessage(role,text,sources=[]){
+  const chat=document.getElementById("chat");
+  const div=document.createElement("div");
+  div.className="msg "+(role==="assistant"?"ai":"user");
+  div.innerHTML='<div class="who">'+(role==="assistant"?escapeHtml(names[specialist][locale]):t("TY","YOU"))+'</div><div>'+escapeHtml(text)+'</div>';
+  if(Array.isArray(sources)&&sources.length){
+    const s=document.createElement("div"); s.className="sources";
+    s.innerHTML="<b>"+t("Źródła","Sources")+"</b>";
+    sources.slice(0,6).forEach(src=>{
+      const a=document.createElement("a"); a.href=src.url; a.target="_blank"; a.rel="noopener";
+      a.textContent=src.title||src.url; s.appendChild(a);
+    });
+    div.appendChild(s);
+  }
+  chat.appendChild(div); div.scrollIntoView({behavior:"smooth",block:"end"});
+}
+function showGate(message){
+  document.getElementById("gate").innerHTML='<div class="locked"><b>'+t("Asystent jest dostępny w pakiecie VIP.","The assistant is available with VIP.")+'</b><br><span class="sub">'+escapeHtml(message||"")+'</span><br><a class="upgrade" href="https://t.me/Super_Mario_Official_bot?start=qa_plan_vip">'+t("Aktywuj VIP","Activate VIP")+'</a></div>';
+}
+async function load(){
+  clearInterval(heartbeatTimer);
+  try{
+    const data=await api("status");
+    locale=data.profile?.locale||"pl";
+    serverState=data.status; syncAt=Date.now();
+    document.documentElement.lang=locale;
+    document.getElementById("title").textContent=names[specialist][locale]+" — Quality AI";
+    document.getElementById("subtitle").textContent=t("Specjalista jakości z pamięcią kontekstu i bieżącą weryfikacją źródeł.","Quality specialist with context memory and live source verification.");
+    document.getElementById("usedLabel").textContent=t("Wykorzystano","Used");
+    document.getElementById("leftLabel").textContent=t("Pozostało","Remaining");
+    document.getElementById("notice").textContent=t(
+      "Agent pamięta historię rozmowy w wybranej specjalizacji. Przy aktualnych wymaganiach korzysta z bieżącego wyszukiwania i preferuje źródła oficjalne. Wiedza branżowa nie jest aktualizowana na podstawie niezweryfikowanych twierdzeń użytkownika.",
+      "The agent remembers conversation history for the selected speciality. For current requirements it uses live search and prioritises official sources. Domain knowledge is not updated from unverified user claims."
+    );
+    const plan=data.status?.membership?.quality_plans;
+    document.getElementById("planBadge").textContent=plan?.name_pl||t("Brak aktywnego VIP","No active VIP");
+    renderSpecialists(); renderHistory(data.history||[]); paintTimer();
+    if(Number(data.status?.included_seconds||0)<=0) showGate(t("Twój aktualny pakiet nie zawiera czasu asystenta.","Your current plan does not include assistant time."));
+    else document.getElementById("gate").innerHTML="";
+    if(serverState?.session?.status==="active") startHeartbeat();
+  }catch(e){
+    showGate(e.message);
+    document.getElementById("planBadge").textContent=t("Brak dostępu","No access");
+  }
+}
+function startHeartbeat(){
+  clearInterval(heartbeatTimer);
+  heartbeatTimer=setInterval(async()=>{
+    if(serverState?.session?.status!=="active")return;
+    try{
+      const data=await api("heartbeat");
+      serverState=data.status; syncAt=Date.now(); paintTimer();
+      if(serverState.remaining_seconds<=0) clearInterval(heartbeatTimer);
+    }catch(_){}
+  },10000);
+}
+document.getElementById("startBtn").onclick=async()=>{
+  try{
+    const data=await api("start");
+    serverState=data.status; syncAt=Date.now(); paintTimer(); startHeartbeat();
+  }catch(e){alert(e.message);}
+};
+document.getElementById("stopBtn").onclick=async()=>{
+  try{
+    const data=await api("stop");
+    serverState=data.status; syncAt=Date.now(); paintTimer(); clearInterval(heartbeatTimer);
+  }catch(e){alert(e.message);}
+};
+async function send(){
+  const input=document.getElementById("input");
+  const message=input.value.trim(); if(!message)return;
+  input.value=""; addMessage("user",message,[]);
+  document.getElementById("sendBtn").disabled=true;
+  try{
+    const data=await api("message",{message});
+    addMessage("assistant",data.answer,data.sources||[]);
+    serverState=data.status; syncAt=Date.now(); paintTimer();
+  }catch(e){ addMessage("assistant",t("Błąd: ","Error: ")+e.message,[]); }
+  finally{ document.getElementById("sendBtn").disabled=serverState?.session?.status!=="active"; }
+}
+document.getElementById("sendBtn").onclick=send;
+document.getElementById("input").addEventListener("keydown",e=>{
+  if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();}
+});
+ticker=setInterval(paintTimer,1000);
+document.addEventListener("visibilitychange",()=>{
+  if(document.hidden&&serverState?.session?.status==="active"){
+    fetch("/api/quality-assistant",{
+      method:"POST",keepalive:true,
+      headers:{"content-type":"application/json","x-telegram-init-data":initData},
+      body:JSON.stringify({action:"heartbeat",specialist})
+    }).catch(()=>{});
+  }
+});
+load();
+</script>
+</body>
+</html>
