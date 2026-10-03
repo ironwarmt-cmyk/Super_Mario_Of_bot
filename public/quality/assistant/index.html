@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Quality Specialist AI</title>
+<title>Quality Copilot</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 :root{
@@ -26,8 +26,8 @@
   <div class="top">
     <div>
       <div class="brand">QUALITY ASSURANCE SUPPORT</div>
-      <h1 id="title">Quality Specialist AI</h1>
-      <div class="sub" id="subtitle">Wybierz specjalistę i uruchom sesję.</div>
+      <h1 id="title">Quality Copilot</h1>
+      <div class="sub" id="subtitle">Wybierz specjalistę, uruchom START i pracuj na bieżących źródłach oraz wiedzy projektowej.</div>
     </div>
     <div class="badge" id="planBadge">Ładowanie…</div>
   </div>
@@ -76,12 +76,20 @@ let heartbeatTimer = null;
 let ticker = null;
 
 const names = {
-  brc:{pl:"BRC",en:"BRC"},
-  ifs:{pl:"IFS",en:"IFS"},
-  haccp:{pl:"HACCP",en:"HACCP"},
-  complaints:{pl:"Analiza reklamacji",en:"Complaint analysis"},
-  capa:{pl:"CAPA",en:"CAPA"},
-  other:{pl:"Inne",en:"Other"}
+  brc:{pl:"BRCGS Food Safety",en:"BRCGS Food Safety"},
+  ifs:{pl:"IFS Food",en:"IFS Food"},
+  haccp:{pl:"HACCP / Codex",en:"HACCP / Codex"},
+  audit:{pl:"Audyt i Gap Analysis",en:"Audit & Gap Analysis"},
+  documents:{pl:"Dokumentacja i procedury",en:"Documents & procedures"},
+  complaints:{pl:"Reklamacje i trendy",en:"Complaints & trends"},
+  capa:{pl:"CAPA / RCA",en:"CAPA / RCA"},
+  suppliers:{pl:"Dostawcy i surowce",en:"Suppliers & raw materials"},
+  traceability:{pl:"Identyfikowalność i wycofanie",en:"Traceability & recall"},
+  labelling:{pl:"Etykiety i alergeny",en:"Labelling & allergens"},
+  change:{pl:"Zmiana / nowa technologia",en:"Change / new technology"},
+  management:{pl:"KPI i przegląd zarządzania",en:"KPI & management review"},
+  legal:{pl:"Prawo i wymagania — Live",en:"Law & requirements — Live"},
+  other:{pl:"Quality Manager 360°",en:"Quality Manager 360°"}
 };
 
 function t(pl,en){ return locale==="en"?en:pl; }
