@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Quality Account</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{--bg:#07111c;--panel:#0d1b2a;--line:#203b54;--text:#f5f7fa;--muted:#9eb0c1;--accent:#3bd6a2;--blue:#54a7ff;--danger:#ff6b6b}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 10% 0,#133d5c 0,transparent 34%),radial-gradient(circle at 90% 5%,#134a39 0,transparent 28%),var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+.wrap{max-width:860px;margin:auto;padding:22px 16px 70px}.brand{font-size:12px;font-weight:900;letter-spacing:.08em;color:var(--accent)}h1{font-size:34px;margin:8px 0 6px}.lead{color:var(--muted);line-height:1.55}.panel{margin-top:18px;padding:18px;border:1px solid var(--line);border-radius:20px;background:#0b1723dd;backdrop-filter:blur(10px)}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}label{display:block;margin:14px 0 7px;font-size:13px;font-weight:800}input,select{width:100%;border:1px solid var(--line);border-radius:13px;background:var(--panel);color:var(--text);padding:13px;font:inherit}.company{display:none}.btn{display:inline-flex;align-items:center;justify-content:center;width:100%;border:0;border-radius:14px;padding:14px 16px;font-weight:900;background:var(--accent);color:#04110c}.status{margin-top:12px;font-size:13px;color:var(--muted)}.ok{color:var(--accent)}.err{color:var(--danger)}.note{padding:13px;border-left:3px solid var(--blue);background:#54a7ff0c;border-radius:12px;color:#cbd9e6;line-height:1.5}.check{display:flex;gap:10px;align-items:flex-start;margin-top:12px}.check input{width:auto;margin-top:4px}.pill{display:inline-block;padding:5px 9px;border-radius:999px;border:1px solid var(--line);font-size:12px;color:var(--muted)}
+@media(max-width:650px){.grid{grid-template-columns:1fr}h1{font-size:29px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">QUALITY ASSURANCE SUPPORT</div>
+  <h1 id="title">Moje konto</h1>
+  <div class="lead" id="lead">Nie tworzysz osobnego hasła. Twoim loginem jest konto Telegram, a dane kontaktowe i firmowe uzupełniasz tylko raz.</div>
+
+  <div class="panel">
+    <div class="note" id="identity">Identyfikacja: Telegram</div>
+  </div>
+
+  <div class="panel">
+    <form id="form">
+      <label id="accountTypeLabel" for="accountType">Typ konta</label>
+      <select id="accountType">
+        <option value="individual">Osoba indywidualna</option>
+        <option value="company">Firma</option>
+      </select>
+
+      <div class="grid">
+        <div><label id="firstNameLabel" for="firstName">Imię</label><input id="firstName" maxlength="100"></div>
+        <div><label id="lastNameLabel" for="lastName">Nazwisko</label><input id="lastName" maxlength="100"></div>
+      </div>
+
+      <div class="grid">
+        <div><label id="emailLabel" for="email">E-mail kontaktowy</label><input id="email" type="email" maxlength="254"></div>
+        <div><label id="phoneLabel" for="phone">Telefon</label><input id="phone" maxlength="40"></div>
+      </div>
+
+      <label id="jobLabel" for="job">Stanowisko / rola</label>
+      <input id="job" maxlength="140" placeholder="np. Quality Manager">
+
+      <div class="company" id="companyFields">
+        <div class="grid">
+          <div><label id="companyLabel" for="companyName">Nazwa firmy</label><input id="companyName" maxlength="180"></div>
+          <div><label id="taxLabel" for="taxId">NIP / VAT ID</label><input id="taxId" maxlength="40"></div>
+        </div>
+        <div class="grid">
+          <div><label id="companyCityLabel" for="companyCity">Miasto firmy</label><input id="companyCity" maxlength="120"></div>
+          <div><label id="countryLabel" for="country">Kod kraju</label><input id="country" maxlength="2" value="PL"></div>
+        </div>
+      </div>
+
+      <label class="check"><input id="privacy" type="checkbox"><span id="privacyText">Potwierdzam zapoznanie się z polityką prywatności.</span></label>
+      <label class="check"><input id="terms" type="checkbox"><span id="termsText">Akceptuję warunki korzystania z usługi.</span></label>
+
+      <button class="btn" id="saveBtn" type="submit">Zapisz konto</button>
+      <div class="status" id="status"></div>
+    </form>
+  </div>
+</div>
+
+<script>
+const tg=window.Telegram?.WebApp; tg?.ready(); tg?.expand();
+const initData=tg?.initData||"";
+let locale="pl";
+const copy={
+ pl:{title:"Moje konto",lead:"Nie tworzysz osobnego hasła. Twoim loginem jest konto Telegram, a dane kontaktowe i firmowe uzupełniasz tylko raz.",type:"Typ konta",individual:"Osoba indywidualna",company:"Firma",first:"Imię",last:"Nazwisko",email:"E-mail kontaktowy",phone:"Telefon",job:"Stanowisko / rola",companyName:"Nazwa firmy",tax:"NIP / VAT ID",city:"Miasto firmy",country:"Kod kraju",privacy:"Potwierdzam zapoznanie się z polityką prywatności.",terms:"Akceptuję warunki korzystania z usługi.",save:"Zapisz konto",saved:"Dane konta zostały zapisane.",identity:"Identyfikacja konta: Telegram"},
+ en:{title:"My account",lead:"You do not create a separate password. Your Telegram account is your login; contact and company details are completed once.",type:"Account type",individual:"Individual",company:"Company",first:"First name",last:"Last name",email:"Contact email",phone:"Phone",job:"Job title / role",companyName:"Company name",tax:"Tax / VAT ID",city:"Company city",country:"Country code",privacy:"I confirm I have read the privacy policy.",terms:"I accept the service terms.",save:"Save account",saved:"Account details saved.",identity:"Account identity: Telegram"}
+};
+function esc(s=""){const d=document.createElement("div");d.textContent=String(s);return d.innerHTML;}
+function apply(){
+ const t=copy[locale]; document.documentElement.lang=locale;
+ title.textContent=t.title; lead.textContent=t.lead; accountTypeLabel.textContent=t.type;
+ accountType.options[0].textContent=t.individual; accountType.options[1].textContent=t.company;
+ firstNameLabel.textContent=t.first; lastNameLabel.textContent=t.last; emailLabel.textContent=t.email; phoneLabel.textContent=t.phone; jobLabel.textContent=t.job;
+ companyLabel.textContent=t.companyName; taxLabel.textContent=t.tax; companyCityLabel.textContent=t.city; countryLabel.textContent=t.country;
+ privacyText.textContent=t.privacy; termsText.textContent=t.terms; saveBtn.textContent=t.save;
+}
+function toggleCompany(){companyFields.style.display=accountType.value==="company"?"block":"none";}
+accountType.addEventListener("change",toggleCompany);
+
+async function api(method,body){
+ const r=await fetch("/api/quality-account",{
+  method,headers:{"content-type":"application/json","x-telegram-init-data":initData},
+  ...(body?{body:JSON.stringify(body)}:{})
+ });
+ const data=await r.json().catch(()=>({ok:false,error:"Invalid response"}));
+ if(!r.ok||!data.ok) throw new Error(data.error||("HTTP "+r.status));
+ return data;
+}
+function fill(p={},tgUser={}){
+ accountType.value=p.account_type||"individual"; firstName.value=p.first_name||tgUser.first_name||""; lastName.value=p.last_name||tgUser.last_name||"";
+ email.value=p.email||""; phone.value=p.phone||""; job.value=p.job_title||""; companyName.value=p.company_name||""; taxId.value=p.tax_id||"";
+ companyCity.value=p.company_city||""; country.value=p.company_country_code||"PL";
+ privacy.checked=Boolean(p.privacy_accepted_at); terms.checked=Boolean(p.terms_accepted_at);
+ toggleCompany();
+}
+async function load(){
+ if(!initData){status.innerHTML='<span class="err">'+(locale==="en"?"Open this page from Telegram.":"Otwórz tę stronę z poziomu Telegrama.")+'</span>';saveBtn.disabled=true;return;}
+ try{
+  const data=await api("GET"); locale=data.locale==="en"?"en":"pl"; apply(); fill(data.profile||{},data.telegram||{});
+  identity.innerHTML='<b>'+copy[locale].identity+'</b><br><span class="pill">ID '+esc(data.telegram?.id||"")+'</span>'+(data.telegram?.username?' <span class="pill">@'+esc(data.telegram.username)+'</span>':'');
+ }catch(e){status.innerHTML='<span class="err">'+esc(e.message)+'</span>';saveBtn.disabled=true;}
+}
+form.addEventListener("submit",async e=>{
+ e.preventDefault();
+ if(!privacy.checked||!terms.checked){status.innerHTML='<span class="err">'+(locale==="en"?"Accept privacy and terms first.":"Najpierw zaakceptuj politykę prywatności i warunki korzystania.")+'</span>';return;}
+ saveBtn.disabled=true;status.textContent=locale==="en"?"Saving…":"Zapisywanie…";
+ try{
+  await api("POST",{account_type:accountType.value,first_name:firstName.value,last_name:lastName.value,email:email.value,phone:phone.value,job_title:job.value,company_name:companyName.value,tax_id:taxId.value,company_city:companyCity.value,company_country_code:country.value||"PL",accept_privacy:true,accept_terms:true});
+  status.innerHTML='<span class="ok">'+copy[locale].saved+'</span>';tg?.HapticFeedback?.notificationOccurred("success");
+ }catch(e){status.innerHTML='<span class="err">'+esc(e.message)+'</span>';tg?.HapticFeedback?.notificationOccurred("error");}
+ finally{saveBtn.disabled=false;}
+});
+load();
+</script>
+</body>
+</html>
