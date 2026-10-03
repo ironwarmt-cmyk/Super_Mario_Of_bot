@@ -6,6 +6,7 @@ import {
   getQualityProduct,
   getUserProfile
 } from "../lib/db.js";
+import { buildQualityDocx } from "../lib/quality-docx.js";
 
 function webhookSecret(token) {
   return crypto.createHash("sha256").update(token).digest("hex");
@@ -33,7 +34,7 @@ function filenameFor(product, lang) {
     .replace(/[^a-zA-Z0-9 _.-]/g, "")
     .trim()
     .replace(/\s+/g, "-")
-    .slice(0, 80) + ".md";
+    .slice(0, 80) + ".docx";
 }
 
 export default async function handler(req, res) {
@@ -105,11 +106,20 @@ export default async function handler(req, res) {
       return res.status(400).json({ ok: false, error: "Invalid asset path" });
     }
 
-    const data = await fs.readFile(absolutePath, "utf8");
+    const markdown = await fs.readFile(absolutePath, "utf8");
+    const data = await buildQualityDocx({
+      product,
+      markdown,
+      lang
+    });
     const filename = filenameFor(product, lang);
 
-    res.setHeader("Content-Type", "text/markdown; charset=utf-8");
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    );
     res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.setHeader("Content-Length", String(data.length));
     res.setHeader("Cache-Control", "private, no-store");
     return res.status(200).send(data);
   } catch (error) {
