@@ -1,11 +1,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
-import {
-  getQualityMembership,
-  getQualityProduct,
-  getUserProfile
-} from "../lib/db.js";
+import { getQualityProductAccess, getUserProfile } from "../lib/db.js";
 import { buildQualityDocx } from "../lib/quality-docx.js";
 
 function webhookSecret(token) {
@@ -14,10 +10,7 @@ function webhookSecret(token) {
 
 function expectedSignature(token, userId, slug, lang, exp) {
   const payload = `${userId}:${slug}:${lang}:${exp}`;
-  return crypto
-    .createHmac("sha256", webhookSecret(token))
-    .update(payload)
-    .digest("hex");
+  return crypto.createHmac("sha256", webhookSecret(token)).update(payload).digest("hex");
 }
 
 function safeEqual(a, b) {
@@ -38,14 +31,9 @@ function filenameFor(product, lang) {
 }
 
 export default async function handler(req, res) {
-  if (req.method !== "GET") {
-    return res.status(405).json({ ok: false, error: "Method not allowed" });
-  }
-
+  if (req.method !== "GET") return res.status(405).json({ ok: false, error: "Method not allowed" });
   const token = process.env.TELEGRAM_BOT_TOKEN;
-  if (!token) {
-    return res.status(503).json({ ok: false, error: "Bot is not configured" });
-  }
+  if (!token) return res.status(503).json({ ok: false, error: "Bot is not configured" });
 
   const userId = Number(req.query.u);
   const slug = String(req.query.slug || "");
@@ -53,80 +41,34 @@ export default async function handler(req, res) {
   const exp = Number(req.query.exp);
   const sig = String(req.query.sig || "");
 
-  if (!Number.isSafeInteger(userId) || !slug || !Number.isFinite(exp) || !sig) {
-    return res.status(400).json({ ok: false, error: "Invalid link" });
-  }
-
-  if (Math.floor(Date.now() / 1000) > exp) {
-    return res.status(410).json({ ok: false, error: "Link expired" });
-  }
-
-  const expected = expectedSignature(token, userId, slug, lang, exp);
-  if (!safeEqual(sig, expected)) {
-    return res.status(401).json({ ok: false, error: "Invalid signature" });
-  }
+  if (!Number.isSafeInteger(userId) || !slug || !Number.isFinite(exp) || !sig) return res.status(400).json({ ok: false, error: "Invalid link" });
+  if (Math.floor(Date.now() / 1000) > exp) return res.status(410).json({ ok: false, error: "Link expired" });
+  if (!safeEqual(sig, expectedSignature(token, userId, slug, lang, exp))) return res.status(401).json({ ok: false, error: "Invalid signature" });
 
   try {
-    const [product, membership, profile] = await Promise.all([
-      getQualityProduct(slug),
-      getQualityMembership(userId),
+    const [access, profile] = await Promise.all([
+      getQualityProductAccess(userId, slug),
       getUserProfile(userId)
     ]);
+    const product = access?.product;
+    if (!product) return res.status(404).json({ ok: false, error: "Product not found" });
+    if (!Boolean(profile?.is_admin) && !access.unlocked) return res.status(403).json({ ok: false, error: "Access not active" });
 
-    if (!product) {
-      return res.status(404).json({ ok: false, error: "Product not found" });
-    }
-
-    const tierRank = Number(membership?.quality_plans?.tier_rank || 0);
-    const membershipActive =
-      membership?.status === "active" &&
-      (!membership?.period_end || new Date(membership.period_end) > new Date());
-
-    const allowed =
-      Boolean(profile?.is_admin) ||
-      (membershipActive && tierRank >= Number(product.minimum_tier_rank || 1));
-
-    if (!allowed) {
-      return res.status(403).json({ ok: false, error: "Access not active" });
-    }
-
-    const relativePath =
-      lang === "en"
-        ? product.asset_path_en || product.asset_path_pl
-        : product.asset_path_pl || product.asset_path_en;
-
-    if (!relativePath) {
-      return res.status(404).json({ ok: false, error: "No downloadable asset" });
-    }
-
+    const relativePath = lang === "en" ? product.asset_path_en || product.asset_path_pl : product.asset_path_pl || product.asset_path_en;
+    if (!relativePath) return res.status(404).json({ ok: false, error: "No downloadable asset" });
     const contentRoot = path.resolve(process.cwd(), "content", "quality");
     const absolutePath = path.resolve(process.cwd(), relativePath);
-
-    if (!absolutePath.startsWith(contentRoot + path.sep)) {
-      return res.status(400).json({ ok: false, error: "Invalid asset path" });
-    }
+    if (!absolutePath.startsWith(contentRoot + path.sep)) return res.status(400).json({ ok: false, error: "Invalid asset path" });
 
     const markdown = await fs.readFile(absolutePath, "utf8");
-    const data = await buildQualityDocx({
-      product,
-      markdown,
-      lang
-    });
-    const filename = filenameFor(product, lang);
-
-    res.setHeader(
-      "Content-Type",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    );
-    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    const data = await buildQualityDocx({ product, markdown, lang });
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+    res.setHeader("Content-Disposition", `attachment; filename="${filenameFor(product, lang)}"`);
     res.setHeader("Content-Length", String(data.length));
     res.setHeader("Cache-Control", "private, no-store");
     return res.status(200).send(data);
   } catch (error) {
     console.error("quality_download_error", error);
-    return res.status(500).json({
-      ok: false,
-      error: "Download failed"
-    });
+    return res.status(500).json({ ok: false, error: "Download failed" });
   }
 }
