@@ -80,6 +80,7 @@ async function configureBotProfile(token) {
     { command: "start", description: "Uruchom Quality Assurance Support" },
     { command: "menu", description: "Otwórz menu główne" },
     { command: "language", description: "Zmień język PL / EN" },
+    { command: "support", description: "Pomoc, problem lub pomysł" },
     { command: "paysupport", description: "Pomoc dotycząca płatności" },
     { command: "admin", description: "Panel właściciela" }
   ];
@@ -88,6 +89,7 @@ async function configureBotProfile(token) {
     { command: "start", description: "Start Quality Assurance Support" },
     { command: "menu", description: "Open main menu" },
     { command: "language", description: "Change language PL / EN" },
+    { command: "support", description: "Help, issue or feedback" },
     { command: "paysupport", description: "Payment support" },
     { command: "admin", description: "Owner panel" }
   ];
