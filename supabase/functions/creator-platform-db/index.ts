@@ -746,6 +746,17 @@ Deno.serve(async (req) => {
       return json({ ok: true, data: data || null });
     }
 
+    if (action === "list_quality_services") {
+      const { data, error } = await supabase
+        .from("quality_services")
+        .select("*")
+        .eq("active", true)
+        .order("sort_order", { ascending: true });
+
+      if (error) throw error;
+      return json({ ok: true, data: data || [] });
+    }
+
     if (action === "list_quality_token_packs") {
       const { data, error } = await supabase
         .from("quality_token_packs")
