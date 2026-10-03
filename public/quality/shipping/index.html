@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Adres wysyłki e-booka drukowanego</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{--bg:#07111c;--panel:#0d1b2a;--line:#203b54;--text:#f5f7fa;--muted:#9eb0c1;--accent:#3bd6a2;--blue:#54a7ff;--danger:#ff6b6b}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 10% 0,#133d5c 0,transparent 34%),radial-gradient(circle at 90% 5%,#134a39 0,transparent 28%),var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+.wrap{max-width:820px;margin:auto;padding:22px 16px 70px}.brand{font-size:12px;font-weight:900;letter-spacing:.08em;color:var(--accent)}h1{font-size:34px;margin:8px 0 6px}.lead{color:var(--muted);line-height:1.55}.panel{margin-top:18px;padding:18px;border:1px solid var(--line);border-radius:20px;background:#0b1723dd;backdrop-filter:blur(10px)}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}label{display:block;margin:14px 0 7px;font-size:13px;font-weight:800}input{width:100%;border:1px solid var(--line);border-radius:13px;background:var(--panel);color:var(--text);padding:13px;font:inherit}.btn{display:inline-flex;align-items:center;justify-content:center;width:100%;border:0;border-radius:14px;padding:14px 16px;font-weight:900;background:var(--accent);color:#04110c}.status{margin-top:12px;font-size:13px;color:var(--muted)}.ok{color:var(--accent)}.err{color:var(--danger)}.summary{padding:14px;border:1px solid #54a7ff33;border-left:3px solid var(--blue);border-radius:12px;background:#54a7ff0c;color:#d2deea;line-height:1.55}.pill{display:inline-block;margin-top:8px;padding:5px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted);font-size:12px}@media(max-width:650px){.grid{grid-template-columns:1fr}h1{font-size:29px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">QUALITY ASSURANCE SUPPORT</div>
+  <h1 id="title">Adres wysyłki wersji drukowanej</h1>
+  <div class="lead" id="lead">Po zakupie pakietu otrzymujesz e-book cyfrowy oraz drukowaną wersję wysłaną na wskazany adres.</div>
+
+  <div class="panel">
+    <div class="summary" id="summary">Ładowanie danych pakietu…</div>
+  </div>
+
+  <div class="panel">
+    <form id="form">
+      <div class="grid">
+        <div>
+          <label id="recipientLabel" for="recipient">Imię i nazwisko odbiorcy</label>
+          <input id="recipient" maxlength="180" autocomplete="name">
+        </div>
+        <div>
+          <label id="companyLabel" for="company">Firma (opcjonalnie)</label>
+          <input id="company" maxlength="180" autocomplete="organization">
+        </div>
+      </div>
+
+      <label id="streetLabel" for="street1">Ulica i numer</label>
+      <input id="street1" maxlength="180" autocomplete="street-address">
+
+      <label id="street2Label" for="street2">Dodatkowy adres (opcjonalnie)</label>
+      <input id="street2" maxlength="180">
+
+      <div class="grid">
+        <div>
+          <label id="postalLabel" for="postal">Kod pocztowy</label>
+          <input id="postal" maxlength="32" autocomplete="postal-code">
+        </div>
+        <div>
+          <label id="cityLabel" for="city">Miasto</label>
+          <input id="city" maxlength="120" autocomplete="address-level2">
+        </div>
+      </div>
+
+      <div class="grid">
+        <div>
+          <label id="countryLabel" for="country">Kod kraju</label>
+          <input id="country" maxlength="2" value="PL" autocomplete="country">
+        </div>
+        <div>
+          <label id="phoneLabel" for="phone">Telefon (opcjonalnie)</label>
+          <input id="phone" maxlength="40" autocomplete="tel">
+        </div>
+      </div>
+
+      <button class="btn" id="saveBtn" type="submit">Zapisz adres wysyłki</button>
+      <div class="status" id="status"></div>
+    </form>
+  </div>
+</div>
+
+<script>
+const tg=window.Telegram?.WebApp; tg?.ready(); tg?.expand();
+const initData=tg?.initData||"";
+let locale="pl";
+
+const copy={
+  pl:{
+    title:"Adres wysyłki wersji drukowanej",
+    lead:"Po zakupie pakietu otrzymujesz e-book cyfrowy oraz drukowaną wersję wysłaną na wskazany adres.",
+    recipient:"Imię i nazwisko odbiorcy",company:"Firma (opcjonalnie)",street:"Ulica i numer",street2:"Dodatkowy adres (opcjonalnie)",
+    postal:"Kod pocztowy",city:"Miasto",country:"Kod kraju",phone:"Telefon (opcjonalnie)",save:"Zapisz adres wysyłki",
+    saved:"Adres zapisany. Zamówienie wersji drukowanej ma status: ",noPlan:"Brak aktywnego pakietu. Najpierw aktywuj BASIC, PRO albo VIP.",
+    summary:"Aktywny pakiet",ebook:"Wersja drukowana",status:"Status wysyłki"
+  },
+  en:{
+    title:"Printed edition shipping address",
+    lead:"After purchasing a plan, you receive the digital e-book and a printed edition shipped to your chosen address.",
+    recipient:"Recipient name",company:"Company (optional)",street:"Street and number",street2:"Address line 2 (optional)",
+    postal:"Postal code",city:"City",country:"Country code",phone:"Phone (optional)",save:"Save shipping address",
+    saved:"Address saved. Printed edition order status: ",noPlan:"No active plan. Activate BASIC, PRO or VIP first.",
+    summary:"Active plan",ebook:"Printed edition",status:"Shipping status"
+  }
+};
+
+function esc(s=""){const d=document.createElement("div");d.textContent=String(s);return d.innerHTML;}
+function apply(){
+  const t=copy[locale]; document.documentElement.lang=locale;
+  title.textContent=t.title; lead.textContent=t.lead; recipientLabel.textContent=t.recipient; companyLabel.textContent=t.company;
+  streetLabel.textContent=t.street; street2Label.textContent=t.street2; postalLabel.textContent=t.postal; cityLabel.textContent=t.city;
+  countryLabel.textContent=t.country; phoneLabel.textContent=t.phone; saveBtn.textContent=t.save;
+}
+async function api(method,body){
+  const r=await fetch("/api/quality-shipping",{
+    method,
+    headers:{"content-type":"application/json","x-telegram-init-data":initData},
+    ...(body?{body:JSON.stringify(body)}:{})
+  });
+  const data=await r.json().catch(()=>({ok:false,error:"Invalid response"}));
+  if(!r.ok||!data.ok) throw new Error(data.error||("HTTP "+r.status));
+  return data;
+}
+function fill(f){
+  if(!f)return;
+  recipient.value=f.recipient_name||""; company.value=f.company_name||""; street1.value=f.street_line_1||"";
+  street2.value=f.street_line_2||""; postal.value=f.postal_code||""; city.value=f.city||""; country.value=f.country_code||"PL"; phone.value=f.phone||"";
+}
+function summaryView(data){
+  const t=copy[locale], m=data.membership, f=data.fulfillment;
+  if(!m){summary.innerHTML='<span class="err">'+t.noPlan+'</span>'; saveBtn.disabled=true; return;}
+  const p=m.quality_plans||{};
+  const book={basic:"BASIC e-book",pro:"PRO e-book",vip:"VIP e-book"}[p.slug]||"e-book";
+  summary.innerHTML='<b>'+t.summary+': '+esc(p.name_pl||p.name_en||p.slug)+'</b><br>'+t.ebook+': '+esc(book)+(f?'<br>'+t.status+': <span class="pill">'+esc(f.status)+'</span>':'');
+}
+async function load(){
+  if(!initData){status.innerHTML='<span class="err">Otwórz formularz z poziomu Telegrama.</span>';saveBtn.disabled=true;return;}
+  try{
+    const data=await api("GET"); locale=data.locale==="en"?"en":"pl"; apply(); summaryView(data); fill(data.fulfillment);
+  }catch(e){status.innerHTML='<span class="err">'+esc(e.message)+'</span>';saveBtn.disabled=true;}
+}
+form.addEventListener("submit",async e=>{
+  e.preventDefault(); saveBtn.disabled=true; status.textContent=locale==="en"?"Saving…":"Zapisywanie…";
+  try{
+    const data=await api("POST",{
+      recipient_name:recipient.value.trim(),company_name:company.value.trim(),street_line_1:street1.value.trim(),
+      street_line_2:street2.value.trim(),postal_code:postal.value.trim(),city:city.value.trim(),
+      country_code:(country.value.trim()||"PL").toUpperCase(),phone:phone.value.trim()
+    });
+    status.innerHTML='<span class="ok">'+copy[locale].saved+esc(data.fulfillment?.status||"new")+'</span>';
+    summaryView({membership:data.membership,fulfillment:data.fulfillment});
+    tg?.HapticFeedback?.notificationOccurred("success");
+  }catch(e){status.innerHTML='<span class="err">'+esc(e.message)+'</span>';tg?.HapticFeedback?.notificationOccurred("error");}
+  finally{saveBtn.disabled=false;}
+});
+load();
+</script>
+</body>
+</html>
