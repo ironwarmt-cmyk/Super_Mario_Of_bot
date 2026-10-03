@@ -124,6 +124,103 @@ async function upsertTelegramUser(supabase, user) {
   return data;
 }
 
+const QUALITY_SPECIALISTS = new Set([
+  "brc",
+  "ifs",
+  "haccp",
+  "complaints",
+  "capa",
+  "other"
+]);
+
+async function readQualityMembership(supabase, telegramUserId) {
+  const { data, error } = await supabase
+    .from("quality_memberships")
+    .select("*,quality_plans(*)")
+    .eq("telegram_user_id", telegramUserId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data || null;
+}
+
+function membershipIsActive(membership) {
+  if (!membership || membership.status !== "active") return false;
+  if (!membership.period_end) return true;
+  return new Date(membership.period_end).getTime() > Date.now();
+}
+
+async function settleQualityAssistantTime(supabase, telegramUserId) {
+  const membership = await readQualityMembership(supabase, telegramUserId);
+  const includedSeconds = Number(
+    membership?.quality_plans?.included_chat_minutes || 0
+  ) * 60;
+
+  const { data: session, error: sessionError } = await supabase
+    .from("quality_assistant_sessions")
+    .select("*")
+    .eq("telegram_user_id", telegramUserId)
+    .maybeSingle();
+
+  if (sessionError) throw sessionError;
+
+  let usedSeconds = Number(membership?.assistant_seconds_used || 0);
+  let currentSession = session || null;
+
+  if (
+    membershipIsActive(membership) &&
+    currentSession?.status === "active" &&
+    currentSession.last_heartbeat_at &&
+    includedSeconds > usedSeconds
+  ) {
+    const now = Date.now();
+    const last = new Date(currentSession.last_heartbeat_at).getTime();
+    const rawDelta = Math.max(0, Math.floor((now - last) / 1000));
+    const delta = Math.min(rawDelta, 60, includedSeconds - usedSeconds);
+
+    if (delta > 0) {
+      usedSeconds += delta;
+
+      const { error: membershipError } = await supabase
+        .from("quality_memberships")
+        .update({
+          assistant_seconds_used: usedSeconds,
+          chat_minutes_used: Math.floor(usedSeconds / 60),
+          updated_at: new Date(now).toISOString()
+        })
+        .eq("telegram_user_id", telegramUserId);
+
+      if (membershipError) throw membershipError;
+
+      const remaining = Math.max(0, includedSeconds - usedSeconds);
+      const nextStatus = remaining > 0 ? "active" : "stopped";
+
+      const { data: updatedSession, error: updateError } = await supabase
+        .from("quality_assistant_sessions")
+        .update({
+          session_seconds: Number(currentSession.session_seconds || 0) + delta,
+          last_heartbeat_at: new Date(now).toISOString(),
+          status: nextStatus,
+          updated_at: new Date(now).toISOString()
+        })
+        .eq("telegram_user_id", telegramUserId)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+      currentSession = updatedSession;
+    }
+  }
+
+  return {
+    membership,
+    session: currentSession,
+    included_seconds: includedSeconds,
+    used_seconds: usedSeconds,
+    remaining_seconds: Math.max(0, includedSeconds - usedSeconds)
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method !== "POST") {
     return json({ ok: false, error: "Method not allowed" }, 405);
@@ -907,6 +1004,285 @@ Deno.serve(async (req) => {
 
       if (error) throw error;
       return json({ ok: true, data: data || null });
+    }
+
+    if (action === "record_quality_plan_payment") {
+      const user = body?.user;
+      const payment = body?.payment || {};
+
+      if (!user?.id || !payment?.telegram_payment_charge_id) {
+        return json({ ok: false, error: "Incomplete quality plan payment" }, 400);
+      }
+
+      const match = /^qa_plan:([a-z0-9-]+)$/i.exec(
+        String(payment.invoice_payload || "")
+      );
+      if (!match) {
+        return json({ ok: false, error: "Invalid quality plan payload" }, 400);
+      }
+
+      const slug = match[1];
+
+      const { data: plan, error: planError } = await supabase
+        .from("quality_plans")
+        .select("*")
+        .eq("slug", slug)
+        .eq("active", true)
+        .maybeSingle();
+
+      if (planError) throw planError;
+      if (!plan || !plan.checkout_enabled || !plan.price_stars) {
+        return json({ ok: false, error: "Quality plan not available" }, 404);
+      }
+
+      if (
+        payment.currency !== "XTR" ||
+        Number(payment.total_amount) !== Number(plan.price_stars)
+      ) {
+        return json({ ok: false, error: "Quality plan payment amount mismatch" }, 400);
+      }
+
+      await upsertTelegramUser(supabase, user);
+
+      const { data: existingPayment, error: paymentReadError } = await supabase
+        .from("quality_plan_payments")
+        .select("*")
+        .eq("telegram_payment_charge_id", payment.telegram_payment_charge_id)
+        .maybeSingle();
+
+      if (paymentReadError) throw paymentReadError;
+
+      if (existingPayment) {
+        const membership = await readQualityMembership(supabase, user.id);
+        return json({
+          ok: true,
+          data: { plan, membership, duplicate: true }
+        });
+      }
+
+      const subscriptionExpiration = payment.subscription_expiration_date
+        ? new Date(Number(payment.subscription_expiration_date) * 1000)
+        : new Date(Date.now() + 30 * 86400000);
+
+      const { error: paymentError } = await supabase
+        .from("quality_plan_payments")
+        .insert({
+          telegram_user_id: user.id,
+          plan_id: plan.id,
+          stars_paid: payment.total_amount,
+          telegram_payment_charge_id: payment.telegram_payment_charge_id,
+          telegram_subscription_charge_id:
+            payment.telegram_payment_charge_id || null
+        });
+
+      if (paymentError) throw paymentError;
+
+      const { data: membership, error: membershipError } = await supabase
+        .from("quality_memberships")
+        .upsert(
+          {
+            telegram_user_id: user.id,
+            plan_id: plan.id,
+            status: "active",
+            period_start: new Date().toISOString(),
+            period_end: subscriptionExpiration.toISOString(),
+            custom_docs_used: 0,
+            chat_minutes_used: 0,
+            assistant_seconds_used: 0,
+            selected_training_product_id: null,
+            telegram_subscription_charge_id:
+              payment.telegram_payment_charge_id,
+            auto_renew: true,
+            updated_at: new Date().toISOString()
+          },
+          { onConflict: "telegram_user_id" }
+        )
+        .select("*,quality_plans(*)")
+        .single();
+
+      if (membershipError) throw membershipError;
+
+      await supabase
+        .from("quality_assistant_sessions")
+        .update({
+          status: "stopped",
+          last_heartbeat_at: null,
+          started_at: null,
+          session_seconds: 0,
+          updated_at: new Date().toISOString()
+        })
+        .eq("telegram_user_id", user.id);
+
+      return json({
+        ok: true,
+        data: { plan, membership, duplicate: false }
+      });
+    }
+
+    if (action === "get_quality_assistant_status") {
+      const telegramUserId = Number(body?.telegram_user_id);
+      const state = await settleQualityAssistantTime(
+        supabase,
+        telegramUserId
+      );
+
+      return json({ ok: true, data: state });
+    }
+
+    if (action === "start_quality_assistant_session") {
+      const telegramUserId = Number(body?.telegram_user_id);
+      const specialist = String(body?.specialist || "").toLowerCase();
+
+      if (!QUALITY_SPECIALISTS.has(specialist)) {
+        return json({ ok: false, error: "Invalid specialist" }, 400);
+      }
+
+      const state = await settleQualityAssistantTime(
+        supabase,
+        telegramUserId
+      );
+
+      if (!membershipIsActive(state.membership)) {
+        return json({ ok: false, error: "Active membership required" }, 403);
+      }
+
+      if (state.included_seconds <= 0) {
+        return json({ ok: false, error: "Assistant not included in this plan" }, 403);
+      }
+
+      if (state.remaining_seconds <= 0) {
+        return json({ ok: false, error: "Assistant allowance exhausted" }, 402);
+      }
+
+      const now = new Date().toISOString();
+      const { data: session, error } = await supabase
+        .from("quality_assistant_sessions")
+        .upsert(
+          {
+            telegram_user_id: telegramUserId,
+            specialist,
+            status: "active",
+            started_at: now,
+            last_heartbeat_at: now,
+            session_seconds:
+              state.session?.status === "active" &&
+              state.session?.specialist === specialist
+                ? Number(state.session.session_seconds || 0)
+                : 0,
+            updated_at: now
+          },
+          { onConflict: "telegram_user_id" }
+        )
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return json({
+        ok: true,
+        data: { ...state, session }
+      });
+    }
+
+    if (action === "heartbeat_quality_assistant_session") {
+      const telegramUserId = Number(body?.telegram_user_id);
+      const state = await settleQualityAssistantTime(
+        supabase,
+        telegramUserId
+      );
+
+      if (state.session?.status === "active") {
+        const now = new Date().toISOString();
+        const { data: session, error } = await supabase
+          .from("quality_assistant_sessions")
+          .update({
+            last_heartbeat_at: now,
+            updated_at: now
+          })
+          .eq("telegram_user_id", telegramUserId)
+          .select()
+          .single();
+
+        if (error) throw error;
+        state.session = session;
+      }
+
+      return json({ ok: true, data: state });
+    }
+
+    if (action === "stop_quality_assistant_session") {
+      const telegramUserId = Number(body?.telegram_user_id);
+      const state = await settleQualityAssistantTime(
+        supabase,
+        telegramUserId
+      );
+
+      if (state.session) {
+        const { data: session, error } = await supabase
+          .from("quality_assistant_sessions")
+          .update({
+            status: "stopped",
+            last_heartbeat_at: null,
+            updated_at: new Date().toISOString()
+          })
+          .eq("telegram_user_id", telegramUserId)
+          .select()
+          .single();
+
+        if (error) throw error;
+        state.session = session;
+      }
+
+      return json({ ok: true, data: state });
+    }
+
+    if (action === "list_quality_assistant_messages") {
+      const telegramUserId = Number(body?.telegram_user_id);
+      const specialist = String(body?.specialist || "").toLowerCase();
+
+      if (!QUALITY_SPECIALISTS.has(specialist)) {
+        return json({ ok: false, error: "Invalid specialist" }, 400);
+      }
+
+      const { data, error } = await supabase
+        .from("quality_assistant_messages")
+        .select("id,role,content,source_meta,created_at")
+        .eq("telegram_user_id", telegramUserId)
+        .eq("specialist", specialist)
+        .order("created_at", { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+      return json({ ok: true, data: (data || []).reverse() });
+    }
+
+    if (action === "save_quality_assistant_message") {
+      const telegramUserId = Number(body?.telegram_user_id);
+      const specialist = String(body?.specialist || "").toLowerCase();
+      const role = String(body?.role || "");
+      const content = String(body?.content || "").trim();
+
+      if (!QUALITY_SPECIALISTS.has(specialist)) {
+        return json({ ok: false, error: "Invalid specialist" }, 400);
+      }
+      if (!["user", "assistant"].includes(role) || !content) {
+        return json({ ok: false, error: "Invalid assistant message" }, 400);
+      }
+
+      const { data, error } = await supabase
+        .from("quality_assistant_messages")
+        .insert({
+          telegram_user_id: telegramUserId,
+          specialist,
+          role,
+          content,
+          source_meta: body?.source_meta || {}
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return json({ ok: true, data });
     }
 
     if (action === "get_session") {
