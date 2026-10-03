@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Quality Support</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{--bg:#07111c;--panel:#0d1b2a;--line:#203b54;--text:#f5f7fa;--muted:#9eb0c1;--accent:#3bd6a2;--blue:#54a7ff;--danger:#ff6b6b}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 10% 0,#133d5c 0,transparent 34%),radial-gradient(circle at 90% 5%,#134a39 0,transparent 28%),var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+.wrap{max-width:820px;margin:auto;padding:22px 16px 70px}.brand{font-size:12px;font-weight:900;letter-spacing:.08em;color:var(--accent)}h1{font-size:34px;margin:8px 0 6px}.lead{color:var(--muted);line-height:1.55}.panel{margin-top:18px;padding:18px;border:1px solid var(--line);border-radius:20px;background:#0b1723dd;backdrop-filter:blur(10px)}label{display:block;margin:14px 0 7px;font-size:13px;font-weight:800}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}input,select,textarea{width:100%;border:1px solid var(--line);border-radius:13px;background:var(--panel);color:var(--text);padding:13px;font:inherit}textarea{min-height:150px;resize:vertical}.btn{display:inline-flex;align-items:center;justify-content:center;width:100%;border:0;border-radius:14px;padding:14px 16px;font-weight:900;text-decoration:none}.primary{background:var(--accent);color:#04110c}.secondary{background:#17324a;color:var(--text);border:1px solid var(--line);margin-top:10px}.status{margin-top:12px;font-size:13px;color:var(--muted)}.ok{color:var(--accent)}.err{color:var(--danger)}.tickets{display:flex;flex-direction:column;gap:10px;margin-top:12px}.ticket{padding:13px;border:1px solid var(--line);border-radius:14px;background:#ffffff06}.ticket small{color:var(--muted)}.pill{display:inline-block;padding:4px 8px;border:1px solid var(--line);border-radius:999px;font-size:11px;margin-left:6px;color:var(--muted)}.note{margin-top:18px;padding:14px;border-left:3px solid var(--blue);background:#54a7ff0c;border-radius:12px;color:#cbd9e6;line-height:1.5}.mail{color:#8bc7ff;text-decoration:none;font-weight:800}@media(max-width:650px){.grid{grid-template-columns:1fr}h1{font-size:29px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">QUALITY ASSURANCE SUPPORT</div>
+  <h1 id="title">Pomoc i sugestie</h1>
+  <div class="lead" id="lead">Zgłoś problem techniczny, płatność, błąd w materiale albo pomysł na ulepszenie. Zgłoszenie zapisuje się bezpośrednio na Twoim koncie Telegram.</div>
+
+  <div class="panel">
+    <form id="form">
+      <div class="grid">
+        <div>
+          <label for="category" id="categoryLabel">Kategoria</label>
+          <select id="category">
+            <option value="technical">Problem techniczny</option>
+            <option value="payment">Płatność / dostęp</option>
+            <option value="content">Dokument / szkolenie / treść</option>
+            <option value="idea">Pomysł na ulepszenie</option>
+            <option value="other">Inne</option>
+          </select>
+        </div>
+        <div>
+          <label for="email" id="emailLabel">E-mail zwrotny (opcjonalnie)</label>
+          <input id="email" type="email" placeholder="twoj@email.pl">
+        </div>
+      </div>
+
+      <label for="subject" id="subjectLabel">Temat</label>
+      <input id="subject" maxlength="180" placeholder="Krótko: czego dotyczy sprawa?">
+
+      <label for="message" id="messageLabel">Wiadomość / komentarz</label>
+      <textarea id="message" maxlength="5000" placeholder="Opisz problem, sugestię albo pomysł możliwie konkretnie..."></textarea>
+
+      <button class="btn primary" id="sendBtn" type="submit">Wyślij zgłoszenie</button>
+      <div class="status" id="status"></div>
+    </form>
+
+    <a class="btn secondary" id="emailBtn" href="mailto:qasupportmt@gmail.com?subject=Quality%20Assurance%20Support">Napisz e-mail: qasupportmt@gmail.com</a>
+  </div>
+
+  <div class="note" id="note">W zgłoszeniu technicznym warto podać, co kliknąłeś, czego oczekiwałeś i co faktycznie się wydarzyło. Przy płatności nie wpisuj danych karty ani haseł.</div>
+
+  <div class="panel">
+    <b id="historyTitle">Moje ostatnie zgłoszenia</b>
+    <div class="tickets" id="tickets"><div class="lead">Ładowanie…</div></div>
+  </div>
+</div>
+
+<script>
+const tg=window.Telegram?.WebApp; tg?.ready(); tg?.expand();
+const initData=tg?.initData||"";
+let locale="pl";
+
+const copy={
+  pl:{
+    title:"Pomoc i sugestie",
+    lead:"Zgłoś problem techniczny, płatność, błąd w materiale albo pomysł na ulepszenie. Zgłoszenie zapisuje się bezpośrednio na Twoim koncie Telegram.",
+    category:"Kategoria",email:"E-mail zwrotny (opcjonalnie)",subject:"Temat",message:"Wiadomość / komentarz",
+    send:"Wyślij zgłoszenie",history:"Moje ostatnie zgłoszenia",sent:"Zgłoszenie zapisane. Numer: ",
+    note:"W zgłoszeniu technicznym warto podać, co kliknąłeś, czego oczekiwałeś i co faktycznie się wydarzyło. Przy płatności nie wpisuj danych karty ani haseł.",
+    empty:"Nie masz jeszcze zgłoszeń.",
+    categories:{technical:"Problem techniczny",payment:"Płatność / dostęp",content:"Dokument / szkolenie / treść",idea:"Pomysł na ulepszenie",other:"Inne"},
+    statuses:{new:"nowe",in_progress:"w trakcie",resolved:"rozwiązane",closed:"zamknięte"}
+  },
+  en:{
+    title:"Help & feedback",
+    lead:"Report a technical issue, payment/access problem, content issue or an idea for improvement. The ticket is saved directly to your Telegram account.",
+    category:"Category",email:"Reply email (optional)",subject:"Subject",message:"Message / feedback",
+    send:"Submit ticket",history:"My recent tickets",sent:"Ticket saved. ID: ",
+    note:"For technical issues, say what you clicked, what you expected and what actually happened. Never enter card details or passwords.",
+    empty:"You do not have any tickets yet.",
+    categories:{technical:"Technical issue",payment:"Payment / access",content:"Document / training / content",idea:"Improvement idea",other:"Other"},
+    statuses:{new:"new",in_progress:"in progress",resolved:"resolved",closed:"closed"}
+  }
+};
+
+function applyLang(){
+  const t=copy[locale];
+  document.documentElement.lang=locale;
+  title.textContent=t.title; lead.textContent=t.lead;
+  categoryLabel.textContent=t.category; emailLabel.textContent=t.email;
+  subjectLabel.textContent=t.subject; messageLabel.textContent=t.message;
+  sendBtn.textContent=t.send; historyTitle.textContent=t.history; note.textContent=t.note;
+  [...category.options].forEach(o=>o.textContent=t.categories[o.value]||o.value);
+}
+
+async function api(method,body){
+  const r=await fetch("/api/quality-support",{
+    method,
+    headers:{"content-type":"application/json","x-telegram-init-data":initData},
+    ...(body?{body:JSON.stringify(body)}:{})
+  });
+  const data=await r.json().catch(()=>({ok:false,error:"Invalid server response"}));
+  if(!r.ok||!data.ok) throw new Error(data.error||("HTTP "+r.status));
+  return data;
+}
+
+function renderTickets(items=[]){
+  const box=document.getElementById("tickets"); box.innerHTML="";
+  if(!items.length){box.innerHTML='<div class="lead">'+copy[locale].empty+'</div>';return;}
+  items.forEach(x=>{
+    const d=document.createElement("div"); d.className="ticket";
+    const date=new Date(x.created_at).toLocaleString(locale==="en"?"en-GB":"pl-PL");
+    d.innerHTML='<b>'+escapeHtml(x.subject||copy[locale].categories[x.category]||"Support")+'</b><span class="pill">'+escapeHtml(copy[locale].statuses[x.status]||x.status)+'</span><br><small>'+escapeHtml(date)+'</small><div style="margin-top:7px">'+escapeHtml(x.message)+'</div>';
+    box.appendChild(d);
+  });
+}
+function escapeHtml(s=""){const d=document.createElement("div");d.textContent=String(s);return d.innerHTML;}
+
+async function load(){
+  if(!initData){
+    status.innerHTML='<span class="err">'+(locale==="en"?"Open this form from the Telegram bot.":"Otwórz ten formularz z poziomu bota Telegram.")+'</span>';
+    sendBtn.disabled=true; return;
+  }
+  try{
+    const data=await api("GET");
+    locale=data.locale==="en"?"en":"pl";
+    applyLang();
+    renderTickets(data.tickets||[]);
+  }catch(e){
+    status.innerHTML='<span class="err">'+escapeHtml(e.message)+'</span>';
+  }
+}
+
+form.addEventListener("submit",async e=>{
+  e.preventDefault();
+  const msg=message.value.trim();
+  if(msg.length<5){status.innerHTML='<span class="err">'+(locale==="en"?"Write at least 5 characters.":"Wpisz co najmniej 5 znaków.")+'</span>';return;}
+  sendBtn.disabled=true; status.textContent=locale==="en"?"Sending…":"Wysyłanie…";
+  try{
+    const data=await api("POST",{
+      category:category.value,
+      subject:subject.value.trim(),
+      message:msg,
+      contact_email:email.value.trim()
+    });
+    status.innerHTML='<span class="ok">'+copy[locale].sent+escapeHtml(data.ticket.id.slice(0,8).toUpperCase())+'</span>';
+    subject.value=""; message.value="";
+    const refreshed=await api("GET");
+    renderTickets(refreshed.tickets||[]);
+    tg?.HapticFeedback?.notificationOccurred("success");
+  }catch(e){
+    status.innerHTML='<span class="err">'+escapeHtml(e.message)+'</span>';
+    tg?.HapticFeedback?.notificationOccurred("error");
+  }finally{sendBtn.disabled=false;}
+});
+
+load();
+</script>
+</body>
+</html>
