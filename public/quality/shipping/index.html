@@ -119,7 +119,10 @@ function summaryView(data){
   if(!m){summary.innerHTML='<span class="err">'+t.noPlan+'</span>'; saveBtn.disabled=true; return;}
   const p=m.quality_plans||{};
   const book={basic:"BASIC e-book",pro:"PRO e-book",vip:"VIP e-book"}[p.slug]||"e-book";
-  summary.innerHTML='<b>'+t.summary+': '+esc(p.name_pl||p.name_en||p.slug)+'</b><br>'+t.ebook+': '+esc(book)+(f?'<br>'+t.status+': <span class="pill">'+esc(f.status)+'</span>':'');
+  const shippingLine = p.physical_shipping_included
+    ? '<br><b>'+ (locale==="en" ? "Shipping: included in plan price" : "Przesyłka: wliczona w cenę pakietu") +'</b>'
+    : '<br>'+ (locale==="en" ? "Shipping: charged separately" : "Przesyłka: rozliczana osobno");
+  summary.innerHTML='<b>'+t.summary+': '+esc(p.name_pl||p.name_en||p.slug)+'</b><br>'+t.ebook+': '+esc(book)+shippingLine+(f?'<br>'+t.status+': <span class="pill">'+esc(f.status)+'</span>':'');
 }
 async function load(){
   if(!initData){status.innerHTML='<span class="err">Otwórz formularz z poziomu Telegrama.</span>';saveBtn.disabled=true;return;}
