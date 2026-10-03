@@ -132,35 +132,65 @@ export default async function handler(req, res) {
         const ebookUrl = ebookSlug
           ? qualityDownloadUrl(token, message.from.id, ebookSlug, locale)
           : null;
-        const shippingUrl =
-          "https://supermarioofbot-iron-war.vercel.app/quality/shipping/";
 
-        const buttons = [
-          ...(ebookUrl
-            ? [[{
-                text: pl ? "⬇️ Pobierz e-book pakietu" : "⬇️ Download plan e-book",
-                url: ebookUrl
-              }]]
-            : []),
-          [{
-            text: pl
-              ? "📦 Podaj adres wysyłki wersji drukowanej"
-              : "📦 Enter printed-edition shipping address",
-            web_app: { url: shippingUrl }
-          }],
-          [{ text: "🏠 Quality menu", callback_data: "qa:home" }],
-          [{ text: pl ? "📚 Biblioteka" : "📚 Library", callback_data: "qa:products" }],
-          ...(Number(result.plan.included_chat_minutes || 0) > 0
-            ? [[{ text: "🤖 Quality Copilot", callback_data: "qa:assistant" }]]
-            : [])
-        ];
+        const buttons = [];
+
+        if (ebookUrl) {
+          buttons.push([{
+            text: pl ? "⬇️ Pobierz e-book pakietu" : "⬇️ Download plan e-book",
+            url: ebookUrl
+          }]);
+        }
+
+        if (result.plan.physical_copy_optional) {
+          if (result.plan.physical_shipping_included) {
+            buttons.push([{
+              text: pl
+                ? "📦 Chcę wersję drukowaną — przesyłka w cenie"
+                : "📦 I want the printed edition — shipping included",
+              web_app: {
+                url: "https://supermarioofbot-iron-war.vercel.app/quality/shipping/"
+              }
+            }]);
+          } else if (result.plan.physical_shipping_checkout_url) {
+            const sep = result.plan.physical_shipping_checkout_url.includes("?") ? "&" : "?";
+            const shippingUrl =
+              result.plan.physical_shipping_checkout_url +
+              sep +
+              "client_reference_id=" +
+              encodeURIComponent("tg_" + message.from.id) +
+              "&utm_source=telegram&utm_medium=bot&utm_campaign=" +
+              encodeURIComponent(result.plan.slug + "_printed_ebook_shipping");
+
+            buttons.push([{
+              text: pl
+                ? `📦 Wersja drukowana — przesyłka ${Number(result.plan.physical_shipping_price_pln || 0).toFixed(2).replace(".", ",")} zł (BLIK / karta)`
+                : `📦 Printed edition — shipping PLN ${Number(result.plan.physical_shipping_price_pln || 0).toFixed(2)} (BLIK / card)`,
+              url: shippingUrl
+            }]);
+          }
+        }
+
+        buttons.push([{ text: "🏠 Quality menu", callback_data: "qa:home" }]);
+        buttons.push([{ text: pl ? "📚 Biblioteka" : "📚 Library", callback_data: "qa:products" }]);
+        if (Number(result.plan.included_chat_minutes || 0) > 0) {
+          buttons.push([{ text: "🤖 Quality Copilot", callback_data: "qa:assistant" }]);
+        }
+
+        const physicalLine = result.plan.physical_shipping_included
+          ? (pl
+              ? "Wersja drukowana jest opcjonalna; jeśli ją wybierzesz, przesyłka w Polsce jest wliczona w cenę."
+              : "The printed edition is optional; if selected, Poland shipping is included in the plan price.")
+          : (pl
+              ? `Wersja drukowana jest opcjonalna. Jeśli ją wybierzesz, przesyłka kosztuje ${Number(result.plan.physical_shipping_price_pln || 0).toFixed(2).replace(".", ",")} zł i jest opłacana osobno BLIKiem lub kartą.`
+              : `The printed edition is optional. If selected, shipping costs PLN ${Number(result.plan.physical_shipping_price_pln || 0).toFixed(2)} and is paid separately by BLIK or card.`);
 
         await sendMessage(
           token,
           chatId,
           pl
-            ? `✅ Pakiet <b>${escapeHtml(planName)}</b> został aktywowany.\n\nDostęp aktywny do: <b>${new Date(result.membership.period_end).toLocaleDateString("pl-PL")}</b>.\n\nW pakiecie otrzymujesz e-book cyfrowy do pobrania oraz drukowaną wersję wysyłaną na wskazany adres. Uzupełnij adres wysyłki przyciskiem poniżej.`
-            : `✅ <b>${escapeHtml(planName)}</b> has been activated.\n\nAccess active until: <b>${new Date(result.membership.period_end).toLocaleDateString("en-GB")}</b>.\n\nYour plan includes a digital e-book download and a printed edition shipped to your selected address. Enter your shipping details below.`,
+            ? `✅ Pakiet <b>${escapeHtml(planName)}</b> został aktywowany.\n\nDostęp aktywny do: <b>${new Date(result.membership.period_end).toLocaleDateString("pl-PL")}</b>.\n\n<b>E-book cyfrowy jest zawsze w pakiecie i możesz pobrać go od razu.</b>\n${physicalLine}`
+            : `✅ <b>${escapeHtml(planName)}</b> has been activated.\n\nAccess active until: <b>${new Date(result.membership.period_end).toLocaleDateString("en-GB")}</b>.\n\n<b>The digital e-book is always included and can be downloaded immediately.</b>\n${physicalLine}`,
           { inline_keyboard: buttons }
         );
         return res.status(200).json({ ok: true });
