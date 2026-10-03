@@ -24,6 +24,7 @@ import {
   renderTraining,
   renderTokens,
   renderPhysicalProduct,
+  renderExpertServices,
   renderAssistant,
   renderMembership
 } from "../lib/quality-ui.js";
@@ -45,6 +46,7 @@ import {
   getQualityProduct,
   listQualityProducts,
   listQualityTokenPacks,
+  listQualityServices,
   getQualityTokenPack,
   getQualityWallet,
   recordQualityTokenPayment,
@@ -787,6 +789,20 @@ export default async function handler(req, res) {
       if (action === "qa:physical") {
         const profile = await getUserProfile(callback.from.id);
         const view = renderPhysicalProduct(
+          profile?.locale || "pl",
+          callback.from.id
+        );
+        await editMessage(token, chatId, messageId, view.text, view.reply_markup);
+        return res.status(200).json({ ok: true });
+      }
+
+      if (action === "qa:services") {
+        const [profile, services] = await Promise.all([
+          getUserProfile(callback.from.id),
+          listQualityServices()
+        ]);
+        const view = renderExpertServices(
+          services,
           profile?.locale || "pl",
           callback.from.id
         );
