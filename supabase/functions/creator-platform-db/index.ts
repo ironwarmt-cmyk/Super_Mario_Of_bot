@@ -295,6 +295,84 @@ Deno.serve(async (req) => {
       return json({ ok: true, data: data || [] });
     }
 
+    if (action === "get_quality_customer_profile") {
+      const telegramUserId = Number(body?.telegram_user_id);
+
+      const { data, error } = await supabase
+        .from("quality_customer_profiles")
+        .select("*")
+        .eq("telegram_user_id", telegramUserId)
+        .maybeSingle();
+
+      if (error) throw error;
+      return json({ ok: true, data: data || null });
+    }
+
+    if (action === "upsert_quality_customer_profile") {
+      const user = body?.user;
+      const profile = body?.profile || {};
+
+      if (!user?.id) {
+        return json({ ok: false, error: "User is required" }, 400);
+      }
+
+      const accountType =
+        profile.account_type === "company" ? "company" : "individual";
+
+      const clean = (value, max = 180) =>
+        String(value || "").trim().slice(0, max);
+
+      const email = clean(profile.email, 254);
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return json({ ok: false, error: "Invalid email address" }, 400);
+      }
+
+      const firstName = clean(profile.first_name, 100);
+      const lastName = clean(profile.last_name, 100);
+      const companyName = clean(profile.company_name, 180);
+      const taxId = clean(profile.tax_id, 40);
+
+      if (!firstName || !lastName) {
+        return json({ ok: false, error: "First and last name are required" }, 400);
+      }
+
+      if (accountType === "company" && !companyName) {
+        return json({ ok: false, error: "Company name is required" }, 400);
+      }
+
+      await upsertTelegramUser(supabase, user);
+
+      const now = new Date().toISOString();
+      const { data, error } = await supabase
+        .from("quality_customer_profiles")
+        .upsert(
+          {
+            telegram_user_id: user.id,
+            account_type: accountType,
+            first_name: firstName,
+            last_name: lastName,
+            email: email || null,
+            phone: clean(profile.phone, 40) || null,
+            job_title: clean(profile.job_title, 140) || null,
+            company_name: companyName || null,
+            tax_id: taxId || null,
+            company_city: clean(profile.company_city, 120) || null,
+            company_country_code:
+              clean(profile.company_country_code || "PL", 2).toUpperCase(),
+            terms_accepted_at: profile.accept_terms ? now : null,
+            privacy_accepted_at: profile.accept_privacy ? now : null,
+            onboarding_completed_at: now,
+            updated_at: now
+          },
+          { onConflict: "telegram_user_id" }
+        )
+        .select()
+        .single();
+
+      if (error) throw error;
+      return json({ ok: true, data });
+    }
+
     if (action === "get_quality_physical_fulfillment") {
       const telegramUserId = Number(body?.telegram_user_id);
 
