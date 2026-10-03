@@ -123,7 +123,46 @@ export default async function handler(req, res) {
       if (/^qa_plan:([a-z0-9-]+)$/i.test(payload)) {
         const result = await recordQualityPlanPayment(message.from, payment);
         const planName = pl ? result.plan.name_pl : result.plan.name_en;
-        await sendMessage(token, chatId, pl ? `✅ Pakiet <b>${escapeHtml(planName)}</b> został aktywowany.\n\nDostęp aktywny do: <b>${new Date(result.membership.period_end).toLocaleDateString("pl-PL")}</b>.` : `✅ <b>${escapeHtml(planName)}</b> has been activated.\n\nAccess active until: <b>${new Date(result.membership.period_end).toLocaleDateString("en-GB")}</b>.`, { inline_keyboard: [[{ text: "🏠 Quality menu", callback_data: "qa:home" }], [{ text: pl ? "📚 Biblioteka" : "📚 Library", callback_data: "qa:products" }], ...(Number(result.plan.included_chat_minutes || 0) > 0 ? [[{ text: "🤖 Quality Copilot", callback_data: "qa:assistant" }]] : [])] });
+        const ebookMap = {
+          basic: "ebook-basic-quality-foundations",
+          pro: "ebook-pro-food-safety-hazard-analysis",
+          vip: "ebook-vip-quality-manager-playbook"
+        };
+        const ebookSlug = ebookMap[result.plan.slug];
+        const ebookUrl = ebookSlug
+          ? qualityDownloadUrl(token, message.from.id, ebookSlug, locale)
+          : null;
+        const shippingUrl =
+          "https://supermarioofbot-iron-war.vercel.app/quality/shipping/";
+
+        const buttons = [
+          ...(ebookUrl
+            ? [[{
+                text: pl ? "⬇️ Pobierz e-book pakietu" : "⬇️ Download plan e-book",
+                url: ebookUrl
+              }]]
+            : []),
+          [{
+            text: pl
+              ? "📦 Podaj adres wysyłki wersji drukowanej"
+              : "📦 Enter printed-edition shipping address",
+            web_app: { url: shippingUrl }
+          }],
+          [{ text: "🏠 Quality menu", callback_data: "qa:home" }],
+          [{ text: pl ? "📚 Biblioteka" : "📚 Library", callback_data: "qa:products" }],
+          ...(Number(result.plan.included_chat_minutes || 0) > 0
+            ? [[{ text: "🤖 Quality Copilot", callback_data: "qa:assistant" }]]
+            : [])
+        ];
+
+        await sendMessage(
+          token,
+          chatId,
+          pl
+            ? `✅ Pakiet <b>${escapeHtml(planName)}</b> został aktywowany.\n\nDostęp aktywny do: <b>${new Date(result.membership.period_end).toLocaleDateString("pl-PL")}</b>.\n\nW pakiecie otrzymujesz e-book cyfrowy do pobrania oraz drukowaną wersję wysyłaną na wskazany adres. Uzupełnij adres wysyłki przyciskiem poniżej.`
+            : `✅ <b>${escapeHtml(planName)}</b> has been activated.\n\nAccess active until: <b>${new Date(result.membership.period_end).toLocaleDateString("en-GB")}</b>.\n\nYour plan includes a digital e-book download and a printed edition shipped to your selected address. Enter your shipping details below.`,
+          { inline_keyboard: buttons }
+        );
         return res.status(200).json({ ok: true });
       }
 
