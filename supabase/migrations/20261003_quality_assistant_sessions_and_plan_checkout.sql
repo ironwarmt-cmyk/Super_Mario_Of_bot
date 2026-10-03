@@ -47,3 +47,18 @@ alter table quality_assistant_messages enable row level security;
 
 revoke all on table quality_assistant_sessions, quality_assistant_messages from anon, authenticated;
 grant select, insert, update, delete on table quality_assistant_sessions, quality_assistant_messages to service_role;
+
+
+create table if not exists quality_plan_payments (
+  id uuid primary key default gen_random_uuid(),
+  telegram_user_id bigint not null references telegram_users(telegram_user_id) on delete cascade,
+  plan_id uuid not null references quality_plans(id) on delete restrict,
+  stars_paid integer not null check (stars_paid > 0),
+  telegram_payment_charge_id text not null unique,
+  telegram_subscription_charge_id text,
+  created_at timestamptz not null default now()
+);
+
+alter table quality_plan_payments enable row level security;
+revoke all on table quality_plan_payments from anon, authenticated;
+grant select, insert, update, delete on table quality_plan_payments to service_role;
