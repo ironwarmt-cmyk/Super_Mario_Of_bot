@@ -295,6 +295,129 @@ Deno.serve(async (req) => {
       return json({ ok: true, data: data || [] });
     }
 
+    if (action === "get_quality_physical_fulfillment") {
+      const telegramUserId = Number(body?.telegram_user_id);
+
+      const { data: membership, error: membershipError } = await supabase
+        .from("quality_memberships")
+        .select("*,quality_plans(*)")
+        .eq("telegram_user_id", telegramUserId)
+        .maybeSingle();
+
+      if (membershipError) throw membershipError;
+
+      if (!membership || membership.status !== "active") {
+        return json({ ok: true, data: { membership: null, fulfillment: null } });
+      }
+
+      const { data: fulfillment, error } = await supabase
+        .from("quality_physical_fulfillments")
+        .select("*")
+        .eq("telegram_user_id", telegramUserId)
+        .eq("plan_id", membership.plan_id)
+        .eq("membership_period_end", membership.period_end)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      return json({
+        ok: true,
+        data: {
+          membership,
+          fulfillment: fulfillment || null
+        }
+      });
+    }
+
+    if (action === "upsert_quality_physical_fulfillment") {
+      const user = body?.user;
+      const shipping = body?.shipping || {};
+
+      if (!user?.id) {
+        return json({ ok: false, error: "User is required" }, 400);
+      }
+
+      const { data: membership, error: membershipError } = await supabase
+        .from("quality_memberships")
+        .select("*,quality_plans(*)")
+        .eq("telegram_user_id", user.id)
+        .maybeSingle();
+
+      if (membershipError) throw membershipError;
+
+      if (
+        !membership ||
+        membership.status !== "active" ||
+        (membership.period_end &&
+          new Date(membership.period_end).getTime() <= Date.now())
+      ) {
+        return json({ ok: false, error: "Active Quality plan required" }, 403);
+      }
+
+      const planSlug = membership.quality_plans?.slug;
+      const ebookMap = {
+        basic: "ebook-basic-quality-foundations",
+        pro: "ebook-pro-food-safety-hazard-analysis",
+        vip: "ebook-vip-quality-manager-playbook"
+      };
+      const ebookSlug = ebookMap[planSlug];
+
+      if (!ebookSlug) {
+        return json({ ok: false, error: "E-book not configured for this plan" }, 400);
+      }
+
+      const clean = (value, max = 180) =>
+        String(value || "").trim().slice(0, max);
+
+      const recipientName = clean(shipping.recipient_name, 180);
+      const street1 = clean(shipping.street_line_1, 180);
+      const postalCode = clean(shipping.postal_code, 32);
+      const city = clean(shipping.city, 120);
+      const countryCode = clean(shipping.country_code || "PL", 2).toUpperCase();
+
+      if (!recipientName || !street1 || !postalCode || !city) {
+        return json({ ok: false, error: "Incomplete shipping address" }, 400);
+      }
+
+      await upsertTelegramUser(supabase, user);
+
+      const { data, error } = await supabase
+        .from("quality_physical_fulfillments")
+        .upsert(
+          {
+            telegram_user_id: user.id,
+            plan_id: membership.plan_id,
+            membership_period_end: membership.period_end,
+            ebook_slug: ebookSlug,
+            recipient_name: recipientName,
+            company_name: clean(shipping.company_name, 180) || null,
+            street_line_1: street1,
+            street_line_2: clean(shipping.street_line_2, 180) || null,
+            postal_code: postalCode,
+            city,
+            country_code: countryCode,
+            phone: clean(shipping.phone, 40) || null,
+            status: "new",
+            updated_at: new Date().toISOString()
+          },
+          {
+            onConflict: "telegram_user_id,plan_id,membership_period_end"
+          }
+        )
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return json({
+        ok: true,
+        data: {
+          fulfillment: data,
+          membership
+        }
+      });
+    }
+
     if (action === "create_quality_support_ticket") {
       const user = body?.user;
       const ticket = body?.ticket || {};
