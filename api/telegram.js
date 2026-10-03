@@ -290,8 +290,34 @@ export default async function handler(req, res) {
         await sendMessage(token, chatId, view.text, view.reply_markup);
         return res.status(200).json({ ok: true });
       }
-      if (text === "/paysupport") {
-        await sendMessage(token, chatId, "<b>Pomoc dotycząca płatności</b>\n\nNapisz, czego dotyczy problem i zachowaj potwierdzenie zakupu z Telegrama.");
+      if (text === "/support" || text === "/paysupport") {
+        const profile = await getUserProfile(message.from.id);
+        const pl = (profile?.locale || "pl") !== "en";
+        const paymentOnly = text === "/paysupport";
+        await sendMessage(
+          token,
+          chatId,
+          pl
+            ? (paymentOnly
+                ? "<b>🛟 Pomoc dotycząca płatności</b>\n\nOtwórz formularz supportu i opisz problem. Zgłoszenie zostanie zapisane na Twoim koncie. Możesz też napisać bezpośrednio na <b>qasupportmt@gmail.com</b>.\n\nNie wysyłaj haseł ani pełnych danych karty."
+                : "<b>🛟 POMOC / SUPPORT</b>\n\nMasz problem techniczny, pytanie o dostęp, uwagę do dokumentu albo pomysł na ulepszenie? Wyślij zgłoszenie w formularzu. Zostanie zapisane razem z Twoim kontem Telegram.\n\nE-mail: <b>qasupportmt@gmail.com</b>")
+            : (paymentOnly
+                ? "<b>🛟 Payment support</b>\n\nOpen the support form and describe the issue. The ticket will be linked to your Telegram account. You can also email <b>qasupportmt@gmail.com</b>.\n\nNever send passwords or full card details."
+                : "<b>🛟 HELP / SUPPORT</b>\n\nTechnical problem, access question, document feedback or an improvement idea? Submit a support ticket. It will be linked to your Telegram account.\n\nEmail: <b>qasupportmt@gmail.com</b>"),
+          {
+            inline_keyboard: [[{
+              text: pl ? "📝 Otwórz formularz supportu" : "📝 Open support form",
+              web_app: {
+                url: paymentOnly
+                  ? "https://supermarioofbot-iron-war.vercel.app/quality/support/?category=payment"
+                  : "https://supermarioofbot-iron-war.vercel.app/quality/support/"
+              }
+            }], [{
+              text: pl ? "🏠 Quality menu" : "🏠 Quality menu",
+              callback_data: "qa:home"
+            }]]
+          }
+        );
         return res.status(200).json({ ok: true });
       }
       if (text === "/start" || text === "/menu" || text === "") {
