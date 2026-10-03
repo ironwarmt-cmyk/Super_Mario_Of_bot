@@ -295,6 +295,61 @@ Deno.serve(async (req) => {
       return json({ ok: true, data: data || [] });
     }
 
+    if (action === "create_quality_support_ticket") {
+      const user = body?.user;
+      const ticket = body?.ticket || {};
+      const category = String(ticket.category || "other");
+      const allowedCategories = new Set(["technical","payment","content","idea","other"]);
+      const message = String(ticket.message || "").trim();
+      const subject = String(ticket.subject || "").trim().slice(0, 180);
+      const contactEmail = String(ticket.contact_email || "").trim().slice(0, 254);
+
+      if (!user?.id) {
+        return json({ ok: false, error: "User is required" }, 400);
+      }
+      if (!allowedCategories.has(category)) {
+        return json({ ok: false, error: "Invalid support category" }, 400);
+      }
+      if (message.length < 5 || message.length > 5000) {
+        return json({ ok: false, error: "Support message must contain 5-5000 characters" }, 400);
+      }
+
+      await upsertTelegramUser(supabase, user);
+
+      const { data, error } = await supabase
+        .from("quality_support_tickets")
+        .insert({
+          telegram_user_id: user.id,
+          category,
+          subject: subject || null,
+          message,
+          contact_email: contactEmail || null,
+          status: "new",
+          source: "telegram_webapp",
+          updated_at: new Date().toISOString()
+        })
+        .select("id,category,subject,status,created_at")
+        .single();
+
+      if (error) throw error;
+      return json({ ok: true, data });
+    }
+
+    if (action === "list_quality_support_tickets") {
+      const telegramUserId = Number(body?.telegram_user_id);
+      const limit = Math.min(20, Math.max(1, Number(body?.limit || 10)));
+
+      const { data, error } = await supabase
+        .from("quality_support_tickets")
+        .select("id,category,subject,message,status,created_at,updated_at")
+        .eq("telegram_user_id", telegramUserId)
+        .order("created_at", { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+      return json({ ok: true, data: data || [] });
+    }
+
     if (action === "save_quality_assistant_message") {
       const { data, error } = await supabase.from("quality_assistant_messages").insert({ telegram_user_id: body?.telegram_user_id, specialist: body?.specialist, role: body?.role, content: body?.content, source_meta: body?.source_meta || {} }).select().single();
       if (error) throw error;
