@@ -13,6 +13,7 @@ import {
   buildQualityAgentInstructions,
   agentDisplayName
 } from "../lib/quality-agents.js";
+import { loadQualityKnowledge } from "../lib/quality-knowledge.js";
 
 function json(res, status, data) {
   return res.status(status).json(data);
@@ -128,8 +129,13 @@ async function callQualityAI({ specialist, locale, history, message }) {
     throw new Error("OPENAI_API_KEY is not configured");
   }
 
-  const model = process.env.OPENAI_QUALITY_MODEL || "gpt-6-sol";
-  const instructions = buildQualityAgentInstructions(specialist, locale);
+  const model = process.env.OPENAI_QUALITY_MODEL || "gpt-6.1-sol";
+  const internalKnowledge = await loadQualityKnowledge(specialist);
+  const instructions =
+    buildQualityAgentInstructions(specialist, locale) +
+    "\n\nINTERNAL IMPLEMENTATION KNOWLEDGE\n" +
+    "Use the following project material as internal implementation context. It is not proof that an external legal or certification requirement is current; verify current external requirements with official sources.\n\n" +
+    internalKnowledge;
 
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
