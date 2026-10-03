@@ -11,6 +11,7 @@ import {
   getSectionMessage,
   sendMessage,
   sendStarsInvoice,
+  sendQualityPlanInvoice,
   sendStarsTokenInvoice,
   unbanChatMember
 } from "../lib/telegram.js";
@@ -50,6 +51,7 @@ import {
   getQualityTokenPack,
   getQualityWallet,
   recordQualityTokenPayment,
+  recordQualityPlanPayment,
   getQualityMembership,
   isDatabaseConfigured,
   listCommunities,
@@ -577,6 +579,28 @@ export default async function handler(req, res) {
         return res.status(200).json({ ok: true });
       }
 
+      const qualityPlanMatch = /^qa_plan:([a-z0-9-]+)$/i.exec(payload);
+      if (qualityPlanMatch) {
+        const qualityPlan = await getQualityPlan(qualityPlanMatch[1]);
+        const valid =
+          qualityPlan &&
+          qualityPlan.active &&
+          qualityPlan.checkout_enabled &&
+          query.currency === "XTR" &&
+          Number(query.total_amount) === Number(qualityPlan.price_stars);
+
+        await answerPreCheckoutQuery(
+          token,
+          query.id,
+          Boolean(valid),
+          valid
+            ? undefined
+            : "Pakiet Quality jest niedostępny albo jego cena się zmieniła."
+        );
+
+        return res.status(200).json({ ok: true });
+      }
+
       const planMatch = /^plan:([0-9a-f-]{36})$/i.exec(payload);
 
       if (!planMatch) {
@@ -653,6 +677,39 @@ export default async function handler(req, res) {
         const plans = await listQualityPlans();
         const view = renderQualityPlans(plans, profile?.locale || "pl");
         await editMessage(token, chatId, messageId, view.text, view.reply_markup);
+        return res.status(200).json({ ok: true });
+      }
+
+      if (action.startsWith("qa:buyplan:")) {
+        const slug = action.split(":")[2];
+        const [profile, plan] = await Promise.all([
+          getUserProfile(callback.from.id),
+          getQualityPlan(slug)
+        ]);
+
+        if (!plan || !plan.checkout_enabled || !plan.price_stars) {
+          await editMessage(
+            token,
+            chatId,
+            messageId,
+            profile?.locale === "en"
+              ? "This plan is temporarily unavailable."
+              : "Ten pakiet jest chwilowo niedostępny.",
+            {
+              inline_keyboard: [[
+                { text: profile?.locale === "en" ? "⬅️ Back" : "⬅️ Wróć", callback_data: "qa:plans" }
+              ]]
+            }
+          );
+          return res.status(200).json({ ok: true });
+        }
+
+        await sendQualityPlanInvoice(
+          token,
+          chatId,
+          plan,
+          profile?.locale || "pl"
+        );
         return res.status(200).json({ ok: true });
       }
 
@@ -1196,6 +1253,37 @@ export default async function handler(req, res) {
         return res.status(200).json({ ok: true });
       }
 
+      if (/^qa_plan:[a-z0-9-]+$/i.test(payload)) {
+        const result = await recordQualityPlanPayment(
+          message.from,
+          payment
+        );
+
+        const profile = await getUserProfile(message.from.id);
+        const pl = (profile?.locale || "pl") !== "en";
+        const planName = pl
+          ? result.plan.name_pl
+          : result.plan.name_en;
+
+        await sendMessage(
+          token,
+          chatId,
+          pl
+            ? `✅ Pakiet <b>${escapeHtml(planName)}</b> został aktywowany.\n\nCena referencyjna: <b>${Number(result.plan.display_price_pln).toFixed(2).replace(".", ",")} zł / miesiąc</b>.\nDostęp aktywny do: <b>${new Date(result.membership.period_end).toLocaleDateString("pl-PL")}</b>.`
+            : `✅ <b>${escapeHtml(planName)}</b> has been activated.\n\nReference price: <b>PLN ${Number(result.plan.display_price_pln).toFixed(2)} / month</b>.\nAccess active until: <b>${new Date(result.membership.period_end).toLocaleDateString("en-GB")}</b>.`,
+          {
+            inline_keyboard: [
+              [{ text: pl ? "🏠 Quality menu" : "🏠 Quality menu", callback_data: "qa:home" }],
+              ...(Number(result.plan.included_chat_minutes || 0) > 0
+                ? [[{ text: pl ? "🤖 Otwórz asystenta" : "🤖 Open assistant", callback_data: "qa:assistant" }]]
+                : [])
+            ]
+          }
+        );
+
+        return res.status(200).json({ ok: true });
+      }
+
       const result = await recordSuccessfulPayment(
         message.from,
         payment
@@ -1219,6 +1307,33 @@ export default async function handler(req, res) {
           : undefined
       );
 
+      return res.status(200).json({ ok: true });
+    }
+
+    const qualityPlanDeepLink = /^\/start\s+qa_plan_([a-z0-9-]+)$/i.exec(text);
+    if (qualityPlanDeepLink) {
+      const [profile, plan] = await Promise.all([
+        getUserProfile(message.from.id),
+        getQualityPlan(qualityPlanDeepLink[1])
+      ]);
+
+      if (!plan || !plan.checkout_enabled || !plan.price_stars) {
+        await sendMessage(
+          token,
+          chatId,
+          profile?.locale === "en"
+            ? "This plan is temporarily unavailable."
+            : "Ten pakiet jest chwilowo niedostępny."
+        );
+        return res.status(200).json({ ok: true });
+      }
+
+      await sendQualityPlanInvoice(
+        token,
+        chatId,
+        plan,
+        profile?.locale || "pl"
+      );
       return res.status(200).json({ ok: true });
     }
 
