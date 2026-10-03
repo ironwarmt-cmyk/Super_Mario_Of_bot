@@ -113,7 +113,7 @@ async function configureBotProfile(token) {
       type: "web_app",
       text: "Quality Hub",
       web_app: {
-        url: "https://supermarioofbot-iron-war.vercel.app/quality/"
+        url: "https://supermarioofbot-iron-war.vercel.app/quality/?v=20261003-0543"
       }
     }
   });
