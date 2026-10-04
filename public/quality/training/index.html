@@ -46,18 +46,26 @@ let progress=JSON.parse(localStorage.getItem(key)||"{}");
 function save(){localStorage.setItem(key,JSON.stringify(progress));paintProgress()}
 function paintProgress(){
  const all=catalog.flatMap(c=>c.mods.map((_,i)=>c.id+":"+i));
- const done=all.filter(k=>progress[k]).length;
- doneCount.textContent=done;globalBar.style.width=(all.length?Math.round(done/all.length*100):0)+"%";
+ let completed=0;
+ catalog.forEach(c=>{
+   const state=JSON.parse(localStorage.getItem("qa_course_"+c.id+"_v1")||'{"done":{}}');
+   completed+=Object.values(state.done||{}).filter(Boolean).length;
+ });
+ const manual=all.filter(k=>progress[k]).length;
+ const done=Math.max(completed,manual);
+ doneCount.textContent=done;globalBar.style.width=(all.length?Math.min(100,Math.round(done/all.length*100)):0)+"%";
 }
 function render(){
  courses.innerHTML=catalog.map(c=>`<article class="course" data-required-plan="${c.tier}" data-feature="${c.title}">
    <div class="qa-lock-badge-placeholder"></div><div class="eyebrow">${c.level}</div><h3>${c.title}</h3>
    <div class="course-meta"><span>${c.time}</span><span>${c.mods.length} modułów</span></div>
    <p>${c.mods.slice(0,2).join(" · ")}…</p>
-   <button class="qa-btn course-toggle" type="button">Pokaż program</button>
+   <a class="qa-btn course-start" href="/quality/training/course/?id=${encodeURIComponent(c.id)}">Rozpocznij kurs</a>
+   <button class="qa-btn ghost course-toggle" type="button">Pokaż program</button>
    <div class="modules">${c.mods.map((m,i)=>`<label class="module"><input type="checkbox" data-progress="${c.id}:${i}" ${progress[c.id+":"+i]?"checked":""}><span>${m}</span></label>`).join("")}</div>
  </article>`).join("");
  courses.querySelectorAll(".course-toggle").forEach(b=>b.onclick=e=>{const card=b.closest(".course");if(card.classList.contains("qa-locked"))return;card.classList.toggle("open");b.textContent=card.classList.contains("open")?"Ukryj program":"Pokaż program"});
+ courses.querySelectorAll(".course-start").forEach(a=>a.addEventListener("click",e=>{const card=a.closest(".course");if(card.classList.contains("qa-locked")){e.preventDefault();}}));
  courses.querySelectorAll("[data-progress]").forEach(x=>x.onchange=()=>{progress[x.dataset.progress]=x.checked;save()});
  if(window.QAExperience)window.QAExperience.applyPlan(window.QAExperience.currentPlan(),window.QAExperience.dashboard());
 }
