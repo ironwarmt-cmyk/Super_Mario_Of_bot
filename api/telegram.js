@@ -71,6 +71,146 @@ async function sendHome(token, chatId, user, edit = null) {
   return sendMessage(token, chatId, view.text, view.reply_markup);
 }
 
+const BOT_CENTER_ENDPOINTS = {
+  marioHealth: "https://mario-t-market-control-production.up.railway.app/health",
+  marioReview: "https://mario-t-market-control-production.up.railway.app/management-review",
+  andyHealth: "https://andy-b-quality-control-production.up.railway.app/health",
+  andyCapa: "https://andy-b-quality-control-production.up.railway.app/coverage-capa",
+  andySignals: "https://andy-b-quality-control-production.up.railway.app/worker-signals/status",
+  professorHealth: "https://crypto-360-paper-lab-production.up.railway.app/professor/health",
+  professorSoak: "https://crypto-360-paper-lab-production.up.railway.app/professor/soak",
+  professorSources: "https://crypto-360-paper-lab-production.up.railway.app/professor/source-coverage",
+  swarmHealth: "https://swarm-paper-runner-production.up.railway.app/health"
+};
+
+async function botCenterRead(url) {
+  try {
+    const r = await fetch(url, {
+      headers: { "user-agent":"telegram-bot-center/1.0" },
+      signal: AbortSignal.timeout(3500)
+    });
+    return { ok:r.ok, body:await r.json().catch(() => null) };
+  } catch (error) {
+    return { ok:false, body:null, error:String(error) };
+  }
+}
+
+function botCenterState(v) {
+  if (!v?.ok) return "🔴 DOWN";
+  if (v.body?.ok === false) return "🟡 DEGRADED";
+  return "🟢 OK";
+}
+
+function botCenterPct(n,d) {
+  return d > 0 ? Math.max(0, Math.min(100, Math.round((n/d)*1000)/10)) : 0;
+}
+
+async function getBotCenterSnapshot() {
+  const keys = Object.keys(BOT_CENTER_ENDPOINTS);
+  const vals = await Promise.all(keys.map(k => botCenterRead(BOT_CENTER_ENDPOINTS[k])));
+  const d = Object.fromEntries(keys.map((k,i) => [k, vals[i]]));
+  const soak = d.professorSoak.body || {};
+  const source = d.professorSources.body || {};
+  const capa = d.andyCapa.body || {};
+  const signals = d.andySignals.body || {};
+  const review = d.marioReview.body || {};
+
+  const services = {
+    mario: botCenterState(d.marioHealth),
+    andy: botCenterState(d.andyHealth),
+    professor: botCenterState(d.professorHealth),
+    workers: botCenterState(d.swarmHealth)
+  };
+
+  const soakPct = botCenterPct(Number(soak.elapsedMs||0), Number(soak.targetMs||0));
+  const capaStatus = String(capa.status || "UNKNOWN").toUpperCase();
+  const reviewStatus = String(review.strategicStatus || review.status || "UNKNOWN").toUpperCase();
+  const gate = String(source.sourceCoverageGate || source.gate || "UNKNOWN").toUpperCase();
+
+  const blockers = [];
+  if (Object.values(services).some(v => v.includes("DOWN"))) blockers.push("usługa DOWN");
+  if (soakPct < 100) blockers.push("soak 24 h w toku");
+  if (capaStatus === "OPEN") blockers.push("CAPA otwarta");
+  if (reviewStatus === "OFF_COURSE") blockers.push("management review OFF_COURSE");
+  if (gate !== "CLOSED" && gate !== "UNKNOWN") blockers.push("source gate "+gate);
+
+  return {
+    services,
+    soak: {
+      status:String(soak.status || "UNKNOWN"),
+      progressPct:soakPct,
+      events:Number(soak.events || 0),
+      cycles:Number(soak.cycles || 0),
+      restarts:Number(soak.persistentRestarts || 0),
+      reconnects:Number(soak.reconnects || 0),
+      passNow:Boolean(soak.passNow)
+    },
+    coverage: {
+      gate,
+      qualified:Number(source.qualified || source.counts?.QUALIFIED || 0),
+      partial:Number(source.partial || source.counts?.PARTIAL || 0),
+      unqualified:Number(source.unqualified || source.counts?.UNQUALIFIED || 0)
+    },
+    capa: { status:capaStatus, id:capa.id || null },
+    review: { status:reviewStatus },
+    signals: {
+      queued:Number(signals.queued || 0),
+      received:Number(signals.audit?.received || 0),
+      forwarded:Number(signals.audit?.forwarded || 0),
+      rejected:Number(signals.audit?.rejected || 0),
+      duplicates:Number(signals.audit?.duplicates || 0),
+      lastAggregationAt:signals.audit?.lastAggregationAt || null
+    },
+    decision:blockers.length ? "HOLD" : "GO_PAPER",
+    blockers,
+    generatedAt:new Date().toISOString()
+  };
+}
+
+function renderBotCenter(s) {
+  const nf = new Intl.NumberFormat("pl-PL");
+  const decisionIcon = s.decision === "GO_PAPER" ? "🟢" : "🟡";
+  const lines = [
+    "<b>🎛 CENTRUM BOTÓW</b>",
+    "<i>research / paper only</i>",
+    "",
+    decisionIcon+" <b>"+escapeHtml(s.decision)+"</b>",
+    s.blockers.length ? "Blockery: "+escapeHtml(s.blockers.join(" • ")) : "Brak aktywnych blockerów badawczych.",
+    "",
+    "<b>Organizacja</b>",
+    "Mario: "+s.services.mario,
+    "Andy: "+s.services.andy,
+    "Profesor: "+s.services.professor,
+    "Workerzy: "+s.services.workers,
+    "",
+    "<b>Profesor — soak 24 h</b>",
+    "Postęp: <b>"+s.soak.progressPct.toFixed(1)+"%</b> • status: "+escapeHtml(s.soak.status),
+    "Zdarzenia: <b>"+nf.format(s.soak.events)+"</b> • cykle: "+nf.format(s.soak.cycles),
+    "Restarty / reconnecty: "+nf.format(s.soak.restarts)+" / "+nf.format(s.soak.reconnects),
+    "",
+    "<b>Jakość</b>",
+    "Source gate: <b>"+escapeHtml(s.coverage.gate)+"</b>",
+    "Źródła: Q "+nf.format(s.coverage.qualified)+" • P "+nf.format(s.coverage.partial)+" • U "+nf.format(s.coverage.unqualified),
+    "CAPA: <b>"+escapeHtml(s.capa.status)+"</b>"+(s.capa.id?" • "+escapeHtml(s.capa.id):""),
+    "Management review: <b>"+escapeHtml(s.review.status)+"</b>",
+    "",
+    "<b>Sygnały workerów ≥2% / 5–10 min</b>",
+    "Odebrane: "+nf.format(s.signals.received)+" • Profesor: "+nf.format(s.signals.forwarded),
+    "Odrzucone: "+nf.format(s.signals.rejected)+" • duplikaty: "+nf.format(s.signals.duplicates),
+    "Kolejka: "+nf.format(s.signals.queued),
+    "",
+    "Aktualizacja: "+new Date(s.generatedAt).toLocaleString("pl-PL")
+  ];
+  return {
+    text:lines.join("\n"),
+    reply_markup:{
+      inline_keyboard:[
+        [{ text:"🔄 Odśwież", callback_data:"center:refresh" }]
+      ]
+    }
+  };
+}
+
 export default async function handler(req, res) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
 
@@ -251,6 +391,16 @@ export default async function handler(req, res) {
       const locale = profile?.locale || "pl";
       const pl = locale !== "en";
 
+      if (action === "center:refresh") {
+        if (!profile?.is_admin) {
+          await editMessage(token, chatId, messageId, "⛔ Brak dostępu do Centrum Botów.");
+          return res.status(200).json({ ok:true });
+        }
+        const view = renderBotCenter(await getBotCenterSnapshot());
+        await editMessage(token, chatId, messageId, view.text, view.reply_markup);
+        return res.status(200).json({ ok:true });
+      }
+
       if (action === "qa:home" || action === "home") {
         await sendHome(token, chatId, cb.from, messageId);
         return res.status(200).json({ ok: true });
@@ -398,6 +548,17 @@ export default async function handler(req, res) {
         await sendMessage(token, chatId, view.text, view.reply_markup);
         return res.status(200).json({ ok: true });
       }
+      if (text === "/centrum" || text === "/center") {
+        const profile = await getUserProfile(message.from.id);
+        if (!profile?.is_admin) {
+          await sendMessage(token, chatId, "⛔ Brak dostępu do Centrum Botów.");
+          return res.status(200).json({ ok:true });
+        }
+        const view = renderBotCenter(await getBotCenterSnapshot());
+        await sendMessage(token, chatId, view.text, view.reply_markup);
+        return res.status(200).json({ ok:true });
+      }
+
       if (text === "/ksiegowa" || text === "/accountant") {
         const profile = await getUserProfile(message.from.id);
         const pl = (profile?.locale || "pl") !== "en";
