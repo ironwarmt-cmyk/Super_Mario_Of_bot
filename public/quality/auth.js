@@ -21,17 +21,23 @@
     return session;
   }
   async function proxy(action,payload={}){
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),12000);
     try{
       const r=await fetch("/api/quality-account?mode=web-auth",{
         method:"POST",
         headers:{"content-type":"application/json"},
-        body:JSON.stringify({action,...payload})
+        body:JSON.stringify({action,...payload}),
+        signal:controller.signal
       });
       const d=await r.json().catch(()=>({ok:false,error:"Invalid server response"}));
       if(!r.ok||!d.ok)return {data:null,error:{message:d.error||("HTTP "+r.status),code:d.code||String(r.status)}};
       return {data:d.data,error:null};
     }catch(e){
-      return {data:null,error:{message:"Brak połączenia z serwerem logowania.",code:"network"}};
+      const timeout=e?.name==="AbortError";
+      return {data:null,error:{message:timeout?"Serwer logowania nie odpowiedział w ciągu 12 sekund. Spróbuj ponownie.":"Brak połączenia z serwerem logowania.",code:timeout?"timeout":"network"}};
+    }finally{
+      clearTimeout(timer);
     }
   }
   function consumeRedirect(){
