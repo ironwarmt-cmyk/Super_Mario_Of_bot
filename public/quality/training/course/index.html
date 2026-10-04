@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Kurs — Quality Assurance Support</title>
+<script src="/quality/auth.js"></script>
+<link rel="stylesheet" href="/quality/theme.css?v=20261005-premium">
+<script defer src="/quality/experience.js?v=20261005-1"></script>
+<style>
+.course-app{max-width:1180px;margin:auto;padding:22px 16px 110px}.topline{display:flex;justify-content:space-between;gap:12px;align-items:center}.topline a{color:var(--text);text-decoration:none}.course-head{padding:34px 0 18px}.course-layout{display:grid;grid-template-columns:300px 1fr;gap:16px}.side,.lesson{border:1px solid var(--line);border-radius:22px;background:var(--panel);padding:18px}.side{height:max-content;position:sticky;top:14px}.module-btn{width:100%;text-align:left;margin:6px 0;padding:11px;border-radius:13px;border:1px solid var(--line);background:#ffffff06;color:var(--text)}.module-btn.active{border-color:#58d9ff;background:#58d9ff12}.module-btn.done:after{content:" ✓";color:#55efb0}.lesson h2{font-size:30px}.lesson-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}.learning-card{padding:15px;border:1px solid #ffffff16;border-radius:16px;background:#ffffff06}.learning-card b{display:block;margin-bottom:6px}.lesson ul{line-height:1.65;color:var(--muted)}.quizbox{margin-top:18px;padding:17px;border-radius:18px;border:1px solid #8f6bff55;background:#8f6bff0b}.answers{display:grid;gap:8px;margin-top:10px}.answers button{padding:12px;text-align:left;border-radius:12px;border:1px solid var(--line);background:#100d21;color:var(--text)}.answers button.good{border-color:#55efb0;background:#55efb013}.answers button.bad{border-color:#ff6b8a;background:#ff6b8a10}.nextrow{display:flex;justify-content:space-between;gap:10px;margin-top:18px}.nextrow button{flex:1}.locked-screen{padding:34px;text-align:center;border:1px solid #ffd36b55;border-radius:22px;background:linear-gradient(135deg,#ffd36b0c,#58d9ff08)}.progressline{height:8px;border-radius:999px;background:#ffffff0b;overflow:hidden;margin:12px 0}.progressline i{display:block;height:100%;background:linear-gradient(90deg,#58d9ff,#ff5bd8,#ffd36b);width:0}.finish{padding:20px;border-radius:18px;border:1px solid #55efb055;background:#55efb00b;margin-top:18px}@media(max-width:820px){.course-layout{grid-template-columns:1fr}.side{position:static}.lesson-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body data-build="2026-10-05-course">
+<div class="course-app">
+ <div class="topline"><div><div class="brand">QUALITY ASSURANCE SUPPORT</div><b>AKADEMIA JAKOŚCI</b></div><a href="/quality/training/">← Wszystkie kursy</a></div>
+ <section class="course-head"><div class="eyebrow" id="tier">—</div><h1 id="courseTitle">Ładowanie kursu…</h1><p id="courseLead"></p><div class="progressline"><i id="courseProgress"></i></div><div class="small" id="progressLabel"></div></section>
+ <div id="gate"></div>
+ <div class="course-layout" id="courseLayout" hidden>
+  <aside class="side"><div class="eyebrow">MODUŁY</div><div id="moduleNav"></div></aside>
+  <main class="lesson" id="lesson"></main>
+ </div>
+</div>
+<script>
+const courses={
+ hygiene:{tier:"free",title:"Higiena i GHP/GMP",lead:"Codzienne zachowania, czyszczenie, strefowanie i szybkie reakcje na niezgodności.",mods:[
+  "Higiena osobista i odzież","Mycie i dezynfekcja","Strefowanie i przepływy","Ćwiczenie: znajdź niezgodność"
+ ],quiz:[
+  ["Pracownik dotknął telefonu i wraca do kontaktu z żywnością. Najlepsza reakcja?",["Kontynuować, jeśli telefon był czysty","Wykonać higienę rąk zgodnie z procedurą przed powrotem do pracy","Założyć drugą parę rękawic bez mycia"],1],
+  ["Po czyszczeniu widoczne są resztki produktu. Co oznacza weryfikacja?",["Sprawdzenie, czy rezultat czyszczenia spełnia wymaganie","Samo podpisanie formularza","Przesunięcie kontroli na następny dzień"],0]
+ ]},
+ haccp:{tier:"basic",title:"HACCP od zera",lead:"Od zespołu i opisu produktu do analizy zagrożeń, środków kontroli i weryfikacji.",mods:[
+  "Zespół i opis produktu","Schemat procesu i weryfikacja","Analiza zagrożeń","CCP/OPRP i limity","Monitoring i działania","Walidacja i weryfikacja"
+ ],quiz:[
+  ["Dlaczego schemat procesu trzeba potwierdzić w zakładzie?",["Aby sprawdzić, czy dokument odzwierciedla rzeczywisty przepływ","Tylko dla estetyki dokumentacji","Aby zmniejszyć liczbę etapów"],0],
+  ["Wynik monitoringu CCP jest poza limitem krytycznym. Co dalej?",["Powtórzyć pomiar i usunąć pierwszy wynik","Uruchomić zdefiniowane działania, zabezpieczyć produkt i udokumentować decyzję","Kontynuować do końca zmiany"],1]
+ ]},
+ allergens:{tier:"basic",title:"Alergeny w praktyce",lead:"Mapa alergenów, separacja, czyszczenie, rework i prawidłowe zarządzanie zmianą.",mods:[
+  "Mapa alergenów","Separacja i czyszczenie","Rework i zmiany produktu","Etykiety i deklaracje"
+ ],quiz:[
+  ["Zmiana receptury wprowadza nowy alergen. Co powinno być ocenione przed startem?",["Tylko cena surowca","Etykieta, przepływ, czyszczenie, specyfikacja i ryzyko cross-contact","Wyłącznie magazyn"],1],
+  ["Walidacja czyszczenia alergenowego ma potwierdzić:",["Że metoda jest zdolna osiągnąć wymagany rezultat","Że formularz został podpisany","Że linia wygląda czysto"],0]
+ ]},
+ brcgs:{tier:"pro",title:"BRCGS Food Safety — praktycznie",lead:"Praktyczna gotowość systemu, dowodów, procesów i odpowiedzialności przed audytem.",mods:[
+  "Kontekst i commitment","HACCP i plan bezpieczeństwa","Site standards","Product & process control","Personnel","Audit evidence workshop"
+ ],quiz:[
+  ["Najmocniejszy dowód wdrożenia procedury to:",["Sama procedura w PDF","Spójne zapisy, obserwacja procesu i rozumienie przez pracowników","Kolorowa prezentacja"],1],
+  ["Powtarzalna niezgodność z audytów wskazuje przede wszystkim na potrzebę:",["Zmiany audytora","Oceny przyczyny i skuteczności CAPA","Usunięcia poprzednich raportów"],1]
+ ]},
+ ifs:{tier:"pro",title:"IFS Food — podejście procesowe",lead:"Zarządzanie procesem, ryzykiem, zasobami, pomiarami i działaniami doskonalącymi.",mods:[
+  "Governance","HACCP","Resource management","Operational processes","Measurements & CAPA","Scoring workshop"
+ ],quiz:[
+  ["Podejście procesowe wymaga przede wszystkim:",["Patrzenia na wejścia, działania, odpowiedzialność i wynik procesu","Oceniania wyłącznie dokumentów","Unikania wskaźników"],0],
+  ["CAPA jest skuteczna, gdy:",["Została zamknięta w terminie","Usunięto przyczynę i potwierdzono brak nawrotu","Ma dużo załączników"],1]
+ ]},
+ audit:{tier:"pro",title:"Audyt wewnętrzny",lead:"Planowanie, dobór próby, pytania, dowody, klasyfikacja i raportowanie ustaleń.",mods:[
+  "Program audytów","Plan i próbka","Pytania audytowe","Dowody obiektywne","Niezgodności i raport"
+ ],quiz:[
+  ["Dobra próbka audytowa powinna:",["Być zawsze największa możliwa","Być dobrana do ryzyka i pozwalać ocenić działanie procesu","Obejmować tylko dokumenty"],1],
+  ["Niezgodność powinna odnosić się do:",["Opinii audytora","Wymagania i obiektywnego dowodu","Preferencji kierownika"],1]
+ ]},
+ capa:{tier:"pro",title:"RCA i CAPA bez pozorów",lead:"Od korekty do przyczyny systemowej, planu działania i weryfikacji skuteczności.",mods:[
+  "Korekta vs działanie korygujące","5 Why / Ishikawa","Przyczyna systemowa","Plan CAPA","Weryfikacja skuteczności"
+ ],quiz:[
+  ["Korekta to:",["Usunięcie wykrytego problemu tu i teraz","Zawsze pełna analiza systemowa","Audyt dostawcy"],0],
+  ["Jeżeli problem wraca po kilku tygodniach, oznacza to zwykle, że:",["Skuteczność CAPA wymaga ponownej oceny","Należy podnieść limit akceptacji","Trzeba usunąć trend z raportu"],0]
+ ]},
+ complaints:{tier:"vip",title:"Reklamacje i trendy",lead:"Triaging, ocena ryzyka, trendowanie, odpowiedź klientowi i decyzje CAPA.",mods:[
+  "Triaging reklamacji","Ryzyko i eskalacja","Trend analysis","Kontakt z klientem","CAPA i effectiveness"
+ ],quiz:[
+  ["Pierwszy krok przy reklamacji potencjalnie dotyczącej bezpieczeństwa to:",["Ocena ryzyka i właściwa eskalacja","Odpowiedź marketingowa","Zamknięcie sprawy bez danych"],0],
+  ["Trend reklamacji staje się wartościowy, gdy:",["Łączy dane w kategorie i pokazuje wzorce w czasie","Pokazuje tylko liczbę wszystkich skarg","Nie rozróżnia produktów"],0]
+ ]},
+ suppliers:{tier:"vip",title:"Dostawcy i surowce",lead:"Risk-based approval, specyfikacje, monitoring, badania i eskalacja problemów dostawcy.",mods:[
+  "Risk-based approval","Specyfikacje","Monitoring performance","COA i badania","Eskalacja dostawcy"
+ ],quiz:[
+  ["Częstotliwość monitoringu dostawcy powinna wynikać głównie z:",["Ryzyka surowca i wyników dostawcy","Odległości od zakładu","Koloru opakowania"],0],
+  ["COA powinien być traktowany jako:",["Jeden z elementów systemu kontroli, nie automatyczna gwarancja zgodności","Zastępstwo wszystkich badań","Dokument marketingowy"],0]
+ ]},
+ defense:{tier:"vip",title:"Food Defense & Food Fraud",lead:"Ocena podatności, scenariusze, środki ograniczające i praktyczne ćwiczenia incydentowe.",mods:[
+  "VACCP/TACCP","Ocena podatności","Mitigations","Incident drill","Annual review"
+ ],quiz:[
+  ["Food Defense koncentruje się przede wszystkim na:",["Celowym działaniu mogącym zaszkodzić produktowi lub ludziom","Naturalnym zużyciu maszyn","Wyłącznie kosztach surowca"],0],
+  ["Dobra kontrola podatności powinna być:",["Powiązana z realnym scenariuszem i weryfikowana","Zawsze identyczna dla każdej firmy","Tylko opisowa"],0]
+ ]},
+ leadership:{tier:"vip",title:"Quality Manager 360°",lead:"KPI, przegląd zarządzania, zmiany technologiczne, kryzys i komunikacja z zarządem.",mods:[
+  "KPI i priorytety","Management review","Zmiana technologiczna","Nowa linia / maszyna","Kryzys i recall","Komunikacja z zarządem"
+ ],quiz:[
+  ["Dobry KPI jakości powinien:",["Pomagać podejmować decyzje i pokazywać trend","Być jak największą liczbą","Nie mieć właściciela"],0],
+  ["Przed uruchomieniem nowej linii należy ocenić m.in.:",["Ryzyka procesu, walidację, higienę, przepływy i wymagane dokumenty","Tylko termin montażu","Wyłącznie wydajność"],0]
+ ]}
+};
+const rank={free:0,basic:1,pro:2,vip:3};
+const params=new URLSearchParams(location.search);const id=params.get("id")||"hygiene";const course=courses[id]||courses.hygiene;
+tier.textContent=course.tier.toUpperCase();courseTitle.textContent=course.title;courseLead.textContent=course.lead;document.title=course.title+" — Quality Assurance Support";
+const storageKey="qa_course_"+id+"_v1";let state=JSON.parse(localStorage.getItem(storageKey)||'{"done":{},"current":0}');let current=Math.min(Number(state.current||0),course.mods.length-1);
+function save(){state.current=current;localStorage.setItem(storageKey,JSON.stringify(state));paintProgress()}
+function paintProgress(){const done=Object.values(state.done||{}).filter(Boolean).length;courseProgress.style.width=Math.round(done/course.mods.length*100)+"%";progressLabel.textContent=done+" / "+course.mods.length+" modułów ukończonych"}
+function lessonText(title){
+ return {
+  principle:"Najpierw ustal, jakie ryzyko lub cel kontrolny stoi za tym obszarem. W jakości nie chodzi o sam formularz, lecz o działający proces.",
+  practice:"Przejdź przez rzeczywisty proces, porównaj praktykę z ustalonym sposobem działania i sprawdź reakcję na odchylenia.",
+  evidence:"Szukaj spójności pomiędzy zapisem, obserwacją, rozmową z pracownikiem i wynikiem procesu.",
+  pitfall:"Najczęstszy błąd to uznanie obecności dokumentu za dowód skuteczności bez sprawdzenia wykonania."
+ };
+}
+function renderNav(){moduleNav.innerHTML=course.mods.map((m,i)=>'<button class="module-btn '+(i===current?'active ':'')+(state.done?.[i]?'done':'')+'" data-i="'+i+'">'+(i+1)+'. '+m+'</button>').join("");moduleNav.querySelectorAll("button").forEach(b=>b.onclick=()=>{current=Number(b.dataset.i);save();renderLesson()})}
+function renderLesson(){
+ const title=course.mods[current],t=lessonText(title),q=course.quiz[current%course.quiz.length];
+ lesson.innerHTML='<div class="eyebrow">MODUŁ '+(current+1)+'</div><h2>'+title+'</h2><p>'+t.principle+'</p><div class="lesson-grid"><div class="learning-card"><b>Co zrobić w praktyce</b><span>'+t.practice+'</span></div><div class="learning-card"><b>Jakiego dowodu szukać</b><span>'+t.evidence+'</span></div></div><div class="learning-card"><b>Pułapka</b><span>'+t.pitfall+'</span></div><div class="quizbox"><div class="eyebrow">SPRAWDŹ WIEDZĘ</div><h3>'+q[0]+'</h3><div class="answers">'+q[1].map((a,i)=>'<button data-a="'+i+'">'+a+'</button>').join("")+'</div><div id="quizFeedback" class="small" style="margin-top:9px"></div></div><div class="nextrow"><button class="qa-btn ghost" id="prevBtn" '+(current===0?'disabled':'')+'>← Poprzedni</button><button class="qa-btn" id="nextBtn">'+(current===course.mods.length-1?'Zakończ kurs':'Następny →')+'</button></div>';
+ lesson.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{const choice=Number(b.dataset.a),ok=choice===q[2];lesson.querySelectorAll("[data-a]").forEach((x,i)=>{x.disabled=true;if(i===q[2])x.classList.add("good");else if(i===choice)x.classList.add("bad")});quizFeedback.textContent=ok?"Dobra decyzja. Moduł zaliczony.":"Sprawdź zaznaczoną prawidłową odpowiedź i uzasadnij sobie, dlaczego pozostałe opcje są słabsze.";if(ok){state.done=state.done||{};state.done[current]=true;save();renderNav()}};
+ prevBtn.onclick=()=>{if(current>0){current--;save();renderNav();renderLesson()}};
+ nextBtn.onclick=()=>{if(current<course.mods.length-1){current++;save();renderNav();renderLesson()}else{state.done=state.done||{};state.done[current]=true;save();lesson.innerHTML='<div class="finish"><div class="eyebrow">KURS UKOŃCZONY</div><h2>Ścieżka zakończona.</h2><p>Twój progres został zapisany na tym urządzeniu. Wróć do Akademii i wybierz kolejny kurs.</p><a class="qa-btn" href="/quality/training/">Wróć do Akademii</a></div>';renderNav()}};
+}
+async function start(){
+ await window.QAExperience.ready;
+ const userRank=window.QAExperience.planRank(),needed=rank[course.tier]??0;
+ if(userRank<needed){gate.innerHTML='<div class="locked-screen"><div class="eyebrow">DOSTĘP '+course.tier.toUpperCase()+'</div><h2>Ten kurs jest widoczny jako zapowiedź.</h2><p>Odblokuj odpowiedni pakiet, aby rozpocząć moduły i zapisywać postęp.</p><a class="qa-btn" href="/app#plans">Zobacz pakiety</a></div>';return}
+ courseLayout.hidden=false;paintProgress();renderNav();renderLesson();
+}
+start();
+</script>
+</body></html>
