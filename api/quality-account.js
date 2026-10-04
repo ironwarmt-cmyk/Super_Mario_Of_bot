@@ -2,7 +2,9 @@ import crypto from "node:crypto";
 import {
   getQualityCustomerProfile,
   upsertQualityCustomerProfile,
-  getUserProfile
+  getUserProfile,
+  getQualityLegalBundle,
+  createQualityCheckoutConsent
 } from "../lib/db.js";
 
 function safeEqualHex(a, b) {
@@ -64,17 +66,36 @@ export default async function handler(req, res) {
         getUserProfile(user.id)
       ]);
 
+      const locale = telegramProfile?.locale || "pl";
+      const legal = await getQualityLegalBundle(locale);
+
       return res.status(200).json({
         ok:true,
-        locale: telegramProfile?.locale || "pl",
+        locale,
         telegram: {
           id:user.id,
           first_name:user.first_name || "",
           last_name:user.last_name || "",
           username:user.username || ""
         },
-        profile
+        profile,
+        legal
       });
+    }
+
+    if (req.body?.action === "legal_consent") {
+      const locale = req.body?.locale === "en" ? "en" : "pl";
+      const purchaseKind = String(req.body?.purchase_kind || "");
+      const purchaseReference = String(req.body?.purchase_reference || "");
+      const consent = await createQualityCheckoutConsent(
+        user,
+        purchaseKind,
+        purchaseReference,
+        req.body?.consent || {},
+        locale,
+        "telegram_webapp"
+      );
+      return res.status(200).json({ ok:true, consent });
     }
 
     const profile = await upsertQualityCustomerProfile(user, {

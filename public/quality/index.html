@@ -58,32 +58,12 @@
 </div>
 <script>
 function setLang(lang){document.documentElement.lang=lang;document.querySelectorAll('[data-'+lang+']').forEach(el=>{el.textContent=el.getAttribute('data-'+lang)});localStorage.setItem('qa_lang',lang)}setLang(localStorage.getItem('qa_lang')||new URLSearchParams(location.search).get('lang')||'pl');try{const tg=window.Telegram?.WebApp;tg?.ready();tg?.expand();document.querySelectorAll('.plan-buy').forEach(link=>{
-  link.addEventListener('click',async e=>{
+  link.addEventListener('click',e=>{
     const slug=link.dataset.plan;
-    if(tg?.initData&&tg?.openInvoice&&slug){
+    if(tg?.initData&&slug){
       e.preventDefault();
-      const original=link.textContent;
-      link.textContent=document.documentElement.lang==='en'?'Opening payment…':'Otwieram płatność…';
-      try{
-        const r=await fetch('/api/quality-plan-invoice',{
-          method:'POST',
-          headers:{'content-type':'application/json','x-telegram-init-data':tg.initData},
-          body:JSON.stringify({slug})
-        });
-        const data=await r.json();
-        if(!r.ok||!data?.ok||!data?.invoice_link) throw new Error(data?.error||'Invoice error');
-        tg.openInvoice(data.invoice_link,status=>{
-          if(status==='paid'){
-            link.textContent=document.documentElement.lang==='en'?'✅ PAID — ACTIVATING':'✅ OPŁACONO — AKTYWUJĘ';
-            setTimeout(()=>location.reload(),1600);
-          }else{
-            link.textContent=original;
-          }
-        });
-      }catch(_){
-        link.textContent=original;
-        if(tg?.openTelegramLink) tg.openTelegramLink(link.href); else location.href=link.href;
-      }
+      const lang=document.documentElement.lang==='en'?'en':'pl';
+      location.href='/quality/checkout/?kind=plan&ref='+encodeURIComponent(slug)+'&lang='+encodeURIComponent(lang);
       return;
     }
     if(tg?.openTelegramLink){e.preventDefault();tg.openTelegramLink(link.href)}

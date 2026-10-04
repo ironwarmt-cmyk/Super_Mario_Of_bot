@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { getQualityPlan } from "../lib/db.js";
+import { getQualityPlan, validateQualityCheckoutConsent } from "../lib/db.js";
 
 function safeEqualHex(a, b) {
   const aa = Buffer.from(String(a || ""), "hex");
@@ -77,6 +77,20 @@ export default async function handler(req, res) {
       return res.status(404).json({
         ok: false,
         error: "Plan unavailable"
+      });
+    }
+
+    const consentToken = String(req.body?.consent_token || "");
+    const consent = await validateQualityCheckoutConsent(
+      user.id,
+      consentToken,
+      "plan",
+      plan.slug
+    );
+    if (!consent) {
+      return res.status(403).json({
+        ok: false,
+        error: "Required legal consents must be completed before payment."
       });
     }
 
