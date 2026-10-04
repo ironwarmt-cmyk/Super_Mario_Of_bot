@@ -11,5 +11,15 @@
       "maxDuration": 30,
       "includeFiles": "content/quality/**"
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/login",
+      "destination": "/quality/login/"
+    },
+    {
+      "source": "/app",
+      "destination": "/quality/"
+    }
+  ]
 }
