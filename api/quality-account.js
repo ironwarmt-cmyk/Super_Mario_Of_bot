@@ -45,7 +45,8 @@ async function webAuthProxy(req, res) {
     const upstream = await fetch(base + path, {
       method:"POST",
       headers:{ apikey:key, "content-type":"application/json" },
-      body:JSON.stringify(body)
+      body:JSON.stringify(body),
+      signal:AbortSignal.timeout(10000)
     });
     const data = await upstream.json().catch(() => ({}));
     if (!upstream.ok) {
