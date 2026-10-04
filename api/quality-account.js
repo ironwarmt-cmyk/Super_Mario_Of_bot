@@ -1,4 +1,4 @@
-import crypto from "node:crypto";
+import { resolveQualityIdentity, publicSupabaseConfig } from "../lib/quality-auth.js";
 import {
   getQualityCustomerProfile,
   upsertQualityCustomerProfile,
@@ -14,57 +14,16 @@ import {
   reconcileQualityAccountingReceipt
 } from "../lib/db.js";
 
-function safeEqualHex(a, b) {
-  const aa = Buffer.from(String(a || ""), "hex");
-  const bb = Buffer.from(String(b || ""), "hex");
-  if (!aa.length || aa.length !== bb.length) return false;
-  return crypto.timingSafeEqual(aa, bb);
-}
-
-function verifyTelegramInitData(initData, botToken) {
-  if (!initData || !botToken) return null;
-  const params = new URLSearchParams(initData);
-  const hash = params.get("hash");
-  if (!hash) return null;
-
-  const authDate = Number(params.get("auth_date") || 0);
-  const now = Math.floor(Date.now() / 1000);
-  if (!authDate || now - authDate > 86400 || authDate > now + 60) return null;
-
-  const entries = [];
-  for (const [key, value] of params.entries()) {
-    if (key !== "hash") entries.push([key, value]);
-  }
-  entries.sort(([a], [b]) => a.localeCompare(b));
-
-  const check = entries.map(([k,v]) => `${k}=${v}`).join("\n");
-  const secretKey = crypto.createHmac("sha256", "WebAppData").update(botToken).digest();
-  const expected = crypto.createHmac("sha256", secretKey).update(check).digest("hex");
-  if (!safeEqualHex(hash, expected)) return null;
-
-  try {
-    const rawUser = params.get("user");
-    return rawUser ? JSON.parse(rawUser) : null;
-  } catch {
-    return null;
-  }
-}
-
 export default async function handler(req, res) {
   if (!["GET","POST"].includes(req.method)) {
     return res.status(405).json({ ok:false, error:"Method not allowed" });
   }
 
-  const initData =
-    req.headers["x-telegram-init-data"] ||
-    req.query?.initData ||
-    req.body?.initData ||
-    "";
-
-  const user = verifyTelegramInitData(String(initData), process.env.TELEGRAM_BOT_TOKEN);
-  if (!user?.id) {
-    return res.status(401).json({ ok:false, error:"Open account setup from Telegram." });
+  const identity = await resolveQualityIdentity(req);
+  if (!identity?.telegramUserId) {
+    return res.status(401).json({ ok:false, error:"Sign in to Quality Hub or open it from Telegram." });
   }
+  const user = identity.user || { id: identity.telegramUserId };
 
   const mode = String(req.query?.mode || "");
 
@@ -144,7 +103,8 @@ export default async function handler(req, res) {
           username:user.username || ""
         },
         profile,
-        legal
+        legal,
+        auth: { source: identity.source, linkedTelegram: identity.telegramUserId > 0, email: identity.email || profile?.email || null, publicConfig: publicSupabaseConfig() }
       });
     }
 
