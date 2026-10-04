@@ -36,7 +36,7 @@ const money=g=>(Number(g||0)/100).toFixed(2).replace(".",",")+" zł";
 async function load(){
  if(!initData){status.innerHTML='<span class="err">Otwórz panel z poziomu Telegrama.</span>';return;}
  try{
-  const r=await fetch("/api/quality-accountant",{headers:{"x-telegram-init-data":initData}});
+  const r=await fetch("/api/quality-account?mode=accountant",{headers:{"x-telegram-init-data":initData}});
   const j=await r.json();
   if(!r.ok||!j.ok)throw new Error(j.error||("HTTP "+r.status));
   const d=j.data||{};
