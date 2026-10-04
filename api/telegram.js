@@ -4,6 +4,7 @@ import {
   answerPreCheckoutQuery,
   editMessage,
   sendMessage,
+  editUserStarSubscription,
   sendQualityPlanInvoice,
   sendQualityProductInvoice,
   sendStarsTokenInvoice
@@ -38,6 +39,8 @@ import {
   recordQualityTokenPayment,
   recordQualityPlanPayment,
   recordQualityProductPayment,
+  recordQualityPlanRefund,
+  setQualitySubscriptionAutoRenew,
   isDatabaseConfigured
 } from "../lib/db.js";
 
@@ -102,6 +105,17 @@ export default async function handler(req, res) {
         error = "Nieprawidłowy produkt.";
       }
       await answerPreCheckoutQuery(token, q.id, valid, valid ? undefined : error);
+      return res.status(200).json({ ok: true });
+    }
+
+    if (update.message?.refunded_payment) {
+      const message = update.message;
+      const refund = message.refunded_payment;
+      const payload = String(refund.invoice_payload || "");
+      if (/^qa_plan:([a-z0-9-]+)$/i.test(payload)) {
+        await recordQualityPlanRefund(message.from, refund);
+        await sendMessage(token, message.chat.id, "↩️ Zwrot płatności został zarejestrowany. Powiązany dostęp został zaktualizowany zgodnie ze statusem płatności.");
+      }
       return res.status(200).json({ ok: true });
     }
 
@@ -247,9 +261,17 @@ export default async function handler(req, res) {
       }
 
       if (action.startsWith("qa:buyplan:")) {
-        const plan = await getQualityPlan(action.split(":")[2]);
-        if (!plan || !plan.checkout_enabled || !plan.price_stars) await sendMessage(token, chatId, pl ? "Ten pakiet jest chwilowo niedostępny." : "This plan is temporarily unavailable.");
-        else await sendQualityPlanInvoice(token, chatId, plan, locale);
+        const slug = action.split(":")[2];
+        const plan = await getQualityPlan(slug);
+        if (!plan || !plan.checkout_enabled || !plan.price_stars) {
+          await sendMessage(token, chatId, pl ? "Ten pakiet jest chwilowo niedostępny." : "This plan is temporarily unavailable.");
+        } else {
+          const url = "https://supermarioofbot-iron-war.vercel.app/quality/?buy=" + encodeURIComponent(slug) + "&lang=" + encodeURIComponent(locale);
+          await sendMessage(token, chatId,
+            pl ? "Przed płatnością wymagane jest zapoznanie się z dokumentami i zapis wymaganych zgód." : "Before payment, you must review the legal documents and record the required consents.",
+            { inline_keyboard: [[{ text: pl ? "📑 Przejdź do zakupu i zgód" : "📑 Continue to checkout & consents", web_app: { url } }]] }
+          );
+        }
         return res.status(200).json({ ok: true });
       }
 
@@ -354,6 +376,21 @@ export default async function handler(req, res) {
         await sendMessage(token, chatId, view.text, view.reply_markup);
         return res.status(200).json({ ok: true });
       }
+      if (text === "/terms" || text === "/privacy") {
+        const profile = await getUserProfile(message.from.id);
+        const pl = (profile?.locale || "pl") !== "en";
+        const isTerms = text === "/terms";
+        await sendMessage(
+          token,
+          chatId,
+          isTerms
+            ? (pl ? "<b>Regulamin</b>\n\nAktualny Regulamin jest dostępny w Moim koncie w Quality Hub. Przed zakupem system wymaga zapisania aktualnej wersji wymaganych oświadczeń." : "<b>Terms</b>\n\nThe current Terms are available in My Account in Quality Hub. Before purchase, the system records the current required acknowledgements.")
+            : (pl ? "<b>Polityka prywatności / RODO</b>\n\nAdministratorem danych jest podmiot wskazany w aktualnej Polityce prywatności. Kontakt: <b>qasupportmt@gmail.com</b>. Pełna informacja jest dostępna w Moim koncie." : "<b>Privacy / GDPR</b>\n\nThe controller is identified in the current Privacy Notice. Contact: <b>qasupportmt@gmail.com</b>. The full notice is available in My Account."),
+          { inline_keyboard: [[{ text: pl ? "👤 Moje konto i dokumenty" : "👤 My account & documents", web_app: { url: "https://supermarioofbot-iron-war.vercel.app/quality/account/" } }]] }
+        );
+        return res.status(200).json({ ok: true });
+      }
+
       if (text === "/language") {
         const view = languageMenu();
         await sendMessage(token, chatId, view.text, view.reply_markup);
