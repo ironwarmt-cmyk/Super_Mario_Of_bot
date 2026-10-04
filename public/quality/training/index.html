@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Akademia Jakości — Quality Assurance Support</title>
+<script src="/quality/auth.js"></script>
+<link rel="stylesheet" href="/quality/theme.css?v=20261005-premium">
+<script defer src="/quality/experience.js?v=20261005-1"></script>
+<style>
+.academy{max-width:1120px;margin:auto;padding:24px 16px 100px}.academy-top{display:flex;justify-content:space-between;align-items:center;gap:12px}.academy-top a{color:var(--text);text-decoration:none}.academy-hero{padding:44px 0 26px;display:grid;grid-template-columns:1.15fr .85fr;gap:18px}.academy-stat{padding:22px;border:1px solid var(--line);border-radius:22px;background:var(--panel)}.course-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.course{padding:20px;border:1px solid var(--line);border-radius:22px;background:var(--panel);position:relative}.course h3{margin:10px 0 8px}.course-meta{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}.course-meta span{padding:5px 8px;border-radius:999px;border:1px solid var(--line);font-size:11px}.modules{display:none;margin-top:12px;border-top:1px solid #ffffff13;padding-top:10px}.course.open .modules{display:block}.module{display:flex;gap:9px;align-items:flex-start;padding:8px 0;color:var(--muted)}.module input{width:auto;margin-top:3px}.course button{width:100%;margin-top:10px}.bar{height:8px;border-radius:999px;background:#ffffff10;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,#58d9ff,#ff5bd8,#ffd36b);width:0}.roadmap{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0 30px}.road{padding:14px;border:1px solid var(--line);border-radius:16px;background:#ffffff07}.road b{display:block;margin-bottom:4px}.certificate{margin-top:26px;padding:20px;border:1px solid #ffd36b55;border-radius:22px;background:linear-gradient(130deg,#ffd36b12,#58d9ff09)}@media(max-width:850px){.academy-hero{grid-template-columns:1fr}.course-grid{grid-template-columns:1fr 1fr}.roadmap{grid-template-columns:1fr 1fr}}@media(max-width:560px){.course-grid,.roadmap{grid-template-columns:1fr}}
+</style>
+</head>
+<body data-build="2026-10-05-academy">
+<div class="academy">
+ <div class="academy-top"><div><div class="brand">QUALITY ASSURANCE SUPPORT</div><b>AKADEMIA JAKOŚCI</b></div><a href="/app">← Hub</a></div>
+ <section class="academy-hero">
+   <div><div class="eyebrow">LEARN · APPLY · VERIFY</div><h1>Szkolenia, które prowadzą od teorii do decyzji na hali.</h1><p>Każdy kurs ma moduły, ćwiczenia wdrożeniowe i sprawdzenie wiedzy. Wyższe plany pokazują kolejne ścieżki, zanim je odblokujesz.</p></div>
+   <div class="academy-stat"><div class="eyebrow">TWÓJ POSTĘP</div><h2><span id="doneCount">0</span> modułów ukończonych</h2><div class="bar"><i id="globalBar"></i></div><p>Plan: <b data-current-plan>FREE</b></p></div>
+ </section>
+ <div class="roadmap">
+  <div class="road"><b>01 · Fundament</b><span>GHP/GMP, higiena, HACCP</span></div>
+  <div class="road"><b>02 · System</b><span>BRCGS, IFS, audyty</span></div>
+  <div class="road"><b>03 · Doskonalenie</b><span>CAPA, reklamacje, dostawcy</span></div>
+  <div class="road"><b>04 · Expert</b><span>Food fraud, defense, leadership</span></div>
+ </div>
+ <div class="course-grid" id="courses"></div>
+ <div class="certificate"><div class="eyebrow">ŚCIEŻKA CERTYFIKACJI</div><h2>Ukończ moduły, zalicz quizy i buduj profil Quality.</h2><p>W kolejnej iteracji certyfikat będzie powiązany z kontem użytkownika i historią ukończenia. Interfejs oraz struktura kursów są już przygotowane pod ten mechanizm.</p></div>
+</div>
+<script>
+const catalog=[
+ {id:"hygiene",tier:"free",title:"Higiena i GHP/GMP",time:"45 min",level:"Fundament",mods:["Higiena osobista i odzież","Mycie i dezynfekcja","Strefowanie i przepływy","Ćwiczenie: znajdź niezgodność"]},
+ {id:"haccp",tier:"basic",title:"HACCP od zera",time:"90 min",level:"BASIC",mods:["Zespół i opis produktu","Schemat procesu i weryfikacja","Analiza zagrożeń","CCP/OPRP i limity","Monitoring i działania","Walidacja i weryfikacja"]},
+ {id:"allergens",tier:"basic",title:"Alergeny w praktyce",time:"70 min",level:"BASIC",mods:["Mapa alergenów","Separacja i czyszczenie","Rework i zmiany produktu","Etykiety i deklaracje"]},
+ {id:"brcgs",tier:"pro",title:"BRCGS Food Safety — praktycznie",time:"150 min",level:"PRO",mods:["Kontekst i commitment","HACCP i plan bezpieczeństwa","Site standards","Product & process control","Personnel","Audit evidence workshop"]},
+ {id:"ifs",tier:"pro",title:"IFS Food — podejście procesowe",time:"140 min",level:"PRO",mods:["Governance","HACCP","Resource management","Operational processes","Measurements & CAPA","Scoring workshop"]},
+ {id:"audit",tier:"pro",title:"Audyt wewnętrzny",time:"95 min",level:"PRO",mods:["Program audytów","Plan i próbka","Pytania audytowe","Dowody obiektywne","Niezgodności i raport"]},
+ {id:"capa",tier:"pro",title:"RCA i CAPA bez pozorów",time:"80 min",level:"PRO",mods:["Korekta vs działanie korygujące","5 Why / Ishikawa","Przyczyna systemowa","Plan CAPA","Weryfikacja skuteczności"]},
+ {id:"complaints",tier:"vip",title:"Reklamacje i trendy",time:"100 min",level:"VIP",mods:["Triaging reklamacji","Ryzyko i eskalacja","Trend analysis","Kontakt z klientem","CAPA i effectiveness"]},
+ {id:"suppliers",tier:"vip",title:"Dostawcy i surowce",time:"110 min",level:"VIP",mods:["Risk-based approval","Specyfikacje","Monitoring performance","COA i badania","Eskalcja dostawcy"]},
+ {id:"defense",tier:"vip",title:"Food Defense & Food Fraud",time:"120 min",level:"VIP",mods:["VACCP/TACCP","Ocena podatności","Mitigations","Incident drill","Annual review"]},
+ {id:"leadership",tier:"vip",title:"Quality Manager 360°",time:"180 min",level:"VIP",mods:["KPI i priorytety","Management review","Zmiana technologiczna","Nowa linia / maszyna","Kryzys i recall","Komunikacja z zarządem"]}
+];
+const key="qa_training_progress_v1";
+let progress=JSON.parse(localStorage.getItem(key)||"{}");
+function save(){localStorage.setItem(key,JSON.stringify(progress));paintProgress()}
+function paintProgress(){
+ const all=catalog.flatMap(c=>c.mods.map((_,i)=>c.id+":"+i));
+ const done=all.filter(k=>progress[k]).length;
+ doneCount.textContent=done;globalBar.style.width=(all.length?Math.round(done/all.length*100):0)+"%";
+}
+function render(){
+ courses.innerHTML=catalog.map(c=>`<article class="course" data-required-plan="${c.tier}" data-feature="${c.title}">
+   <div class="qa-lock-badge-placeholder"></div><div class="eyebrow">${c.level}</div><h3>${c.title}</h3>
+   <div class="course-meta"><span>${c.time}</span><span>${c.mods.length} modułów</span></div>
+   <p>${c.mods.slice(0,2).join(" · ")}…</p>
+   <button class="qa-btn course-toggle" type="button">Pokaż program</button>
+   <div class="modules">${c.mods.map((m,i)=>`<label class="module"><input type="checkbox" data-progress="${c.id}:${i}" ${progress[c.id+":"+i]?"checked":""}><span>${m}</span></label>`).join("")}</div>
+ </article>`).join("");
+ courses.querySelectorAll(".course-toggle").forEach(b=>b.onclick=e=>{const card=b.closest(".course");if(card.classList.contains("qa-locked"))return;card.classList.toggle("open");b.textContent=card.classList.contains("open")?"Ukryj program":"Pokaż program"});
+ courses.querySelectorAll("[data-progress]").forEach(x=>x.onchange=()=>{progress[x.dataset.progress]=x.checked;save()});
+ if(window.QAExperience)window.QAExperience.applyPlan(window.QAExperience.currentPlan(),window.QAExperience.dashboard());
+}
+render();paintProgress();
+window.addEventListener("qa:plan",()=>window.QAExperience.applyPlan(window.QAExperience.currentPlan(),window.QAExperience.dashboard()));
+</script>
+</body></html>
