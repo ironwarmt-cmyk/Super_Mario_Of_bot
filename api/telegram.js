@@ -247,13 +247,36 @@ export default async function handler(req, res) {
     }
     try {
       const webhookUrl = "https://supermarioofbot-iron-war.vercel.app/api/telegram?channel=market-audit";
-      const result = await marketTelegramApi(marketToken, "setWebhook", {
+      const webhook = await marketTelegramApi(marketToken, "setWebhook", {
         url: webhookUrl,
         secret_token: marketWebhookSecret(marketToken),
         allowed_updates: ["message"],
         drop_pending_updates: false
       });
-      return res.status(200).json({ ok:true, webhook: webhookUrl, result: result?.result ?? true });
+      const commands = await marketTelegramApi(marketToken, "setMyCommands", {
+        commands: [
+          { command:"status", description:"Status systemu i podsumowanie analiz paper" },
+          { command:"cases", description:"Ostatnie przypadki i ich status" },
+          { command:"quality", description:"NCR, RCA, CAPA i CIP" },
+          { command:"refresh", description:"Synchronizuj dane workerów i odśwież" }
+        ]
+      });
+      const description = await marketTelegramApi(marketToken, "setMyDescription", {
+        description:"Profesorek Audit — niezależny bot research/paper. Śledzi prognozę, przebieg, wynik, czynniki potwierdzające/przeciwne oraz NCR → RCA → CAPA → CIP. Nie wykonuje realnych transakcji."
+      });
+      const shortDescription = await marketTelegramApi(marketToken, "setMyShortDescription", {
+        short_description:"Audyt prognoz rynku • research/paper • RCA/CAPA/CIP"
+      });
+      return res.status(200).json({
+        ok:true,
+        webhook:webhookUrl,
+        configured:{
+          webhook:Boolean(webhook?.result ?? true),
+          commands:Boolean(commands?.result ?? true),
+          description:Boolean(description?.result ?? true),
+          shortDescription:Boolean(shortDescription?.result ?? true)
+        }
+      });
     } catch (error) {
       return res.status(500).json({ ok:false, error:error instanceof Error ? error.message : "Webhook setup failed" });
     }
