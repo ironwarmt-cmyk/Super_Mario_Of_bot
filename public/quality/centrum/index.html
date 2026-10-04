@@ -141,7 +141,7 @@ async function load(){
   try{
     if(!await QualityAuth.requireAuth(location.pathname))return;
     const headers=await QualityAuth.headers();
-    const r=await fetch("/api/quality-bot-center",{headers});
+    const r=await fetch("/api/quality-account?mode=bot-center",{headers});
     const j=await r.json();
     if(!r.ok||!j.ok)throw new Error(j.error||("HTTP "+r.status));
 
