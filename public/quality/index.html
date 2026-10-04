@@ -125,9 +125,9 @@ function setLang(lang){document.documentElement.lang=lang;document.querySelector
             link.textContent=original;
           }
         });
-      }catch(_){
+      }catch(err){
         link.textContent=original;
-        if(tg?.openTelegramLink) tg.openTelegramLink(link.href); else location.href=link.href;
+        alert((document.documentElement.lang==='en'?'Checkout blocked: ':'Zakup zablokowany: ')+(err?.message||'legal verification failed'));
       }
       return;
     }
