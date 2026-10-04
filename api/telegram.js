@@ -300,8 +300,12 @@ export default async function handler(req, res) {
 
       if (action.startsWith("qa:buyproduct:")) {
         const product = await getQualityProduct(action.slice("qa:buyproduct:".length));
-        if (!product || !product.standalone_purchase_enabled) await sendMessage(token, chatId, pl ? "Ten produkt nie jest dostępny pojedynczo." : "This product is not available standalone.");
-        else await sendQualityProductInvoice(token, chatId, product, locale);
+        if (!product || !product.standalone_purchase_enabled) {
+          await sendMessage(token, chatId, pl ? "Ten produkt nie jest dostępny pojedynczo." : "This product is not available standalone.");
+        } else {
+          const url = "https://supermarioofbot-iron-war.vercel.app/quality/checkout/?kind=product&ref=" + encodeURIComponent(product.slug) + "&type=" + encodeURIComponent(product.product_type || "document") + "&lang=" + encodeURIComponent(locale);
+          await sendMessage(token, chatId, pl ? "Przed płatnością wymagane jest przejście przez informacje i zgody." : "Complete the required notices and consents before payment.", { inline_keyboard: [[{ text: pl ? "📑 Kontynuuj zakup" : "📑 Continue checkout", web_app: { url } }]] });
+        }
         return res.status(200).json({ ok: true });
       }
 
@@ -314,7 +318,10 @@ export default async function handler(req, res) {
 
       if (action.startsWith("qa:token:")) {
         const pack = await getQualityTokenPack(Number(action.split(":")[2]));
-        if (pack) await sendStarsTokenInvoice(token, chatId, pack);
+        if (pack) {
+          const url = "https://supermarioofbot-iron-war.vercel.app/quality/checkout/?kind=token&ref=" + encodeURIComponent(pack.tokens) + "&lang=" + encodeURIComponent(locale);
+          await sendMessage(token, chatId, pl ? "Przed płatnością wymagane jest przejście przez informacje i zgody." : "Complete the required notices and consents before payment.", { inline_keyboard: [[{ text: pl ? "📑 Kontynuuj zakup" : "📑 Continue checkout", web_app: { url } }]] });
+        }
         return res.status(200).json({ ok: true });
       }
 
@@ -368,8 +375,13 @@ export default async function handler(req, res) {
       }
       if (productLink) {
         const profile = await getUserProfile(message.from.id);
+        const locale = profile?.locale || "pl";
+        const pl = locale !== "en";
         const product = await getQualityProduct(productLink[1]);
-        if (product) await sendQualityProductInvoice(token, chatId, product, profile?.locale || "pl");
+        if (product) {
+          const url = "https://supermarioofbot-iron-war.vercel.app/quality/checkout/?kind=product&ref=" + encodeURIComponent(product.slug) + "&type=" + encodeURIComponent(product.product_type || "document") + "&lang=" + encodeURIComponent(locale);
+          await sendMessage(token, chatId, pl ? "Przed płatnością przejdź przez wymagane informacje i zgody." : "Complete the required legal notices and consents before payment.", { inline_keyboard: [[{ text: pl ? "📑 Kontynuuj zakup" : "📑 Continue checkout", web_app: { url } }]] });
+        }
         return res.status(200).json({ ok: true });
       }
       if (/^\/start\s+tokens$/i.test(text)) {
