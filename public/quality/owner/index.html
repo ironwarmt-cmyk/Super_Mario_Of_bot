@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Quality Owner Panel</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{--bg:#07111c;--panel:#0d1b2a;--line:#203b54;--text:#f5f7fa;--muted:#9eb0c1;--accent:#3bd6a2;--danger:#ff6b6b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}.wrap{max-width:860px;margin:auto;padding:22px 16px 60px}.brand{font-size:12px;font-weight:900;letter-spacing:.08em;color:var(--accent)}h1{font-size:32px;margin:8px 0 16px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.card{border:1px solid var(--line);border-radius:18px;background:var(--panel);padding:16px}.label{font-size:12px;color:var(--muted);margin-bottom:6px}.value{font-size:24px;font-weight:900}.status{margin-top:16px;color:var(--muted)}.err{color:var(--danger)}.links{display:grid;gap:10px;margin-top:18px}.btn{display:block;text-align:center;text-decoration:none;border-radius:14px;padding:14px;font-weight:800;background:#12283b;color:var(--text);border:1px solid var(--line)}@media(max-width:650px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="brand">QUALITY ASSURANCE SUPPORT</div>
+<h1>Panel właściciela</h1>
+<div class="grid">
+<div class="card"><div class="label">Limit kwartalny</div><div class="value" id="limit">—</div></div>
+<div class="card"><div class="label">Przychód należny</div><div class="value" id="receivable">—</div></div>
+<div class="card"><div class="label">Pozostało</div><div class="value" id="remaining">—</div></div>
+<div class="card"><div class="label">Przychód PIT</div><div class="value" id="pit">—</div></div>
+<div class="card"><div class="label">Koszty</div><div class="value" id="costs">—</div></div>
+<div class="card"><div class="label">Do uzgodnienia</div><div class="value" id="unresolved">—</div></div>
+</div>
+<div class="status" id="status">Ładowanie danych…</div>
+<div class="links">
+<a class="btn" href="/quality/account/">Konto i dane firmy</a>
+<a class="btn" href="/quality/support/">Support</a>
+<a class="btn" href="/quality/">Quality Hub</a>
+</div>
+</div>
+<script>
+const tg=window.Telegram?.WebApp;tg?.ready();tg?.expand();
+const initData=tg?.initData||"";
+const money=g=>(Number(g||0)/100).toFixed(2).replace(".",",")+" zł";
+async function load(){
+ if(!initData){status.innerHTML='<span class="err">Otwórz panel z poziomu Telegrama.</span>';return;}
+ try{
+  const r=await fetch("/api/quality-accountant",{headers:{"x-telegram-init-data":initData}});
+  const j=await r.json();
+  if(!r.ok||!j.ok)throw new Error(j.error||("HTTP "+r.status));
+  const d=j.data||{};
+  limit.textContent=money(d.quarterly_limit_grosz);
+  receivable.textContent=money(d.limit_revenue_grosz);
+  remaining.textContent=money(d.remaining_limit_grosz);
+  pit.textContent=money(d.pit_revenue_grosz);
+  costs.textContent=money(d.pit_cost_grosz);
+  unresolved.textContent=String(d.unresolved_entries??0);
+  status.textContent="Dane właściciela zostały pobrane.";
+ }catch(e){status.innerHTML='<span class="err">'+String(e.message||e)+'</span>';}
+}
+load();
+</script>
+</body>
+</html>
