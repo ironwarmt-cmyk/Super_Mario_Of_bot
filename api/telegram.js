@@ -239,6 +239,26 @@ async function handleMarketAuditBot(req, res) {
 
 export default async function handler(req, res) {
   const channel = String(req.query?.channel || "");
+
+  if (channel === "market-audit" && req.method === "GET" && String(req.query?.setup || "") === "1") {
+    const marketToken = process.env.MARKET_AUDIT_BOT_TOKEN || "";
+    if (!marketToken) {
+      return res.status(503).json({ ok:false, error:"MARKET_AUDIT_BOT_TOKEN is not configured" });
+    }
+    try {
+      const webhookUrl = "https://supermarioofbot-iron-war.vercel.app/api/telegram?channel=market-audit";
+      const result = await marketTelegramApi(marketToken, "setWebhook", {
+        url: webhookUrl,
+        secret_token: marketWebhookSecret(marketToken),
+        allowed_updates: ["message"],
+        drop_pending_updates: false
+      });
+      return res.status(200).json({ ok:true, webhook: webhookUrl, result: result?.result ?? true });
+    } catch (error) {
+      return res.status(500).json({ ok:false, error:error instanceof Error ? error.message : "Webhook setup failed" });
+    }
+  }
+
   if (channel === "market-audit") {
     try { return await handleMarketAuditBot(req,res); }
     catch (error) {
