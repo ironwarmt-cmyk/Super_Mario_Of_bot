@@ -8,7 +8,7 @@
 <script src="/quality/auth.js"></script>
 <style>
 :root{--bg:#07111c;--panel:#0d1b2a;--line:#203b54;--text:#f5f7fa;--muted:#9eb0c1;--accent:#3bd6a2;--blue:#54a7ff;--danger:#ff6b6b}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 10% 0,#123858 0,transparent 35%),var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}.wrap{max-width:520px;margin:auto;padding:44px 16px}.brand{font-size:12px;font-weight:900;letter-spacing:.08em;color:var(--accent)}h1{font-size:34px;margin:8px 0}.lead{color:var(--muted);line-height:1.55}.panel{margin-top:22px;padding:20px;border:1px solid var(--line);border-radius:20px;background:var(--panel)}label{display:block;margin:13px 0 7px;font-weight:800;font-size:13px}input{width:100%;border:1px solid var(--line);border-radius:13px;background:#08131d;color:var(--text);padding:14px;font:inherit}.btn{width:100%;border:0;border-radius:14px;padding:14px;margin-top:12px;font-weight:900;text-decoration:none;display:block;text-align:center}.primary{background:var(--accent);color:#04110c}.secondary{background:#17324a;color:var(--text);border:1px solid var(--line)}.telegram{background:var(--blue);color:#06111c}.status{margin-top:12px;color:var(--muted);font-size:13px}.err{color:var(--danger)}.ok{color:var(--accent)}.sep{text-align:center;color:var(--muted);margin:16px 0 4px;font-size:12px}.small{font-size:12px;color:var(--muted);line-height:1.5;margin-top:14px}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 10% 0,#123858 0,transparent 35%),var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}.wrap{max-width:520px;margin:auto;padding:44px 16px}.brand{font-size:12px;font-weight:900;letter-spacing:.08em;color:var(--accent)}h1{font-size:34px;margin:8px 0}.lead{color:var(--muted);line-height:1.55}.panel{margin-top:22px;padding:20px;border:1px solid var(--line);border-radius:20px;background:var(--panel)}label{display:block;margin:13px 0 7px;font-weight:800;font-size:13px}input{width:100%;border:1px solid var(--line);border-radius:13px;background:#08131d;color:var(--text);padding:14px;font:inherit}.btn{width:100%;border:0;border-radius:14px;padding:14px;margin-top:12px;font-weight:900;text-decoration:none;display:block;text-align:center}.primary{background:var(--accent);color:#04110c}.secondary{background:#17324a;color:var(--text);border:1px solid var(--line)}.telegram{background:var(--blue);color:#06111c}.status{margin-top:12px;color:var(--muted);font-size:14px;line-height:1.5;padding:0}.status.active{padding:12px;border-radius:12px;background:#10263a;border:1px solid var(--line)}.err{color:var(--danger)}.ok{color:var(--accent)}.sep{text-align:center;color:var(--muted);margin:16px 0 4px;font-size:12px}.small{font-size:12px;color:var(--muted);line-height:1.5;margin-top:14px}
 </style>
 </head>
 <body>
@@ -21,7 +21,7 @@
 <label for="password">Hasło</label><input id="password" type="password" autocomplete="current-password" minlength="8" placeholder="minimum 8 znaków">
 <button class="btn primary" id="loginBtn">Zaloguj</button>
 <button class="btn secondary" id="signupBtn">Utwórz konto webowe</button>
-<div class="status" id="status"></div>
+<div class="status" id="status"></div><button class="btn secondary" id="resendBtn" style="display:none">Wyślij ponownie e-mail potwierdzający</button>
 <div class="sep">albo</div>
 <a class="btn telegram" href="https://t.me/Super_Mario_Official_bot">Otwórz Quality na Telegramie</a>
 <div class="small">Aplikacja webowa i bot korzystają z tego samego backendu, planu, limitów i historii po powiązaniu konta.</div>
@@ -29,10 +29,44 @@
 </div>
 <script>
 const qa=window.QualityAuth;const c=qa.client();const params=new URLSearchParams(location.search);const next=params.get("next")||"/quality/";
-function show(msg,ok=false){status.innerHTML='<span class="'+(ok?'ok':'err')+'">'+String(msg)+'</span>'}
+function show(msg,ok=false){status.classList.add("active");status.innerHTML='<span class="'+(ok?'ok':'err')+'">'+String(msg)+'</span>'}
+async function resendConfirmation(){
+ const e=email.value.trim(); if(!e){show("Najpierw wpisz e-mail.");return}
+ resendBtn.disabled=true;status.textContent="Wysyłam ponownie…";
+ const {error}=await c.auth.resend({type:"signup",email:e,options:{emailRedirectTo:location.origin+"/quality/"}});
+ resendBtn.disabled=false;
+ if(error){show(error.message);return}
+ show("Wysłano ponownie. Otwórz wiadomość z Supabase, kliknij link potwierdzający, a potem wróć tutaj i naciśnij „Zaloguj”. Sprawdź też SPAM.",true);
+}
 async function existing(){if(await qa.isAuthenticated()){location.href=next;return true}return false}
-loginBtn.onclick=async()=>{const e=email.value.trim(),p=password.value;if(!e||!p){show("Podaj e-mail i hasło.");return}loginBtn.disabled=true;status.textContent="Logowanie…";const {error}=await c.auth.signInWithPassword({email:e,password:p});loginBtn.disabled=false;if(error){show(error.message);return}location.href=next};
-signupBtn.onclick=async()=>{const e=email.value.trim(),p=password.value;if(!e||p.length<8){show("Podaj poprawny e-mail i hasło minimum 8 znaków.");return}signupBtn.disabled=true;status.textContent="Tworzenie konta…";const {data,error}=await c.auth.signUp({email:e,password:p,options:{emailRedirectTo:location.origin+"/quality/"}});signupBtn.disabled=false;if(error){show(error.message);return}if(data?.session){location.href=next;return}show("Konto utworzone. Sprawdź e-mail i potwierdź adres, potem wróć do logowania.",true)};
+loginBtn.onclick=async()=>{
+ const e=email.value.trim(),p=password.value;if(!e||!p){show("Podaj e-mail i hasło.");return}
+ loginBtn.disabled=true;status.classList.add("active");status.textContent="Logowanie…";
+ const {error}=await c.auth.signInWithPassword({email:e,password:p});
+ loginBtn.disabled=false;
+ if(error){
+   const raw=String(error.message||"");
+   if(/email not confirmed/i.test(raw)){
+     show("Konto zostało utworzone, ale adres e-mail nie jest jeszcze potwierdzony. Otwórz wiadomość potwierdzającą, kliknij link, a potem wróć tutaj i zaloguj się.");
+     resendBtn.style.display="block";
+     return;
+   }
+   if(/invalid login credentials/i.test(raw)){show("Nieprawidłowy e-mail lub hasło.");return}
+   show(raw);return
+ }
+ location.href=next
+};
+signupBtn.onclick=async()=>{
+ const e=email.value.trim(),p=password.value;if(!e||p.length<8){show("Podaj poprawny e-mail i hasło minimum 8 znaków.");return}
+ signupBtn.disabled=true;status.classList.add("active");status.textContent="Tworzenie konta…";
+ const {data,error}=await c.auth.signUp({email:e,password:p,options:{emailRedirectTo:location.origin+"/quality/"}});
+ signupBtn.disabled=false;
+ if(error){show(error.message);return}
+ if(data?.session){location.href=next;return}
+ show("Konto utworzone. Wysłaliśmy e-mail potwierdzający. Kliknij link w wiadomości, wróć tutaj i wybierz „Zaloguj”. Sprawdź także folder SPAM.",true);
+ resendBtn.style.display="block";
+};
+resendBtn.onclick=resendConfirmation;
 existing();
 </script>
 </body></html>
