@@ -41,7 +41,15 @@ async function existing(){if(await qa.isAuthenticated()){location.href=next;retu
 loginBtn.onclick=async()=>{
  const e=email.value.trim(),p=password.value;if(!e||!p){show("Podaj e-mail i hasło.");return}
  loginBtn.disabled=true;status.classList.add("active");status.textContent="Logowanie…";
- const {error}=await c.auth.signInWithPassword({email:e,password:p});
+ let result;
+ try{
+   result=await c.auth.signInWithPassword({email:e,password:p});
+ }catch(err){
+   loginBtn.disabled=false;
+   show("Błąd logowania: "+String(err?.message||err));
+   return;
+ }
+ const {error}=result;
  loginBtn.disabled=false;
  if(error){
    const raw=String(error.message||"");
@@ -58,7 +66,15 @@ loginBtn.onclick=async()=>{
 signupBtn.onclick=async()=>{
  const e=email.value.trim(),p=password.value;if(!e||p.length<8){show("Podaj poprawny e-mail i hasło minimum 8 znaków.");return}
  signupBtn.disabled=true;status.classList.add("active");status.textContent="Tworzenie konta…";
- const {data,error}=await c.auth.signUp({email:e,password:p,options:{emailRedirectTo:location.origin+"/quality/"}});
+ let result;
+ try{
+   result=await c.auth.signUp({email:e,password:p,options:{emailRedirectTo:location.origin+"/quality/"}});
+ }catch(err){
+   signupBtn.disabled=false;
+   show("Błąd rejestracji: "+String(err?.message||err));
+   return;
+ }
+ const {data,error}=result;
  signupBtn.disabled=false;
  if(error){show(error.message);return}
  if(data?.session){location.href=next;return}
