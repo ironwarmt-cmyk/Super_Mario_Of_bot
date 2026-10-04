@@ -14,18 +14,66 @@ import {
   reconcileQualityAccountingReceipt
 } from "../lib/db.js";
 
+async function webAuthProxy(req, res) {
+  if (req.method !== "POST") return res.status(405).json({ ok:false, error:"Method not allowed" });
+  const action = String(req.body?.action || "");
+  const base = process.env.SUPABASE_URL || "";
+  const key = process.env.SUPABASE_PUBLISHABLE_KEY || "";
+  if (!base || !key) return res.status(503).json({ ok:false, error:"Web auth is not configured" });
+
+  let path = "";
+  let body = {};
+  if (action === "sign_in") {
+    path = "/auth/v1/token?grant_type=password";
+    body = { email:String(req.body?.email || ""), password:String(req.body?.password || "") };
+  } else if (action === "sign_up") {
+    const redirect = String(req.body?.redirect_to || "");
+    path = "/auth/v1/signup" + (redirect ? "?redirect_to=" + encodeURIComponent(redirect) : "");
+    body = { email:String(req.body?.email || ""), password:String(req.body?.password || "") };
+  } else if (action === "resend") {
+    const redirect = String(req.body?.redirect_to || "");
+    path = "/auth/v1/resend" + (redirect ? "?redirect_to=" + encodeURIComponent(redirect) : "");
+    body = { type:"signup", email:String(req.body?.email || "") };
+  } else if (action === "refresh") {
+    path = "/auth/v1/token?grant_type=refresh_token";
+    body = { refresh_token:String(req.body?.refresh_token || "") };
+  } else {
+    return res.status(400).json({ ok:false, error:"Unknown web auth action" });
+  }
+
+  try {
+    const upstream = await fetch(base + path, {
+      method:"POST",
+      headers:{ apikey:key, "content-type":"application/json" },
+      body:JSON.stringify(body)
+    });
+    const data = await upstream.json().catch(() => ({}));
+    if (!upstream.ok) {
+      return res.status(upstream.status).json({
+        ok:false,
+        error:data?.msg || data?.message || data?.error_description || data?.error || "Authentication failed",
+        code:data?.error_code || null
+      });
+    }
+    return res.status(200).json({ ok:true, data });
+  } catch {
+    return res.status(502).json({ ok:false, error:"Authentication service unavailable" });
+  }
+}
+
 export default async function handler(req, res) {
   if (!["GET","POST"].includes(req.method)) {
     return res.status(405).json({ ok:false, error:"Method not allowed" });
   }
+
+  const mode = String(req.query?.mode || "");
+  if (mode === "web-auth") return webAuthProxy(req, res);
 
   const identity = await resolveQualityIdentity(req);
   if (!identity?.telegramUserId) {
     return res.status(401).json({ ok:false, error:"Sign in to Quality Hub or open it from Telegram." });
   }
   const user = identity.user || { id: identity.telegramUserId };
-
-  const mode = String(req.query?.mode || "");
 
   try {
     if (mode === "dashboard") {
