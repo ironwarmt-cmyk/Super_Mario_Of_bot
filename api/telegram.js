@@ -43,6 +43,13 @@ import {
   setQualitySubscriptionAutoRenew,
   claimQualityAccountantOwner,
   getQualityAccountingSummary,
+  getMarketAuditSummary,
+  listMarketAuditCases,
+  getMarketAuditCase,
+  createMarketAuditCase,
+  addMarketAuditObservation,
+  closeMarketAuditCase,
+  updateMarketAuditQuality,
   isDatabaseConfigured
 } from "../lib/db.js";
 
@@ -71,7 +78,175 @@ async function sendHome(token, chatId, user, edit = null) {
   return sendMessage(token, chatId, view.text, view.reply_markup);
 }
 
+
+function marketWebhookSecret(token) {
+  return crypto.createHash("sha256").update(token).digest("hex");
+}
+
+async function marketTelegramApi(token, method, payload) {
+  const response = await fetch("https://api.telegram.org/bot" + token + "/" + method, {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify(payload),
+    signal:AbortSignal.timeout(8000)
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data?.ok) throw new Error(data?.description || ("Telegram HTTP " + response.status));
+  return data;
+}
+
+function renderMarketCase(c) {
+  const h=c || {};
+  const cmp=h.comparison || {};
+  const q=h.quality || {};
+  const target=h.paper_target_price || null;
+  const lines=[
+    "<b>📊 PRZYPADEK BADAWCZY</b>",
+    "<b>"+escapeHtml(h.asset || "—")+"</b> • "+escapeHtml(h.direction || "—")+" • "+escapeHtml(h.status || "—"),
+    "",
+    "<b>Analiza wstępna</b>",
+    "Cena odniesienia: <b>"+escapeHtml(h.reference_price ?? "—")+"</b>",
+    "Symulowany cel paper: <b>"+escapeHtml(target ?? "—")+"</b>",
+    "Próg: <b>"+escapeHtml(h.predicted_move_pct ?? "—")+"%</b>",
+    "Horyzont: <b>"+escapeHtml(h.horizon_minutes ?? "—")+" min</b>",
+    "Confidence: <b>"+escapeHtml(h.confidence ?? "—")+"</b>",
+    "",
+    "<b>Przebieg vs przewidywanie</b>",
+    "Zgodne: <b>"+escapeHtml(cmp.behavedAsPredicted===true?"TAK":cmp.behavedAsPredicted===false?"NIE":"PENDING")+"</b>",
+    "Max ruch: <b>"+escapeHtml(cmp.maxObservedMovePct==null?"—":Number(cmp.maxObservedMovePct).toFixed(3)+"%")+"</b>",
+    "Potwierdzające wartości: "+escapeHtml((cmp.supportingVariables||[]).join(", ") || "—"),
+    "Wartości przeciwne: "+escapeHtml((cmp.contradictingVariables||[]).join(", ") || "—"),
+    "",
+    "<b>Jakość</b>",
+    "NCR: "+escapeHtml(q.nonconformity?.type || "brak"),
+    "RCA: "+escapeHtml(q.rootCause || "—"),
+    "CAPA: <b>"+escapeHtml((q.capa||[]).length)+"</b>",
+    "CIP: <b>"+escapeHtml((q.cip||[]).length)+"</b>",
+    "Effectiveness: "+escapeHtml(q.effectivenessCheck || "—"),
+    "Management review: "+escapeHtml(q.managementReview || "—"),
+    "",
+    "<i>Wyłącznie research/paper. Brak realnego zlecenia kupna lub sprzedaży.</i>"
+  ];
+  return lines.join("\n");
+}
+
+async function syncMarketCasesFromAndy() {
+  try {
+    const r=await fetch("https://andy-b-quality-control-production.up.railway.app/worker-signals/status",{
+      headers:{"user-agent":"market-audit-sync/1.0"},
+      signal:AbortSignal.timeout(6000)
+    });
+    if(!r.ok)return {ok:false,http:r.status,created:0};
+    const j=await r.json();
+    const signals=Array.isArray(j?.audit?.lastBatch?.signals)?j.audit.lastBatch.signals:[];
+    let created=0;
+    for(const s of signals.slice(0,100)){
+      try{
+        const result=await createMarketAuditCase({
+          ...s,
+          initialAnalysis:{
+            source:"ANDY_WORKER_BATCH",
+            evidence:s.evidence||null,
+            detectedAt:s.detectedAt||null
+          },
+          expectedVariables:Array.isArray(s.expectedVariables)?s.expectedVariables:[],
+          riskFactors:Array.isArray(s.riskFactors)?s.riskFactors:[]
+        },"ANDY");
+        if(result)created++;
+      }catch{}
+    }
+    return {ok:true,total:signals.length,created};
+  }catch(error){
+    return {ok:false,error:String(error),created:0};
+  }
+}
+
+async function handleMarketAuditBot(req, res) {
+  const token=process.env.MARKET_AUDIT_BOT_TOKEN || "";
+  if(!token)return res.status(503).json({ok:false,error:"MARKET_AUDIT_BOT_TOKEN is not configured"});
+  if(req.headers["x-telegram-bot-api-secret-token"] !== marketWebhookSecret(token)) {
+    return res.status(401).json({ok:false,error:"Invalid market-audit webhook secret"});
+  }
+
+  const update=req.body||{};
+  const message=update.message;
+  if(!message?.chat?.id)return res.status(200).json({ok:true,ignored:true});
+
+  const profile=await getUserProfile(message.from.id).catch(()=>null);
+  if(!profile?.is_admin){
+    await marketTelegramApi(token,"sendMessage",{chat_id:message.chat.id,text:"⛔ Brak dostępu."});
+    return res.status(200).json({ok:true});
+  }
+
+  const chatId=message.chat.id;
+  const text=String(message.text||"").trim();
+  if(text==="/start"||text==="/status"||text==="/refresh"){
+    const sync=await syncMarketCasesFromAndy();
+    const s=await getMarketAuditSummary();
+    const out=[
+      "<b>🧠 MARKET ANALYSIS AUDIT BOT</b>",
+      "<i>research / paper only</i>",
+      "",
+      "Przypadki: <b>"+Number(s?.total||0)+"</b>",
+      "Otwarte: <b>"+Number(s?.open||0)+"</b>",
+      "MATCH: <b>"+Number(s?.match||0)+"</b> • MISS: <b>"+Number(s?.miss||0)+"</b>",
+      "Otwarte NCR/CAPA: <b>"+Number(s?.open_quality||0)+"</b>",
+      "",
+      "Synchronizacja workerów: "+(sync.ok?"OK":"BŁĄD"),
+      "",
+      "<b>Komendy</b>",
+      "/cases — ostatnie przypadki",
+      "/case ID — pełna analiza",
+      "/quality — NCR / RCA / CAPA / CIP",
+      "/refresh — odśwież dane",
+      "",
+      "<i>Nie wykonuje realnych transakcji ani zleceń.</i>"
+    ].join("\n");
+    await marketTelegramApi(token,"sendMessage",{chat_id:chatId,text:out,parse_mode:"HTML"});
+    return res.status(200).json({ok:true});
+  }
+
+  if(text==="/cases"){
+    await syncMarketCasesFromAndy();
+    const rows=await listMarketAuditCases(20);
+    const out=(rows||[]).length
+      ? rows.map((x)=>"<code>"+escapeHtml(x.case_id)+"</code> • "+escapeHtml(x.asset||"—")+" • "+escapeHtml(x.status||"—")).join("\n")
+      : "Brak przypadków.";
+    await marketTelegramApi(token,"sendMessage",{chat_id:chatId,text:"<b>Ostatnie analizy</b>\n\n"+out,parse_mode:"HTML"});
+    return res.status(200).json({ok:true});
+  }
+
+  if(text.startsWith("/case ")){
+    const id=text.slice(6).trim();
+    const row=await getMarketAuditCase(id);
+    await marketTelegramApi(token,"sendMessage",{chat_id:chatId,text:row?renderMarketCase(row):"Nie znaleziono przypadku.",parse_mode:"HTML"});
+    return res.status(200).json({ok:true});
+  }
+
+  if(text==="/quality"){
+    const rows=await listMarketAuditCases(50);
+    const bad=(rows||[]).filter((x)=>x.quality?.nonconformity);
+    const out=bad.length
+      ? bad.slice(0,20).map((x)=>"<code>"+escapeHtml(x.case_id)+"</code> • "+escapeHtml(x.asset||"—")+" • RCA "+escapeHtml(x.quality?.rootCause||"PENDING")+" • CAPA "+Number((x.quality?.capa||[]).length)+" • CIP "+Number((x.quality?.cip||[]).length)).join("\n")
+      : "Brak otwartych niezgodności.";
+    await marketTelegramApi(token,"sendMessage",{chat_id:chatId,text:"<b>NCR / RCA / CAPA / CIP</b>\n\n"+out,parse_mode:"HTML"});
+    return res.status(200).json({ok:true});
+  }
+
+  await marketTelegramApi(token,"sendMessage",{chat_id:chatId,text:"Dostępne: /status, /cases, /case ID, /quality, /refresh"});
+  return res.status(200).json({ok:true});
+}
+
 export default async function handler(req, res) {
+  const channel = String(req.query?.channel || "");
+  if (channel === "market-audit") {
+    try { return await handleMarketAuditBot(req,res); }
+    catch (error) {
+      console.error("market_audit_bot_error",error);
+      return res.status(500).json({ok:false,error:error instanceof Error?error.message:"Market audit bot failed"});
+    }
+  }
+
   const token = process.env.TELEGRAM_BOT_TOKEN;
 
   if (req.method === "GET") {
