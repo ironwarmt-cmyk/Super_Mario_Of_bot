@@ -12,6 +12,13 @@ function injectShell(){
   const root=document.createElement("div");
   root.id="qa-experience-shell";
   root.innerHTML=`
+    <nav class="qa-dock" aria-label="Nawigacja Quality">
+      <a href="/app" data-dock="hub"><span>⌂</span><small>Hub</small></a>
+      <a href="/quality/training/" data-dock="academy"><span>▣</span><small>Akademia</small></a>
+      <a href="/quality/game/" data-dock="game"><span>🐭</span><small>Audyt</small></a>
+      <a href="/quality/assistant/?specialist=other" data-dock="copilot"><span>✦</span><small>Copilot</small></a>
+      <a href="/quality/account/" data-dock="account"><span>◎</span><small id="qaDockPlan">FREE</small></a>
+    </nav>
     <button class="qa-feedback-fab" id="qaFeedbackFab" type="button" aria-label="Zgłoś problem lub pomysł">✦ Feedback</button>
     <div class="qa-modal-backdrop" id="qaFeedbackBackdrop" hidden>
       <div class="qa-modal" role="dialog" aria-modal="true" aria-labelledby="qaFeedbackTitle">
@@ -167,6 +174,11 @@ function applyPlan(plan,data){
     }
   });
   document.querySelectorAll("[data-current-plan]").forEach(el=>el.textContent=currentPlan.toUpperCase());
+  const dockPlan=document.getElementById("qaDockPlan");if(dockPlan)dockPlan.textContent=currentPlan.toUpperCase();
+  const path=location.pathname;
+  document.querySelectorAll(".qa-dock a").forEach(a=>a.classList.remove("active"));
+  const target=path.includes("/training")?"academy":path.includes("/game")?"game":path.includes("/assistant")?"copilot":path.includes("/account")?"account":"hub";
+  document.querySelector('.qa-dock [data-dock="'+target+'"]')?.classList.add("active");
   window.dispatchEvent(new CustomEvent("qa:plan",{detail:{plan:currentPlan,rank:rank(currentPlan),dashboard}}));
 }
 
