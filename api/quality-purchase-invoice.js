@@ -1,4 +1,4 @@
-import crypto from "node:crypto";
+import { resolveQualityIdentity } from "../lib/quality-auth.js";
 import {
   getQualityPlan,
   getQualityProduct,
@@ -26,8 +26,9 @@ async function createInvoice(token,payload){
 export default async function handler(req,res){
   if(req.method!=="POST")return res.status(405).json({ok:false,error:"Method not allowed"});
   const token=process.env.TELEGRAM_BOT_TOKEN;
-  const user=verifyTelegramInitData(String(req.headers["x-telegram-init-data"]||req.body?.initData||""),token);
-  if(!user?.id)return res.status(401).json({ok:false,error:"Open checkout from Telegram."});
+  const identity=await resolveQualityIdentity(req);
+  if(!identity?.telegramUserId)return res.status(401).json({ok:false,error:"Sign in to Quality Hub or open checkout from Telegram."});
+  const user=identity.user||{id:identity.telegramUserId};
   const kind=String(req.body?.kind||"");const reference=String(req.body?.reference||"").toLowerCase();const consentToken=String(req.body?.consent_token||"");
   try{
     let purchaseKind,invoice;
