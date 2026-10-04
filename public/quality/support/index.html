@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Quality Support</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/quality/auth.js"></script>
 <style>
 :root{--bg:#07111c;--panel:#0d1b2a;--line:#203b54;--text:#f5f7fa;--muted:#9eb0c1;--accent:#3bd6a2;--blue:#54a7ff;--danger:#ff6b6b}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 10% 0,#133d5c 0,transparent 34%),radial-gradient(circle at 90% 5%,#134a39 0,transparent 28%),var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
@@ -15,7 +17,7 @@
 <div class="wrap">
   <div class="brand">QUALITY ASSURANCE SUPPORT</div>
   <h1 id="title">Pomoc i sugestie</h1>
-  <div class="lead" id="lead">Zgłoś problem techniczny, płatność, błąd w materiale albo pomysł na ulepszenie. Zgłoszenie zapisuje się bezpośrednio na Twoim koncie Telegram.</div>
+  <div class="lead" id="lead">Zgłoś problem techniczny, płatność, błąd w materiale albo pomysł na ulepszenie. Zgłoszenie zapisuje się bezpośrednio na Twoim koncie Quality.</div>
 
   <div class="panel">
     <form id="form">
@@ -79,7 +81,7 @@ const copy={
   },
   en:{
     title:"Help & feedback",
-    lead:"Report a technical issue, payment/access problem, content issue or an idea for improvement. The ticket is saved directly to your Telegram account.",
+    lead:"Report a technical issue, payment/access problem, content issue or an idea for improvement. The ticket is saved directly to your Quality account.",
     category:"Category",email:"Reply email (optional)",subject:"Subject",message:"Message / feedback",
     send:"Submit ticket",history:"My recent tickets",sent:"Ticket saved. ID: ",
     note:"For technical issues, say what you clicked, what you expected and what actually happened. Never enter card details or passwords.",
@@ -100,9 +102,10 @@ function applyLang(){
 }
 
 async function api(method,body){
+  const headers=await window.QualityAuth.headers({"content-type":"application/json"});
   const r=await fetch("/api/quality-support",{
     method,
-    headers:{"content-type":"application/json","x-telegram-init-data":initData},
+    headers,
     ...(body?{body:JSON.stringify(body)}:{})
   });
   const data=await r.json().catch(()=>({ok:false,error:"Invalid server response"}));
@@ -123,9 +126,8 @@ function renderTickets(items=[]){
 function escapeHtml(s=""){const d=document.createElement("div");d.textContent=String(s);return d.innerHTML;}
 
 async function load(){
-  if(!initData){
-    status.innerHTML='<span class="err">'+(locale==="en"?"Open this form from the Telegram bot.":"Otwórz ten formularz z poziomu bota Telegram.")+'</span>';
-    sendBtn.disabled=true; return;
+  if(!(await window.QualityAuth.isAuthenticated())){
+    location.href="/quality/login/?next="+encodeURIComponent(location.pathname+location.search);return;
   }
   try{
     const data=await api("GET");
