@@ -4,7 +4,14 @@ import {
   upsertQualityCustomerProfile,
   getUserProfile,
   getQualityLegalBundle,
-  createQualityCheckoutConsent
+  createQualityCheckoutConsent,
+  getQualityMembership,
+  getQualityWallet,
+  getQualityAssistantStatus,
+  getQualityAccountingSummary,
+  claimQualityAccountantOwner,
+  recordQualityAccountingCost,
+  reconcileQualityAccountingReceipt
 } from "../lib/db.js";
 
 function safeEqualHex(a, b) {
@@ -59,7 +66,65 @@ export default async function handler(req, res) {
     return res.status(401).json({ ok:false, error:"Open account setup from Telegram." });
   }
 
+  const mode = String(req.query?.mode || "");
+
   try {
+    if (mode === "dashboard") {
+      if (req.method !== "POST") {
+        return res.status(405).json({ ok:false, error:"Method not allowed" });
+      }
+      const [profile, membership, wallet, assistant] = await Promise.all([
+        getUserProfile(user.id),
+        getQualityMembership(user.id),
+        getQualityWallet(user.id),
+        getQualityAssistantStatus(user.id)
+      ]);
+      const plan = membership?.quality_plans || null;
+      const docsLeft = membership && plan
+        ? Math.max(0, Number(plan.included_custom_docs || 0) - Number(membership.custom_docs_used || 0))
+        : 0;
+      return res.status(200).json({
+        ok:true,
+        profile,
+        membership: membership ? {
+          status:membership.status,
+          period_end:membership.period_end,
+          plan,
+          docs_left:docsLeft
+        } : null,
+        wallet:{ token_balance:Number(wallet?.token_balance || 0) },
+        assistant:{
+          status:assistant?.session?.status || "stopped",
+          specialist:assistant?.session?.specialist || null,
+          used_seconds:Number(assistant?.used_seconds || 0),
+          remaining_seconds:Number(assistant?.remaining_seconds || 0),
+          included_seconds:Number(assistant?.included_seconds || 0)
+        }
+      });
+    }
+
+    if (mode === "accountant") {
+      if (req.method === "GET") {
+        const year = Number(req.query?.year || new Date().getFullYear());
+        const quarter = Number(req.query?.quarter || Math.floor(new Date().getMonth()/3)+1);
+        return res.status(200).json({ ok:true, data:await getQualityAccountingSummary(user.id, year, quarter) });
+      }
+      if (req.method !== "POST") {
+        return res.status(405).json({ ok:false, error:"Method not allowed" });
+      }
+      const action = String(req.body?.action || "");
+      if (action === "claim") {
+        return res.status(200).json({ ok:true, data:await claimQualityAccountantOwner(user.id) });
+      }
+      if (action === "cost") {
+        return res.status(200).json({ ok:true, data:await recordQualityAccountingCost(user.id, Number(req.body?.amount_grosz), req.body?.description, req.body?.document_ref) });
+      }
+      if (action === "reconcile") {
+        return res.status(200).json({ ok:true, data:await reconcileQualityAccountingReceipt(user.id, req.body?.ledger_id, Number(req.body?.pit_received_grosz)) });
+      }
+      return res.status(400).json({ ok:false, error:"Unknown accountant action" });
+    }
+
     if (req.method === "GET") {
       const [profile, telegramProfile] = await Promise.all([
         getQualityCustomerProfile(user.id),
