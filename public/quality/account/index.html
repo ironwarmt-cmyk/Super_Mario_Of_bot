@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Quality Account</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/quality/auth.js"></script>
 <style>
 :root{--bg:#07111c;--panel:#0d1b2a;--line:#203b54;--text:#f5f7fa;--muted:#9eb0c1;--accent:#3bd6a2;--blue:#54a7ff;--danger:#ff6b6b}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 10% 0,#133d5c 0,transparent 34%),radial-gradient(circle at 90% 5%,#134a39 0,transparent 28%),var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
@@ -68,8 +70,8 @@ const tg=window.Telegram?.WebApp; tg?.ready(); tg?.expand();
 const initData=tg?.initData||"";
 let locale="pl";
 const copy={
- pl:{title:"Moje konto",lead:"Nie tworzysz osobnego hasła. Twoim loginem jest konto Telegram, a dane kontaktowe i firmowe uzupełniasz tylko raz.",type:"Typ konta",individual:"Osoba indywidualna",company:"Firma",first:"Imię",last:"Nazwisko",email:"E-mail kontaktowy",phone:"Telefon",job:"Stanowisko / rola",companyName:"Nazwa firmy",tax:"NIP / VAT ID",city:"Miasto firmy",country:"Kod kraju",privacy:"Potwierdzam zapoznanie się z polityką prywatności.",terms:"Akceptuję warunki korzystania z usługi.",save:"Zapisz konto",saved:"Dane konta zostały zapisane.",identity:"Identyfikacja konta: Telegram"},
- en:{title:"My account",lead:"You do not create a separate password. Your Telegram account is your login; contact and company details are completed once.",type:"Account type",individual:"Individual",company:"Company",first:"First name",last:"Last name",email:"Contact email",phone:"Phone",job:"Job title / role",companyName:"Company name",tax:"Tax / VAT ID",city:"Company city",country:"Country code",privacy:"I confirm I have read the privacy policy.",terms:"I accept the service terms.",save:"Save account",saved:"Account details saved.",identity:"Account identity: Telegram"}
+ pl:{title:"Moje konto",lead:"Możesz korzystać niezależnie przez konto webowe albo z poziomu Telegrama. Dane kontaktowe i firmowe są wspólne po powiązaniu kont.",type:"Typ konta",individual:"Osoba indywidualna",company:"Firma",first:"Imię",last:"Nazwisko",email:"E-mail kontaktowy",phone:"Telefon",job:"Stanowisko / rola",companyName:"Nazwa firmy",tax:"NIP / VAT ID",city:"Miasto firmy",country:"Kod kraju",privacy:"Potwierdzam zapoznanie się z polityką prywatności.",terms:"Akceptuję warunki korzystania z usługi.",save:"Zapisz konto",saved:"Dane konta zostały zapisane.",identity:"Identyfikacja konta: Telegram"},
+ en:{title:"My account",lead:"You can use the standalone web account or Telegram. Contact and company details are shared once accounts are linked.",type:"Account type",individual:"Individual",company:"Company",first:"First name",last:"Last name",email:"Contact email",phone:"Phone",job:"Job title / role",companyName:"Company name",tax:"Tax / VAT ID",city:"Company city",country:"Country code",privacy:"I confirm I have read the privacy policy.",terms:"I accept the service terms.",save:"Save account",saved:"Account details saved.",identity:"Account identity: Telegram"}
 };
 function esc(s=""){const d=document.createElement("div");d.textContent=String(s);return d.innerHTML;}
 function apply(){
@@ -84,8 +86,9 @@ function toggleCompany(){companyFields.style.display=accountType.value==="compan
 accountType.addEventListener("change",toggleCompany);
 
 async function api(method,body){
+ const headers=await window.QualityAuth.headers({"content-type":"application/json"});
  const r=await fetch("/api/quality-account",{
-  method,headers:{"content-type":"application/json","x-telegram-init-data":initData},
+  method,headers,
   ...(body?{body:JSON.stringify(body)}:{})
  });
  const data=await r.json().catch(()=>({ok:false,error:"Invalid response"}));
@@ -100,10 +103,12 @@ function fill(p={},tgUser={}){
  toggleCompany();
 }
 async function load(){
- if(!initData){status.innerHTML='<span class="err">'+(locale==="en"?"Open this page from Telegram.":"Otwórz tę stronę z poziomu Telegrama.")+'</span>';saveBtn.disabled=true;return;}
+ if(!(await window.QualityAuth.isAuthenticated())){location.href="/quality/login/?next="+encodeURIComponent(location.pathname+location.search);return;}
  try{
   const data=await api("GET"); locale=data.locale==="en"?"en":"pl"; apply(); fill(data.profile||{},data.telegram||{});
-  identity.innerHTML='<b>'+copy[locale].identity+'</b><br><span class="pill">ID '+esc(data.telegram?.id||"")+'</span>'+(data.telegram?.username?' <span class="pill">@'+esc(data.telegram.username)+'</span>':'');
+  const source=data.auth?.source==="telegram"?"Telegram":"Web";
+  const linked=data.auth?.linkedTelegram?(locale==="en"?"linked with Telegram":"połączone z Telegramem"):(locale==="en"?"independent web account":"niezależne konto webowe");
+  identity.innerHTML='<b>'+source+' · '+linked+'</b>'+(data.auth?.email?'<br><span class="pill">'+esc(data.auth.email)+'</span>':'');
  }catch(e){status.innerHTML='<span class="err">'+esc(e.message)+'</span>';saveBtn.disabled=true;}
 }
 form.addEventListener("submit",async e=>{
