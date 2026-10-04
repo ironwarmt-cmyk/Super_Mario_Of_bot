@@ -65,10 +65,55 @@ function setLang(lang){document.documentElement.lang=lang;document.querySelector
       const original=link.textContent;
       link.textContent=document.documentElement.lang==='en'?'Opening payment…':'Otwieram płatność…';
       try{
+        const lang=document.documentElement.lang==='en'?'en':'pl';
+        const legalResponse=await fetch('/api/quality-account',{
+          method:'GET',
+          headers:{'x-telegram-init-data':tg.initData}
+        });
+        const legalData=await legalResponse.json();
+        if(!legalResponse.ok||!legalData?.ok) throw new Error(legalData?.error||'Legal bundle error');
+
+        const docs=Array.isArray(legalData.legal?.documents)?legalData.legal.documents:[];
+        const required=['terms','privacy','educational_disclaimer','content_license','digital_content_withdrawal'];
+        const missing=required.filter(k=>!docs.some(d=>d.document_key===k));
+        if(missing.length) throw new Error('Required legal documents are unavailable: '+missing.join(', '));
+
+        const capacity=prompt(lang==='en'
+          ?'Choose status: consumer / entrepreneur_professional / entrepreneur_consumer_rights'
+          :'Wpisz status: consumer / entrepreneur_professional / entrepreneur_consumer_rights','consumer');
+        if(!capacity){link.textContent=original;return;}
+
+        const summary=lang==='en'
+          ?'Before payment you must confirm: Terms, Privacy notice, educational disclaimer, licence, immediate digital delivery and acknowledgement of the statutory withdrawal consequence.\n\nOpen the legal documents in My Account if you want to review the full text.\n\nDo you confirm all required statements?'
+          :'Przed płatnością musisz potwierdzić: Regulamin, informację RODO, disclaimer edukacyjny, licencję, żądanie natychmiastowego dostarczenia treści cyfrowej oraz przyjęcie do wiadomości ustawowego skutku dla prawa odstąpienia.\n\nPełne dokumenty są dostępne w Moim koncie.\n\nCzy potwierdzasz wszystkie wymagane oświadczenia?';
+        if(!confirm(summary)){link.textContent=original;return;}
+
+        const consentResponse=await fetch('/api/quality-account',{
+          method:'POST',
+          headers:{'content-type':'application/json','x-telegram-init-data':tg.initData},
+          body:JSON.stringify({
+            action:'legal_consent',
+            locale:lang,
+            purchase_kind:'plan',
+            purchase_reference:slug,
+            consent:{
+              accepted_terms:true,
+              acknowledged_privacy:true,
+              accepted_license:true,
+              requested_immediate_delivery:true,
+              acknowledged_loss_of_withdrawal:true,
+              marketing_consent:false,
+              customer_capacity:capacity
+            }
+          })
+        });
+        const consentData=await consentResponse.json();
+        if(!consentResponse.ok||!consentData?.ok||!consentData?.consent?.consent_token) throw new Error(consentData?.error||'Consent error');
+
         const r=await fetch('/api/quality-plan-invoice',{
           method:'POST',
           headers:{'content-type':'application/json','x-telegram-init-data':tg.initData},
-          body:JSON.stringify({slug})
+          body:JSON.stringify({slug,consent_token:consentData.consent.consent_token})
         });
         const data=await r.json();
         if(!r.ok||!data?.ok||!data?.invoice_link) throw new Error(data?.error||'Invoice error');
