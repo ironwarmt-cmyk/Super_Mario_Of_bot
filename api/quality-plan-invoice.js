@@ -1,53 +1,5 @@
-import crypto from "node:crypto";
+import { resolveQualityIdentity } from "../lib/quality-auth.js";
 import { getQualityPlan, validateQualityCheckoutConsent } from "../lib/db.js";
-
-function safeEqualHex(a, b) {
-  const aa = Buffer.from(String(a || ""), "hex");
-  const bb = Buffer.from(String(b || ""), "hex");
-  if (!aa.length || aa.length !== bb.length) return false;
-  return crypto.timingSafeEqual(aa, bb);
-}
-
-function verifyTelegramInitData(initData, botToken) {
-  if (!initData || !botToken) return null;
-
-  const params = new URLSearchParams(initData);
-  const hash = params.get("hash");
-  if (!hash) return null;
-
-  const authDate = Number(params.get("auth_date") || 0);
-  const now = Math.floor(Date.now() / 1000);
-  if (!authDate || now - authDate > 86400 || authDate > now + 60) return null;
-
-  const entries = [];
-  for (const [key, value] of params.entries()) {
-    if (key !== "hash") entries.push([key, value]);
-  }
-  entries.sort(([a], [b]) => a.localeCompare(b));
-
-  const dataCheckString = entries
-    .map(([key, value]) => `${key}=${value}`)
-    .join("\n");
-
-  const secretKey = crypto
-    .createHmac("sha256", "WebAppData")
-    .update(botToken)
-    .digest();
-
-  const expected = crypto
-    .createHmac("sha256", secretKey)
-    .update(dataCheckString)
-    .digest("hex");
-
-  if (!safeEqualHex(hash, expected)) return null;
-
-  try {
-    const rawUser = params.get("user");
-    return rawUser ? JSON.parse(rawUser) : null;
-  } catch {
-    return null;
-  }
-}
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -55,18 +7,11 @@ export default async function handler(req, res) {
   }
 
   const token = process.env.TELEGRAM_BOT_TOKEN;
-  const initData =
-    req.headers["x-telegram-init-data"] ||
-    req.body?.initData ||
-    "";
-
-  const user = verifyTelegramInitData(String(initData), token);
-  if (!user?.id) {
-    return res.status(401).json({
-      ok: false,
-      error: "Open Quality Hub from Telegram to pay."
-    });
+  const identity = await resolveQualityIdentity(req);
+  if (!identity?.telegramUserId) {
+    return res.status(401).json({ ok:false, error:"Sign in to Quality Hub or open it from Telegram." });
   }
+  const user = identity.user || { id: identity.telegramUserId };
 
   const slug = String(req.body?.slug || "").toLowerCase();
 
