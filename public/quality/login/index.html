@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Quality Hub — logowanie</title>
+<title>Quality Assurance Support — logowanie</title>
 <script src="/quality/auth.js"></script>
 <style>
 :root{--bg:#07111c;--panel:#0d1b2a;--line:#203b54;--text:#f5f7fa;--muted:#9eb0c1;--accent:#3bd6a2;--blue:#54a7ff;--danger:#ff6b6b}
@@ -13,7 +13,8 @@
 <body>
 <div class="wrap">
 <div class="brand">QUALITY ASSURANCE SUPPORT</div>
-<h1>Quality Hub</h1>
+<h1>Quality Assurance Support</h1>
+<div class="lead"><strong>Logowanie</strong></div>
 <div class="lead">Zaloguj się niezależnie od Telegrama. Jeśli użyjesz tego samego e-maila co na koncie Quality w Telegramie, dostęp zostanie powiązany z tym samym kontem.</div>
 <div class="panel">
 <label for="email">E-mail</label><input id="email" type="email" autocomplete="email" placeholder="twoj@email.pl">
@@ -22,7 +23,7 @@
 <button class="btn secondary" id="signupBtn">Utwórz konto webowe</button>
 <div class="status" id="status"></div><button class="btn secondary" id="resendBtn" style="display:none">Wyślij ponownie e-mail potwierdzający</button>
 <div class="sep">albo</div>
-<a class="btn telegram" href="https://t.me/Super_Mario_Official_bot">Otwórz Quality na Telegramie</a>
+<a class="btn telegram" href="https://t.me/Super_Mario_Official_bot">Otwórz Quality Assurance Support na Telegramie</a>
 <div class="small">Aplikacja webowa i bot korzystają z tego samego backendu, planu, limitów i historii po powiązaniu konta.</div>
 </div>
 </div>
@@ -30,16 +31,23 @@
 const qa=window.QualityAuth;const c=qa.client();const params=new URLSearchParams(location.search);const next=params.get("next")||"/quality/";
 function show(msg,ok=false){status.classList.add("active");status.innerHTML='<span class="'+(ok?'ok':'err')+'">'+String(msg)+'</span>'}
 async function resendConfirmation(){
- const e=email.value.trim(); if(!e){show("Najpierw wpisz e-mail.");return}
+ const e=email.value.trim().toLowerCase(); if(!e){show("Najpierw wpisz e-mail.");return}
  resendBtn.disabled=true;status.textContent="Wysyłam ponownie…";
- const {error}=await c.auth.resend({type:"signup",email:e,options:{emailRedirectTo:location.origin+"/quality/"}});
+ const {error}=await c.auth.resend({type:"signup",email:e,options:{emailRedirectTo:location.origin+"/login?confirmed=1"}});
  resendBtn.disabled=false;
- if(error){show(error.message);return}
- show("Wysłano ponownie. Otwórz wiadomość z Supabase, kliknij link potwierdzający, a potem wróć tutaj i naciśnij „Zaloguj”. Sprawdź też SPAM.",true);
+ if(error){
+   const raw=String(error.message||"");
+   if(/security purposes|rate limit|seconds/i.test(raw)){
+     show("Nowy e-mail można wysłać po krótkiej przerwie. Odczekaj około minuty i spróbuj ponownie.");
+     return;
+   }
+   show(raw);return
+ }
+ show("Wysłano nowy e-mail potwierdzający. Użyj wyłącznie najnowszej wiadomości, a potem wróć do logowania.",true);
 }
 async function existing(){if(await qa.isAuthenticated()){location.href=next;return true}return false}
 loginBtn.onclick=async()=>{
- const e=email.value.trim(),p=password.value;if(!e||!p){show("Podaj e-mail i hasło.");return}
+ const e=email.value.trim().toLowerCase(),p=password.value;if(!e||!p){show("Podaj e-mail i hasło.");return}
  loginBtn.disabled=true;status.classList.add("active");status.textContent="Logowanie…";
  let result;
  try{
@@ -64,7 +72,7 @@ loginBtn.onclick=async()=>{
  location.href=next
 };
 signupBtn.onclick=async()=>{
- const e=email.value.trim(),p=password.value;if(!e||p.length<8){show("Podaj poprawny e-mail i hasło minimum 8 znaków.");return}
+ const e=email.value.trim().toLowerCase(),p=password.value;if(!e||p.length<8){show("Podaj poprawny e-mail i hasło minimum 8 znaków.");return}
  signupBtn.disabled=true;status.classList.add("active");status.textContent="Tworzenie konta…";
  let result;
  try{
