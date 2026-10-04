@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Myszka Audytorka — Quality Assurance Support</title>
+<script src="/quality/auth.js"></script>
+<link rel="stylesheet" href="/quality/theme.css?v=20261005-premium">
+<script defer src="/quality/experience.js?v=20261005-1"></script>
+<style>
+.game-wrap{max-width:1060px;margin:auto;padding:24px 16px 100px}.game-top{display:flex;justify-content:space-between;gap:14px;align-items:center}.game-top a{color:var(--text);text-decoration:none}.hero-game{display:grid;grid-template-columns:1.05fr .95fr;gap:18px;align-items:center;padding:38px 0}.mouse-stage{min-height:280px;border:1px solid var(--line);border-radius:26px;background:linear-gradient(145deg,#151126,#0b1022);position:relative;overflow:hidden;padding:20px}.mouse{position:absolute;font-size:54px;left:10%;bottom:26px;filter:drop-shadow(0 12px 18px #0008);animation:mouse-walk 8s ease-in-out infinite alternate}.glass{position:absolute;font-size:36px;left:21%;bottom:64px;animation:glass-look 2.4s ease-in-out infinite}.station{position:absolute;padding:8px 11px;border:1px solid #ffffff22;border-radius:12px;background:#ffffff0b;font-size:12px}.s1{left:10%;top:22%}.s2{left:42%;top:12%}.s3{right:8%;top:32%}.s4{right:20%;bottom:18%}@keyframes mouse-walk{0%{left:8%;transform:scaleX(1)}45%{left:42%;transform:scaleX(1)}55%{left:42%;transform:scaleX(-1)}100%{left:76%;transform:scaleX(-1)}}@keyframes glass-look{50%{transform:rotate(-16deg) translateY(-4px)}}.locations{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.location{padding:18px;border:1px solid var(--line);border-radius:20px;background:var(--panel);cursor:pointer;position:relative;min-height:150px}.location .icon{font-size:32px}.location h3{margin:10px 0 5px}.quiz{margin-top:22px;padding:22px;border:1px solid var(--line);border-radius:22px;background:var(--panel)}.answers{display:grid;gap:9px;margin-top:14px}.answer{padding:13px;text-align:left;border-radius:14px;border:1px solid var(--line);background:#131026;color:var(--text);font-weight:700}.answer.good{border-color:#55efb0;background:#55efb017}.answer.bad{border-color:#ff6b8a;background:#ff6b8a12}.feedback{margin-top:13px;line-height:1.5;color:var(--muted)}.scorebar{display:flex;gap:8px;flex-wrap:wrap}.scorechip{padding:7px 10px;border:1px solid var(--line);border-radius:999px;background:#ffffff08}.progress{height:7px;background:#ffffff10;border-radius:999px;overflow:hidden;margin:12px 0}.progress i{display:block;height:100%;background:linear-gradient(90deg,#58d9ff,#ff5bd8,#ffd36b);width:0;transition:width .3s}.empty{color:var(--muted)}@media(max-width:760px){.hero-game{grid-template-columns:1fr}.locations{grid-template-columns:1fr 1fr}.mouse-stage{min-height:230px}}@media(max-width:460px){.locations{grid-template-columns:1fr}}
+</style>
+</head>
+<body data-build="2026-10-05-game">
+<div class="game-wrap">
+  <div class="game-top"><div><div class="brand">QUALITY ASSURANCE SUPPORT</div><b>MYSZKA AUDYTORKA</b></div><a href="/app">← Hub</a></div>
+  <section class="hero-game">
+    <div><div class="eyebrow">FOOD SAFETY QUEST</div><h1>Wejdź, rozejrzyj się i znajdź niezgodność.</h1><p>Krótka gra audytowa. Myszka sprawdza higienę, temperatury, alergeny, identyfikowalność i zachowania personelu. Ty podejmujesz decyzję.</p><div class="scorebar"><span class="scorechip">XP <b id="xp">0</b></span><span class="scorechip">Seria <b id="streak">0</b></span><span class="scorechip">Poziom <b id="level">Junior Inspector</b></span></div></div>
+    <div class="mouse-stage"><span class="station s1">🧤 higiena</span><span class="station s2">🌡 temperatura</span><span class="station s3">🏷 etykiety</span><span class="station s4">🧹 czystość</span><div class="mouse">🐭</div><div class="glass">🔎</div></div>
+  </section>
+
+  <h2>Wybierz obiekt</h2>
+  <div class="locations">
+    <article class="location" data-place="bakery" data-required-plan="free" data-feature="Piekarnia — Quick Audit"><div class="icon">🥐</div><h3>Piekarnia</h3><p>Quick Audit · higiena i ekspozycja</p></article>
+    <article class="location" data-place="restaurant" data-required-plan="basic" data-feature="Restauracja — Audit Walk"><div class="icon">🍽️</div><h3>Restauracja</h3><p>BASIC · cross-contamination i temperatury</p></article>
+    <article class="location" data-place="factory" data-required-plan="pro" data-feature="Fabryka — Process Audit"><div class="icon">🏭</div><h3>Fabryka</h3><p>PRO · traceability, HACCP, CAPA</p></article>
+    <article class="location" data-place="coldstore" data-required-plan="vip" data-feature="Chłodnia — Expert Audit"><div class="icon">❄️</div><h3>Chłodnia</h3><p>VIP · cold chain i decyzje eksperckie</p></article>
+  </div>
+
+  <section class="quiz" id="quiz"><div class="empty">Wybierz obiekt, a Myszka rozpocznie audyt.</div></section>
+</div>
+<script>
+const scenarios={
+ bakery:[
+  {q:"Pracownik pakuje pieczywo i ma pierścionek oraz bardzo długie paznokcie. Co robisz?",a:["Nic, jeśli ręce wyglądają na czyste","Zatrzymuję czynność, koryguję higienę osobistą i oceniam ryzyko produktu","Zapisuję tylko uwagę do następnego audytu"],c:[1],f:"Biżuteria i niewłaściwa higiena dłoni mogą zwiększać ryzyko zanieczyszczenia. Reakcja powinna być natychmiastowa i adekwatna do ryzyka."},
+  {q:"Pod stołem produkcyjnym widzisz resztki surowca z poprzedniej zmiany. Najlepsza reakcja?",a:["Ocenić czyszczenie, usunąć pozostałości i sprawdzić wykonanie programu higieny","Przesunąć resztki poza linię","Poczekać do końca dnia"],c:[0],f:"Pozostałości wskazują na nieskuteczne czyszczenie lub weryfikację. Trzeba usunąć problem i sprawdzić systemowo przyczynę."}
+ ],
+ restaurant:[
+  {q:"Surowy drób jest przechowywany nad gotową sałatką. Co oznacza ta sytuacja?",a:["Dopuszczalne, jeśli chłodnia ma mniej niż 5°C","Ryzyko zanieczyszczenia krzyżowego — należy natychmiast zmienić układ i ocenić bezpieczeństwo sałatki","Tylko problem estetyczny"],c:[1],f:"Rozdzielenie surowych i gotowych produktów ogranicza zanieczyszczenie krzyżowe. Temperatura sama nie usuwa tego zagrożenia."},
+  {q:"Kucharz mierzy temperaturę potrawy, ale sonda nie została zdezynfekowana między pomiarami.",a:["Kontynuować, bo sonda dotyka tylko żywności","Wstrzymać pomiary, oczyścić i zdezynfekować sondę zgodnie z procedurą","Wymienić termometr dopiero po zmianie"],c:[1],f:"Sonda może przenosić mikroorganizmy pomiędzy produktami. Liczy się prawidłowa higiena narzędzia przed kolejnym pomiarem."}
+ ],
+ factory:[
+  {q:"Paleta surowca ma nieczytelną etykietę partii. Produkcja właśnie ma ruszyć.",a:["Przyjąć numer z poprzedniej palety","Wstrzymać użycie surowca do czasu potwierdzenia identyfikowalności","Nadać nowy numer bez sprawdzenia"],c:[1],f:"Brak pewnej identyfikacji partii jest ryzykiem dla traceability i wycofania. Nie należy zgadywać ani tworzyć sztucznego powiązania."},
+  {q:"CCP ma wynik poza limitem krytycznym. Operator wpisał wartość, ale nic więcej.",a:["To wystarczy, zapis jest dowodem","Uruchomić działania zgodne z planem HACCP: zabezpieczyć produkt, skorygować proces, udokumentować i ocenić przyczynę","Skasować wynik i zmierzyć ponownie"],c:[1],f:"Przekroczenie limitu krytycznego wymaga zdefiniowanej reakcji, postępowania z produktem i zapisu działań."}
+ ],
+ coldstore:[
+  {q:"Rejestrator pokazuje wzrost temperatury ponad limit przez 70 minut. Produkt wygląda prawidłowo.",a:["Zwolnić produkt, bo wygląd jest prawidłowy","Zablokować partię i przeprowadzić udokumentowaną ocenę czasu/temperatury oraz ryzyka","Obniżyć temperaturę i usunąć zapis alarmu"],c:[1],f:"Wygląd nie wystarcza do oceny bezpieczeństwa. Potrzebna jest analiza odchylenia i udokumentowana decyzja o losie produktu."},
+  {q:"Alarm chłodni wraca trzeci raz w tygodniu po tej samej naprawie.",a:["Traktować każde zdarzenie oddzielnie","Uruchomić analizę przyczyny źródłowej i CAPA, bo problem jest powtarzalny","Zwiększyć limit alarmowy"],c:[1],f:"Powtarzalność wskazuje, że korekta nie usunęła przyczyny. To sygnał do RCA/CAPA i oceny skuteczności."}
+ ]
+};
+let place=null,index=0,answered=false;
+const storeKey="qa_game_progress_v1";
+let state=JSON.parse(localStorage.getItem(storeKey)||'{"xp":0,"streak":0}');
+function save(){localStorage.setItem(storeKey,JSON.stringify(state));paintScore()}
+function paintScore(){xp.textContent=state.xp||0;streak.textContent=state.streak||0;level.textContent=state.xp>=220?"Food Safety Master":state.xp>=120?"Audit Pro":state.xp>=50?"QA Specialist":"Junior Inspector"}
+paintScore();
+function start(p){place=p;index=0;render()}
+function render(){
+ const q=scenarios[place]?.[index];
+ if(!q){quiz.innerHTML='<div class="eyebrow">AUDYT ZAKOŃCZONY</div><h2>Świetna robota.</h2><p>XP zapisano na tym urządzeniu. Wybierz kolejny obiekt albo wróć do Hubu.</p>';return}
+ answered=false;
+ quiz.innerHTML='<div class="eyebrow">'+place.toUpperCase()+' · '+(index+1)+'/'+scenarios[place].length+'</div><h2>'+q.q+'</h2><div class="progress"><i style="width:'+((index/scenarios[place].length)*100)+'%"></i></div><div class="answers">'+q.a.map((x,i)=>'<button class="answer" data-i="'+i+'">'+x+'</button>').join("")+'</div><div class="feedback" id="feedback"></div>';
+ quiz.querySelectorAll(".answer").forEach(b=>b.onclick=()=>answer(Number(b.dataset.i)));
+}
+function answer(i){
+ if(answered)return;answered=true;
+ const q=scenarios[place][index];const ok=q.c.includes(i);
+ quiz.querySelectorAll(".answer").forEach((b,j)=>{if(q.c.includes(j))b.classList.add("good");else if(j===i)b.classList.add("bad");b.disabled=true});
+ if(ok){state.xp=(state.xp||0)+20;state.streak=(state.streak||0)+1}else{state.streak=0}
+ save();
+ feedback.innerHTML='<b>'+(ok?'✓ Dobra decyzja':'✕ Nie tym razem')+'</b><br>'+q.f+'<br><button class="qa-btn" id="nextQ" style="margin-top:12px">'+(index+1<scenarios[place].length?'Następne pytanie':'Zakończ audyt')+'</button>';
+ nextQ.onclick=()=>{index++;render()};
+}
+document.querySelectorAll(".location").forEach(card=>card.addEventListener("click",e=>{if(card.classList.contains("qa-locked"))return;start(card.dataset.place)}));
+window.addEventListener("qa:plan",()=>window.QAExperience.applyPlan(window.QAExperience.currentPlan(),window.QAExperience.dashboard()));
+</script>
+</body></html>
