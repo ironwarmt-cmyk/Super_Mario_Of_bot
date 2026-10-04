@@ -354,8 +354,16 @@ export default async function handler(req, res) {
       const productLink = /^\/start\s+qa_product_([a-z0-9-]+)$/i.exec(text);
       if (planLink) {
         const profile = await getUserProfile(message.from.id);
+        const locale = profile?.locale || "pl";
+        const pl = locale !== "en";
         const plan = await getQualityPlan(planLink[1]);
-        if (plan) await sendQualityPlanInvoice(token, chatId, plan, profile?.locale || "pl");
+        if (plan) {
+          const url = "https://supermarioofbot-iron-war.vercel.app/quality/?buy=" + encodeURIComponent(plan.slug) + "&lang=" + encodeURIComponent(locale);
+          await sendMessage(token, chatId,
+            pl ? "Przed płatnością przejdź przez wymagane informacje i zgody." : "Complete the required legal notices and consents before payment.",
+            { inline_keyboard: [[{ text: pl ? "📑 Kontynuuj zakup" : "📑 Continue checkout", web_app: { url } }]] }
+          );
+        }
         return res.status(200).json({ ok: true });
       }
       if (productLink) {
