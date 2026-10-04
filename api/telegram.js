@@ -41,6 +41,8 @@ import {
   recordQualityProductPayment,
   recordQualityPlanRefund,
   setQualitySubscriptionAutoRenew,
+  claimQualityAccountantOwner,
+  getQualityAccountingSummary,
   isDatabaseConfigured
 } from "../lib/db.js";
 
@@ -396,6 +398,26 @@ export default async function handler(req, res) {
         await sendMessage(token, chatId, view.text, view.reply_markup);
         return res.status(200).json({ ok: true });
       }
+      if (text === "/ksiegowa" || text === "/accountant") {
+        const profile = await getUserProfile(message.from.id);
+        const pl = (profile?.locale || "pl") !== "en";
+        try {
+          const s = await getQualityAccountingSummary(message.from.id, 2026, Math.floor(new Date().getMonth()/3)+1);
+          const money = (g) => (Number(g||0)/100).toFixed(2).replace(".",",")+" zł";
+          await sendMessage(token, chatId,
+            pl ? "<b>🧾 Księgowa</b>\n\nLimit działalności nierejestrowanej: <b>"+money(s.quarterly_limit_grosz)+" / kwartał</b>\nPrzychód należny w kwartale: <b>"+money(s.limit_revenue_grosz)+"</b>\nPozostało: <b>"+money(s.remaining_limit_grosz)+"</b>\nWykorzystanie: <b>"+s.limit_used_pct+"%</b>\n\nPIT-36 — przychód otrzymany: <b>"+money(s.pit_revenue_grosz)+"</b>\nKoszty: <b>"+money(s.pit_cost_grosz)+"</b>\nDochód roboczy: <b>"+money(s.pit_income_grosz)+"</b>\nPozycje wymagające dokumentu/uzgodnienia: <b>"+s.unresolved_entries+"</b>\n\nDokładność księgowania: <b>0 groszy różnicy</b>. Deklaracja jest przygotowywana automatycznie, ale jej wysłanie wymaga Twojej autoryzacji."
+               : "<b>🧾 Accountant</b>\n\nQuarter limit: <b>"+money(s.quarterly_limit_grosz)+"</b>\nQuarter receivable revenue: <b>"+money(s.limit_revenue_grosz)+"</b>\nRemaining: <b>"+money(s.remaining_limit_grosz)+"</b>\nPIT-36 received revenue: <b>"+money(s.pit_revenue_grosz)+"</b>\nCosts: <b>"+money(s.pit_cost_grosz)+"</b>\nUnresolved evidence: <b>"+s.unresolved_entries+"</b>\n\nAccounting reconciliation requires <b>zero-grosz difference</b>. Filing requires owner authorization."
+          );
+        } catch {
+          const claim = await claimQualityAccountantOwner(message.from.id);
+          await sendMessage(token, chatId, pl
+            ? "🧾 Moduł Księgowa jest zabezpieczony jako dane właściciela. Twoje konto Telegram zostało zgłoszone do jednorazowego powiązania z właścicielem. Status: <b>"+String(claim?.status||"pending")+"</b>."
+            : "🧾 Accountant data is owner-only. Your Telegram account was submitted for one-time owner binding. Status: <b>"+String(claim?.status||"pending")+"</b>."
+          );
+        }
+        return res.status(200).json({ ok: true });
+      }
+
       if (text === "/terms" || text === "/privacy") {
         const profile = await getUserProfile(message.from.id);
         const pl = (profile?.locale || "pl") !== "en";
