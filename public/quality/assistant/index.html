@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Quality Copilot</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/quality/auth.js"></script>
 <style>
 :root{
   --bg:#07111c;--panel:#0d1b2a;--panel2:#10263a;--line:#203b54;
@@ -102,9 +104,10 @@ function escapeHtml(v=""){
   const d=document.createElement("div"); d.textContent=String(v); return d.innerHTML;
 }
 async function api(action, extra={}){
+  const headers=await window.QualityAuth.headers({"content-type":"application/json"});
   const r=await fetch("/api/quality-assistant",{
     method:"POST",
-    headers:{"content-type":"application/json","x-telegram-init-data":initData},
+    headers,
     body:JSON.stringify({action,specialist,...extra})
   });
   const data=await r.json().catch(()=>({ok:false,error:"Invalid server response"}));
@@ -174,6 +177,9 @@ function showGate(message){
 }
 async function load(){
   clearInterval(heartbeatTimer);
+  if(!(await window.QualityAuth.isAuthenticated())){
+    location.href="/quality/login/?next="+encodeURIComponent(location.pathname+location.search);return;
+  }
   try{
     const data=await api("status");
     locale=data.profile?.locale||"pl";
@@ -240,11 +246,11 @@ document.getElementById("input").addEventListener("keydown",e=>{
 ticker=setInterval(paintTimer,1000);
 document.addEventListener("visibilitychange",()=>{
   if(document.hidden&&serverState?.session?.status==="active"){
-    fetch("/api/quality-assistant",{
+    window.QualityAuth.headers({"content-type":"application/json"}).then(headers=>fetch("/api/quality-assistant",{
       method:"POST",keepalive:true,
-      headers:{"content-type":"application/json","x-telegram-init-data":initData},
+      headers,
       body:JSON.stringify({action:"heartbeat",specialist})
-    }).catch(()=>{});
+    })).catch(()=>{});
   }
 });
 load();
