@@ -1,0 +1,45 @@
+name: Quality full E2E
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/quality-full-e2e.yml"
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Run production Quality E2E
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL="https://ixivedtgqgryawxsxnqd.supabase.co/functions/v1/quality-e2e-runner"
+          OUT="$(mktemp)"
+          for attempt in {1..6}; do
+            echo "E2E attempt $attempt..."
+            CODE="$(curl --silent --show-error --location --max-time 220 --output "$OUT" --write-out "%{http_code}" "$URL" || true)"
+            cat "$OUT" || true
+            echo
+            echo "HTTP=$CODE"
+            if [ "$CODE" = "200" ]; then
+              python3 - "$OUT" <<'PY'
+import json,sys
+data=json.load(open(sys.argv[1]))
+assert data.get("ok") is True, data
+assert int(data.get("failed",1)) == 0, data
+assert int(data.get("total",0)) >= 20, data
+print(f"QUALITY FULL E2E PASS {data['passed']}/{data['total']}")
+PY
+              exit 0
+            fi
+            if [ "$CODE" = "429" ]; then
+              sleep 60
+              continue
+            fi
+            sleep 15
+          done
+          echo "Quality full E2E failed after retries."
+          exit 1
