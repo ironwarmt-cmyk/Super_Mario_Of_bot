@@ -284,3 +284,7 @@ body[data-plan="vip"] .qa-feedback-fab{
   .qa-feedback-fab{bottom:82px}
   .qa-ambient{bottom:82px}
 }
+
+/* Decorative ambient must never block app controls. */
+.qa-ambient{pointer-events:none}
+.qa-ambient-head button{pointer-events:auto}
