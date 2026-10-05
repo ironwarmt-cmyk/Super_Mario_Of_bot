@@ -1,0 +1,20 @@
+name: Quality UI wording guard
+
+on:
+  push:
+    paths:
+      - "public/quality/**"
+      - "scripts/qa-ui-copy-guard.mjs"
+      - ".github/workflows/quality-ui-copy-guard.yml"
+  pull_request:
+    paths:
+      - "public/quality/**"
+      - "scripts/qa-ui-copy-guard.mjs"
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Quality application copy
+        run: node scripts/qa-ui-copy-guard.mjs
