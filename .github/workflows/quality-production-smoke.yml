@@ -64,6 +64,29 @@ jobs:
             fi
           done
 
+      - name: Verify UI regression guards
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          LOGIN="$(curl -fsSL --max-time 25 "$BASE/login")"
+          if echo "$LOGIN" | grep -Fq 'status.classList.add("active")'; then
+            echo "Safari-unsafe implicit status reference returned in production login."
+            exit 1
+          fi
+          echo "$LOGIN" | grep -Fq 'statusEl.classList.add("active")' || {
+            echo "Explicit login status element binding missing."
+            exit 1
+          }
+
+          for path in "/quality/game/" "/quality/training/"; do
+            BODY="$(curl -fsSL --max-time 25 "$BASE$path")"
+            if echo "$BODY" | grep -Fq 'window.addEventListener("qa:plan",()=>window.QAExperience.applyPlan'; then
+              echo "Recursive qa:plan -> applyPlan listener found at $path"
+              exit 1
+            fi
+          done
+
       - name: Verify Quality Hub experience
         shell: bash
         run: |
