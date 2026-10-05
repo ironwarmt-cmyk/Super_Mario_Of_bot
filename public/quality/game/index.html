@@ -72,6 +72,6 @@ function answer(i){
  nextQ.onclick=()=>{index++;render()};
 }
 document.querySelectorAll(".location").forEach(card=>card.addEventListener("click",e=>{if(card.classList.contains("qa-locked"))return;start(card.dataset.place)}));
-window.addEventListener("qa:plan",()=>window.QAExperience.applyPlan(window.QAExperience.currentPlan(),window.QAExperience.dashboard()));
+
 </script>
 </body></html>
