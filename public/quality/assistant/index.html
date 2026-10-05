@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Quality Copilot</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="/quality/auth.js"></script>
 <style>
 :root{
@@ -65,11 +64,6 @@
 </div>
 
 <script>
-const tg = window.Telegram?.WebApp;
-tg?.ready();
-tg?.expand();
-
-const initData = tg?.initData || "";
 const params = new URLSearchParams(location.search);
 let specialist = params.get("specialist") || "brc";
 let locale = "pl";
@@ -174,7 +168,7 @@ function addMessage(role,text,sources=[]){
   chat.appendChild(div); div.scrollIntoView({behavior:"smooth",block:"end"});
 }
 function showGate(message){
-  document.getElementById("gate").innerHTML='<div class="locked"><b>'+t("Asystent jest dostępny w pakiecie VIP.","The assistant is available with VIP.")+'</b><br><span class="sub">'+escapeHtml(message||"")+'</span><br><a class="upgrade" href="https://t.me/Super_Mario_Official_bot?start=qa_plan_vip">'+t("Aktywuj VIP","Activate VIP")+'</a></div>';
+  document.getElementById("gate").innerHTML='<div class="locked"><b>'+t("Asystent jest dostępny w pakiecie VIP.","The assistant is available with VIP.")+'</b><br><span class="sub">'+escapeHtml(message||"")+'</span><br><a class="upgrade" href="/app#plans">'+t("Aktywuj VIP","Activate VIP")+'</a></div>';
 }
 async function load(){
   clearInterval(heartbeatTimer);
