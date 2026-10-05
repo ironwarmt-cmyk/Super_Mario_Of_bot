@@ -78,13 +78,13 @@ button{transition:transform .18s ease,box-shadow .18s ease,border-color .18s eas
   background:rgba(255,79,216,.08)!important;
 }
 .price,.value{color:#fff!important;text-shadow:0 0 24px rgba(88,217,255,.15)}
-.cta,.btn.primary,.btn:not(.secondary):not(.telegram){
+.cta,.btn.primary,.btn:not(.secondary){
   background:linear-gradient(100deg,#ff4fd8 0%,#9a6bff 52%,#58d9ff 100%)!important;
   color:#100815!important;
   box-shadow:0 10px 30px rgba(143,107,255,.24)!important;
   border:0!important;
 }
-.cta:hover,.btn.primary:hover,.btn:not(.secondary):not(.telegram):hover{
+.cta:hover,.btn.primary:hover,.btn:not(.secondary):hover{
   transform:translateY(-1px);
   box-shadow:0 14px 38px rgba(143,107,255,.34)!important;
 }
@@ -93,7 +93,7 @@ button{transition:transform .18s ease,box-shadow .18s ease,border-color .18s eas
   color:#f8f5ff!important;
   border:1px solid rgba(143,107,255,.4)!important;
 }
-.cta.alt,.btn.telegram,.telegram{
+.cta.alt{
   background:linear-gradient(100deg,#58d9ff,#6da8ff)!important;
   color:#07131a!important;
 }
