@@ -21,13 +21,13 @@ function verifyTelegramInitData(initData,botToken){
 }
 async function createInvoice(token,payload){
   const r=await fetch(`https://api.telegram.org/bot${token}/createInvoiceLink`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
-  const d=await r.json();if(!r.ok||!d?.ok||!d?.result)throw new Error(d?.description||"Could not create Telegram invoice");return d.result;
+  const d=await r.json();if(!r.ok||!d?.ok||!d?.result)throw new Error(d?.description||"Could not create payment invoice");return d.result;
 }
 export default async function handler(req,res){
   if(req.method!=="POST")return res.status(405).json({ok:false,error:"Method not allowed"});
   const token=process.env.TELEGRAM_BOT_TOKEN;
   const identity=await resolveQualityIdentity(req);
-  if(!identity?.telegramUserId)return res.status(401).json({ok:false,error:"Sign in to Quality Hub or open checkout from Telegram."});
+  if(!identity?.telegramUserId)return res.status(401).json({ok:false,error:"Sign in to Quality Assurance Support to continue checkout."});
   const user=identity.user||{id:identity.telegramUserId};
   const kind=String(req.body?.kind||"");const reference=String(req.body?.reference||"").toLowerCase();const consentToken=String(req.body?.consent_token||"");
   try{
