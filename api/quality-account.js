@@ -9,6 +9,7 @@ import {
   getQualityWallet,
   getQualityAssistantStatus,
   getQualityAccountingSummary,
+  getQualityOwnerUsers,
   claimQualityAccountantOwner,
   recordQualityAccountingCost,
   reconcileQualityAccountingReceipt
@@ -128,6 +129,11 @@ export default async function handler(req, res) {
       });
     }
 
+    if (mode === "owner-users") {
+      if (req.method !== "GET") return res.status(405).json({ ok:false, error:"Method not allowed" });
+      return res.status(200).json({ ok:true, data:await getQualityOwnerUsers(user.id) });
+    }
+
     if (mode === "accountant") {
       if (req.method === "GET") {
         const year = Number(req.query?.year || new Date().getFullYear());
@@ -207,7 +213,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok:true, profile });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Account setup failed";
-    const status = mode === "accountant" && /owner|forbidden|unauthori|access|accountant/i.test(message) ? 403 : 500;
+    const status = (mode === "accountant" || mode === "owner-users") && /owner|forbidden|unauthori|access|accountant/i.test(message) ? 403 : 500;
     return res.status(status).json({ ok:false, error:message });
   }
 }
