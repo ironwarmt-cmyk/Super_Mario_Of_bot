@@ -29,12 +29,13 @@
 </div>
 <script>
 const qa=window.QualityAuth;const c=qa.client();const params=new URLSearchParams(location.search);const next=params.get("next")||"/quality/";
-function show(msg,ok=false){status.classList.add("active");status.innerHTML='<span class="'+(ok?'ok':'err')+'">'+String(msg)+'</span>'}
+const emailEl=document.getElementById("email"),passwordEl=document.getElementById("password"),loginBtnEl=document.getElementById("loginBtn"),signupBtnEl=document.getElementById("signupBtn"),statusEl=document.getElementById("status"),resendBtnEl=document.getElementById("resendBtn");
+function show(msg,ok=false){statusEl.classList.add("active");statusEl.innerHTML='<span class="'+(ok?'ok':'err')+'">'+String(msg)+'</span>'}
 async function resendConfirmation(){
- const e=email.value.trim().toLowerCase(); if(!e){show("Najpierw wpisz e-mail.");return}
- resendBtn.disabled=true;status.textContent="Wysyłam ponownie…";
+ const e=emailEl.value.trim().toLowerCase(); if(!e){show("Najpierw wpisz e-mail.");return}
+ resendBtnEl.disabled=true;statusEl.textContent="Wysyłam ponownie…";
  const {error}=await c.auth.resend({type:"signup",email:e,options:{emailRedirectTo:location.origin+"/login?confirmed=1"}});
- resendBtn.disabled=false;
+ resendBtnEl.disabled=false;
  if(error){
    const raw=String(error.message||"");
    if(/security purposes|rate limit|seconds/i.test(raw)){
@@ -46,24 +47,24 @@ async function resendConfirmation(){
  show("Wysłano nowy e-mail potwierdzający. Użyj wyłącznie najnowszej wiadomości, a potem wróć do logowania.",true);
 }
 async function existing(){if(await qa.isAuthenticated()){location.href=next;return true}return false}
-loginBtn.onclick=async()=>{
- const e=email.value.trim().toLowerCase(),p=password.value;if(!e||!p){show("Podaj e-mail i hasło.");return}
- loginBtn.disabled=true;status.classList.add("active");status.textContent="Logowanie…";
+loginBtnEl.onclick=async()=>{
+ const e=emailEl.value.trim().toLowerCase(),p=passwordEl.value;if(!e||!p){show("Podaj e-mail i hasło.");return}
+ loginBtnEl.disabled=true;statusEl.classList.add("active");statusEl.textContent="Logowanie…";
  let result;
  try{
    result=await c.auth.signInWithPassword({email:e,password:p});
  }catch(err){
-   loginBtn.disabled=false;
+   loginBtnEl.disabled=false;
    show("Błąd logowania: "+String(err?.message||err));
    return;
  }
  const {error}=result;
- loginBtn.disabled=false;
+ loginBtnEl.disabled=false;
  if(error){
    const raw=String(error.message||"");
    if(/email not confirmed/i.test(raw)){
      show("Konto zostało utworzone, ale adres e-mail nie jest jeszcze potwierdzony. Otwórz wiadomość potwierdzającą, kliknij link, a potem wróć tutaj i zaloguj się.");
-     resendBtn.style.display="block";
+     resendBtnEl.style.display="block";
      return;
    }
    if(/invalid login credentials/i.test(raw)){show("Nieprawidłowy e-mail lub hasło.");return}
@@ -71,25 +72,25 @@ loginBtn.onclick=async()=>{
  }
  location.href=next
 };
-signupBtn.onclick=async()=>{
- const e=email.value.trim().toLowerCase(),p=password.value;if(!e||p.length<8){show("Podaj poprawny e-mail i hasło minimum 8 znaków.");return}
- signupBtn.disabled=true;status.classList.add("active");status.textContent="Tworzenie konta…";
+signupBtnEl.onclick=async()=>{
+ const e=emailEl.value.trim().toLowerCase(),p=passwordEl.value;if(!e||p.length<8){show("Podaj poprawny e-mail i hasło minimum 8 znaków.");return}
+ signupBtnEl.disabled=true;statusEl.classList.add("active");statusEl.textContent="Tworzenie konta…";
  let result;
  try{
    result=await c.auth.signUp({email:e,password:p,options:{emailRedirectTo:location.origin+"/quality/"}});
  }catch(err){
-   signupBtn.disabled=false;
+   signupBtnEl.disabled=false;
    show("Błąd rejestracji: "+String(err?.message||err));
    return;
  }
  const {data,error}=result;
- signupBtn.disabled=false;
+ signupBtnEl.disabled=false;
  if(error){show(error.message);return}
  if(data?.session){location.href=next;return}
  show("Konto utworzone. Wysłaliśmy e-mail potwierdzający. Kliknij link w wiadomości, wróć tutaj i wybierz „Zaloguj”. Sprawdź także folder SPAM.",true);
- resendBtn.style.display="block";
+ resendBtnEl.style.display="block";
 };
-resendBtn.onclick=resendConfirmation;
+resendBtnEl.onclick=resendConfirmation;
 existing();
 </script>
 </body></html>
