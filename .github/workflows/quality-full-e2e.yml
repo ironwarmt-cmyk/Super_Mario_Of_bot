@@ -25,14 +25,7 @@ jobs:
             echo
             echo "HTTP=$CODE"
             if [ "$CODE" = "200" ]; then
-              python3 - "$OUT" <<'PY'
-import json,sys
-data=json.load(open(sys.argv[1]))
-assert data.get("ok") is True, data
-assert int(data.get("failed",1)) == 0, data
-assert int(data.get("total",0)) >= 20, data
-print(f"QUALITY FULL E2E PASS {data['passed']}/{data['total']}")
-PY
+              python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); assert d.get("ok") is True, d; assert int(d.get("failed",1))==0, d; assert int(d.get("total",0))>=20, d; print("QUALITY FULL E2E PASS {}/{}".format(d["passed"],d["total"]))' "$OUT"
               exit 0
             fi
             if [ "$CODE" = "429" ]; then
