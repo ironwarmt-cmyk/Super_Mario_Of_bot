@@ -12,7 +12,7 @@ export default async function handler(req, res) {
 
   const identity = await resolveQualityIdentity(req);
   if (!identity?.telegramUserId) {
-    return res.status(401).json({ ok:false, error:"Sign in to Quality Hub or open shipping from Telegram." });
+    return res.status(401).json({ ok:false, error:"Sign in to Quality Assurance Support to manage shipping." });
   }
   const user = identity.user || { id: identity.telegramUserId };
 
