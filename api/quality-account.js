@@ -28,8 +28,25 @@ async function webAuthProxy(req, res) {
     body = { email:String(req.body?.email || ""), password:String(req.body?.password || "") };
   } else if (action === "sign_up") {
     const redirect = String(req.body?.redirect_to || "");
+    const email = String(req.body?.email || "").trim().toLowerCase();
+    const password = String(req.body?.password || "");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ ok:false, error:"Podaj prawidłowy adres e-mail." });
+    }
+    if (
+      password.length < 12 ||
+      !/[a-z]/.test(password) ||
+      !/[A-Z]/.test(password) ||
+      !/[0-9]/.test(password) ||
+      !/[^A-Za-z0-9]/.test(password)
+    ) {
+      return res.status(400).json({
+        ok:false,
+        error:"Hasło musi mieć co najmniej 12 znaków oraz zawierać małą literę, wielką literę, cyfrę i znak specjalny."
+      });
+    }
     path = "/auth/v1/signup" + (redirect ? "?redirect_to=" + encodeURIComponent(redirect) : "");
-    body = { email:String(req.body?.email || ""), password:String(req.body?.password || "") };
+    body = { email, password };
   } else if (action === "resend") {
     const redirect = String(req.body?.redirect_to || "");
     path = "/auth/v1/resend" + (redirect ? "?redirect_to=" + encodeURIComponent(redirect) : "");
@@ -145,7 +162,7 @@ export default async function handler(req, res) {
       return res.status(200).json({
         ok:true,
         locale,
-        telegram: {
+        account: {
           id:user.id,
           first_name:user.first_name || "",
           last_name:user.last_name || "",
@@ -153,7 +170,7 @@ export default async function handler(req, res) {
         },
         profile,
         legal,
-        auth: { source: identity.source, linkedTelegram: identity.telegramUserId > 0, email: identity.email || profile?.email || null, publicConfig: publicSupabaseConfig() }
+        auth: { source: identity.source === "web" ? "web" : "linked", email: identity.email || profile?.email || null, publicConfig: publicSupabaseConfig() }
       });
     }
 
@@ -167,7 +184,7 @@ export default async function handler(req, res) {
         purchaseReference,
         req.body?.consent || {},
         locale,
-        "telegram_webapp"
+        identity.source === "web" ? "web_app" : "linked_app"
       );
       return res.status(200).json({ ok:true, consent });
     }
@@ -189,9 +206,8 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ ok:true, profile });
   } catch (error) {
-    return res.status(500).json({
-      ok:false,
-      error:error instanceof Error ? error.message : "Account setup failed"
-    });
+    const message = error instanceof Error ? error.message : "Account setup failed";
+    const status = mode === "accountant" && /owner|forbidden|unauthori|access|accountant/i.test(message) ? 403 : 500;
+    return res.status(status).json({ ok:false, error:message });
   }
 }
