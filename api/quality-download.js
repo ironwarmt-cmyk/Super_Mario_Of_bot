@@ -33,7 +33,7 @@ function filenameFor(product, lang) {
 export default async function handler(req, res) {
   if (req.method !== "GET") return res.status(405).json({ ok: false, error: "Method not allowed" });
   const token = process.env.TELEGRAM_BOT_TOKEN;
-  if (!token) return res.status(503).json({ ok: false, error: "Bot is not configured" });
+  if (!token) return res.status(503).json({ ok: false, error: "Delivery service is not configured" });
 
   const userId = Number(req.query.u);
   const slug = String(req.query.slug || "");
