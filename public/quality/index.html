@@ -121,18 +121,6 @@ setLang(localStorage.getItem('qa_lang')||new URLSearchParams(location.search).ge
     accountLink.href='/quality/account/';
     accountLink.textContent=document.documentElement.lang==='en'?'My account':'Moje konto';
   }
-  document.querySelectorAll('.plan-buy').forEach(link=>{
-    link.addEventListener('click',e=>{
-      const slug=link.dataset.plan;
-      if(tg?.initData&&slug){
-        e.preventDefault();
-        const lang=document.documentElement.lang==='en'?'en':'pl';
-        location.href='/quality/checkout/?kind=plan&ref='+encodeURIComponent(slug)+'&lang='+encodeURIComponent(lang);
-        return;
-      }
-      if(tg?.openTelegramLink){e.preventDefault();tg.openTelegramLink(link.href)}
-    });
-  });
   if(!authed){
     document.getElementById('cockpit-message').innerHTML=(document.documentElement.lang==='en'
       ?'Sign in to use the independent web app. <a href="/quality/login/" style="color:#8bc7ff">Sign in</a>'
