@@ -140,7 +140,7 @@ export default async function handler(req, res) {
   if (!identity?.telegramUserId) {
     return json(res, 401, {
       ok: false,
-      error: "Sign in to Quality Hub or open the assistant from Telegram."
+      error: "Sign in to Quality Assurance Support to use the assistant."
     });
   }
   const user = identity.user || { id: identity.telegramUserId };
