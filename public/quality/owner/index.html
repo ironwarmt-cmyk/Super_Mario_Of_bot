@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Quality Owner Panel</title>
 <style>
-:root{--bg:#07111c;--panel:#0d1b2a;--line:#203b54;--text:#f5f7fa;--muted:#9eb0c1;--accent:#3bd6a2;--danger:#ff6b6b}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}.wrap{max-width:860px;margin:auto;padding:22px 16px 60px}.brand{font-size:12px;font-weight:900;letter-spacing:.08em;color:var(--accent)}h1{font-size:32px;margin:8px 0 16px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.card{border:1px solid var(--line);border-radius:18px;background:var(--panel);padding:16px}.label{font-size:12px;color:var(--muted);margin-bottom:6px}.value{font-size:24px;font-weight:900}.status{margin-top:16px;color:var(--muted)}.err{color:var(--danger)}.links{display:grid;gap:10px;margin-top:18px}.btn{display:block;text-align:center;text-decoration:none;border-radius:14px;padding:14px;font-weight:800;background:#12283b;color:var(--text);border:1px solid var(--line)}@media(max-width:650px){.grid{grid-template-columns:1fr}}
+:root{--bg:#07111c;--panel:#0d1b2a;--line:#203b54;--text:#f5f7fa;--muted:#9eb0c1;--accent:#3bd6a2;--danger:#ff6b6b;--warn:#ffd166}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}.wrap{max-width:1180px;margin:auto;padding:22px 16px 110px}.brand{font-size:12px;font-weight:900;letter-spacing:.08em;color:var(--accent)}h1{font-size:32px;margin:8px 0 8px}h2{font-size:22px;margin:28px 0 12px}.intro{color:var(--muted);margin-bottom:18px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.monitor-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.card{border:1px solid var(--line);border-radius:18px;background:var(--panel);padding:16px}.label{font-size:12px;color:var(--muted);margin-bottom:6px}.value{font-size:24px;font-weight:900}.status{margin-top:12px;color:var(--muted)}.err{color:var(--danger)}.links{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.btn{display:inline-flex;text-align:center;text-decoration:none;border-radius:14px;padding:12px 14px;font-weight:800;background:#12283b;color:var(--text);border:1px solid var(--line)}.users{display:grid;gap:10px;margin-top:12px}.user{border:1px solid var(--line);border-radius:18px;background:var(--panel);padding:14px;display:grid;grid-template-columns:1.5fr .75fr .9fr 1fr 1fr .65fr;gap:12px;align-items:center}.user-head{font-weight:900}.sub{font-size:12px;color:var(--muted);margin-top:4px;overflow-wrap:anywhere}.cell-label{display:none;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}.badge{display:inline-flex;border:1px solid #ffffff22;border-radius:999px;padding:5px 8px;font-size:11px;font-weight:900}.ok{color:var(--accent)}.warn{color:var(--warn)}.dim{color:var(--muted)}.empty{padding:20px;border:1px dashed var(--line);border-radius:16px;color:var(--muted)}@media(max-width:900px){.monitor-grid{grid-template-columns:repeat(2,1fr)}.user{grid-template-columns:1fr 1fr}.cell-label{display:block}.grid{grid-template-columns:1fr 1fr}}@media(max-width:650px){.grid,.monitor-grid,.user{grid-template-columns:1fr}.wrap{padding-left:12px;padding-right:12px}}
 </style>
-<link rel="stylesheet" href="/quality/theme.css?v=20261004-vibrant">
+<link rel="stylesheet" href="/quality/theme.css?v=20261005-premium">
 <script defer src="/quality/experience.js?v=20261005-1"></script>
 <script src="/quality/auth.js"></script>
 </head>
@@ -16,6 +16,8 @@
 <div class="wrap">
 <div class="brand">QUALITY ASSURANCE SUPPORT</div>
 <h1>Panel właściciela</h1>
+<div class="intro">Finanse oraz bieżący nadzór nad kontami i wykorzystaniem Quality.</div>
+<h2>Finanse</h2>
 <div class="grid">
 <div class="card"><div class="label">Limit kwartalny</div><div class="value" id="limit">—</div></div>
 <div class="card"><div class="label">Przychód należny</div><div class="value" id="receivable">—</div></div>
@@ -24,30 +26,53 @@
 <div class="card"><div class="label">Koszty</div><div class="value" id="costs">—</div></div>
 <div class="card"><div class="label">Do uzgodnienia</div><div class="value" id="unresolved">—</div></div>
 </div>
-<div class="status" id="status">Ładowanie danych…</div>
-<div class="links">
-<a class="btn" href="/quality/account/">Konto i dane firmy</a>
-<a class="btn" href="/quality/support/">Support</a>
-<a class="btn" href="/quality/">Quality Hub</a>
+<div class="status" id="financeStatus">Ładowanie danych finansowych…</div>
+<h2>Użytkownicy i testerzy</h2>
+<div class="monitor-grid">
+<div class="card"><div class="label">Konta</div><div class="value" id="mTotal">—</div></div>
+<div class="card"><div class="label">Aktywni 24 h</div><div class="value" id="mActive">—</div></div>
+<div class="card"><div class="label">Aktywne pakiety</div><div class="value" id="mPlans">—</div></div>
+<div class="card"><div class="label">Aktywny Copilot</div><div class="value" id="mAssistant">—</div></div>
+<div class="card"><div class="label">Otwarte zgłoszenia</div><div class="value" id="mSupport">—</div></div>
 </div>
+<div class="status" id="monitorStatus">Ładowanie aktywności…</div>
+<div class="users" id="users"></div>
+<div class="links"><a class="btn" href="/quality/account/">Konto i dane firmy</a><a class="btn" href="/quality/support/">Support</a><a class="btn" href="/quality/">Quality Hub</a></div>
 </div>
 <script>
 const money=g=>(Number(g||0)/100).toFixed(2).replace(".",",")+" zł";
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+const fmtDate=v=>{if(!v)return"brak";const d=new Date(v);return Number.isNaN(d.getTime())?"brak":d.toLocaleString("pl-PL",{dateStyle:"short",timeStyle:"short"})};
+const fmtTime=s=>{s=Math.max(0,Number(s||0));if(s<60)return Math.round(s)+" s";return Math.round(s/60)+" min"};
+const pct=(used,total)=>total>0?Math.min(999,Math.round(Number(used||0)*100/Number(total))):0;
+function renderUsers(data){
+ const sum=data?.summary||{};mTotal.textContent=sum.total??0;mActive.textContent=sum.active_24h??0;mPlans.textContent=sum.active_memberships??0;mAssistant.textContent=sum.active_assistants??0;mSupport.textContent=sum.open_support??0;
+ const rows=Array.isArray(data?.users)?data.users:[];
+ if(!rows.length){users.innerHTML='<div class="empty">Brak zarejestrowanych kont do wyświetlenia.</div>';return}
+ users.innerHTML=rows.map(u=>{
+   const name=[u.first_name,u.last_name].filter(Boolean).join(" ")||u.email||"Użytkownik";
+   const company=u.company_name?esc(u.company_name):"konto indywidualne";
+   const active=u.active_24h?'<span class="badge ok">aktywny 24 h</span>':'<span class="badge dim">poza 24 h</span>';
+   const plan='<span class="badge">'+esc(String(u.plan_name||u.plan_slug||"REGULAR").toUpperCase())+'</span>';
+   const member=String(u.membership_status||"none");
+   const copilot=String(u.assistant_status||"stopped").toLowerCase()==="active"?'<span class="badge ok">aktywny</span>':'<span class="badge dim">wyłączony</span>';
+   const docs=Number(u.custom_docs_included||0)>0?Number(u.custom_docs_used||0)+'/'+Number(u.custom_docs_included):String(Number(u.custom_docs_used||0));
+   const ai=fmtTime(u.assistant_seconds_used)+' / '+fmtTime(u.assistant_seconds_included);
+   const sup=Number(u.open_support||0)>0?'<span class="badge warn">'+Number(u.open_support)+' otw.</span>':'<span class="badge ok">0 otw.</span>';
+   return '<div class="user"><div><div class="cell-label">Konto</div><div class="user-head">'+esc(name)+'</div><div class="sub">'+esc(u.email||"brak e-mail")+' · '+company+'</div><div class="sub">Ostatnia aktywność: '+esc(fmtDate(u.last_seen_at))+'</div>'+active+'</div><div><div class="cell-label">Pakiet</div>'+plan+'<div class="sub">'+esc(member)+'</div></div><div><div class="cell-label">Copilot</div>'+copilot+'<div class="sub">'+esc(u.assistant_specialist||"—")+'</div></div><div><div class="cell-label">Użycie</div><strong>Dokumenty '+esc(docs)+'</strong><div class="sub">Copilot '+esc(ai)+'</div></div><div><div class="cell-label">Support</div>'+sup+'<div class="sub">'+Number(u.total_support||0)+' łącznie</div></div><div><div class="cell-label">Tokeny</div><strong>'+Number(u.token_balance||0)+'</strong><div class="sub">'+pct(u.assistant_seconds_used,u.assistant_seconds_included)+'% czasu</div></div></div>';
+ }).join("");
+}
 async function load(){
- if(!(await window.QualityAuth?.isAuthenticated?.())){location.href="/login?next="+encodeURIComponent(location.pathname);return;}
+ if(!(await window.QualityAuth?.isAuthenticated?.())){location.href="/login?next="+encodeURIComponent(location.pathname);return}
  try{
-  const headers=await window.QualityAuth.headers(); const r=await fetch("/api/quality-account?mode=accountant",{headers});
-  const j=await r.json();
-  if(!r.ok||!j.ok)throw new Error(j.error||("HTTP "+r.status));
-  const d=j.data||{};
-  limit.textContent=money(d.quarterly_limit_grosz);
-  receivable.textContent=money(d.limit_revenue_grosz);
-  remaining.textContent=money(d.remaining_limit_grosz);
-  pit.textContent=money(d.pit_revenue_grosz);
-  costs.textContent=money(d.pit_cost_grosz);
-  unresolved.textContent=String(d.unresolved_entries??0);
-  status.textContent="Dane właściciela zostały pobrane.";
- }catch(e){status.innerHTML='<span class="err">'+String(e.message||e)+'</span>';}
+   const headers=await window.QualityAuth.headers();
+   const [fr,mr]=await Promise.all([fetch("/api/quality-account?mode=accountant",{headers}),fetch("/api/quality-account?mode=owner-users",{headers})]);
+   const [fj,mj]=await Promise.all([fr.json(),mr.json()]);
+   if(!fr.ok||!fj.ok)throw new Error(fj.error||("Finanse HTTP "+fr.status));
+   const d=fj.data||{};limit.textContent=money(d.quarterly_limit_grosz);receivable.textContent=money(d.limit_revenue_grosz);remaining.textContent=money(d.remaining_limit_grosz);pit.textContent=money(d.pit_revenue_grosz);costs.textContent=money(d.pit_cost_grosz);unresolved.textContent=String(d.unresolved_entries??0);financeStatus.textContent="Dane finansowe aktualne.";
+   if(!mr.ok||!mj.ok)throw new Error(mj.error||("Monitoring HTTP "+mr.status));
+   renderUsers(mj.data||{});monitorStatus.textContent="Nadzór kont działa. Dane odświeżają się przy ponownym wejściu do panelu.";
+ }catch(e){const msg=esc(e.message||e);financeStatus.innerHTML='<span class="err">'+msg+'</span>';monitorStatus.innerHTML='<span class="err">'+msg+'</span>'}
 }
 load();
 </script>
