@@ -131,14 +131,14 @@ export default async function handler(req, res) {
 
     if (mode === "owner-users") {
       if (req.method !== "GET") return res.status(405).json({ ok:false, error:"Method not allowed" });
-      return res.status(200).json({ ok:true, data:await getQualityOwnerUsers(user.id) });
+      return res.status(200).json({ ok:true, data:await getQualityOwnerUsers(user.id, identity.authUserId) });
     }
 
     if (mode === "accountant") {
       if (req.method === "GET") {
         const year = Number(req.query?.year || new Date().getFullYear());
         const quarter = Number(req.query?.quarter || Math.floor(new Date().getMonth()/3)+1);
-        return res.status(200).json({ ok:true, data:await getQualityAccountingSummary(user.id, year, quarter) });
+        return res.status(200).json({ ok:true, data:await getQualityAccountingSummary(user.id, year, quarter, identity.authUserId) });
       }
       if (req.method !== "POST") {
         return res.status(405).json({ ok:false, error:"Method not allowed" });
@@ -148,10 +148,10 @@ export default async function handler(req, res) {
         return res.status(200).json({ ok:true, data:await claimQualityAccountantOwner(user.id) });
       }
       if (action === "cost") {
-        return res.status(200).json({ ok:true, data:await recordQualityAccountingCost(user.id, Number(req.body?.amount_grosz), req.body?.description, req.body?.document_ref) });
+        return res.status(200).json({ ok:true, data:await recordQualityAccountingCost(user.id, Number(req.body?.amount_grosz), req.body?.description, req.body?.document_ref, identity.authUserId) });
       }
       if (action === "reconcile") {
-        return res.status(200).json({ ok:true, data:await reconcileQualityAccountingReceipt(user.id, req.body?.ledger_id, Number(req.body?.pit_received_grosz)) });
+        return res.status(200).json({ ok:true, data:await reconcileQualityAccountingReceipt(user.id, req.body?.ledger_id, Number(req.body?.pit_received_grosz), identity.authUserId) });
       }
       return res.status(400).json({ ok:false, error:"Unknown accountant action" });
     }
