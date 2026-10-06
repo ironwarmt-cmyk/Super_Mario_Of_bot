@@ -7,6 +7,7 @@
     "node": ">=20"
   },
   "dependencies": {
-    "docx": "^9.8.1"
+    "docx": "^9.8.1",
+    "@vercel/oidc": "latest"
   }
 }
