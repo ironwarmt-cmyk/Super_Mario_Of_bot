@@ -54,10 +54,7 @@ function injectShell(){
         <button type="button" id="qaErrorClose">×</button>
       </div>
     </div>
-    <div class="qa-ambient" id="qaAmbient" aria-label="Ambient Quality Arcade">
-      <div class="qa-ambient-head"><span id="qaAmbientLabel">QUALITY PULSE</span><button id="qaMotionToggle" type="button">◉</button></div>
-      <canvas id="qaAmbientCanvas" width="248" height="144"></canvas>
-    </div>`;
+`;
   document.body.appendChild(root);
 
   const backdrop=document.getElementById("qaFeedbackBackdrop");
@@ -76,7 +73,6 @@ function injectShell(){
     const meta=document.getElementById("qaErrorMeta").textContent;
     msg.value="Błąd aplikacji\n"+meta+"\n\nCo robiłem: ";
   };
-  startAmbient();
 }
 
 async function sendFeedback(){
@@ -195,55 +191,6 @@ async function resolvePlan(){
   planResolved=true;
   applyPlan(plan,data);
   return {plan,data};
-}
-
-function startAmbient(){
-  const canvas=document.getElementById("qaAmbientCanvas");
-  if(!canvas)return;
-  const ctx=canvas.getContext("2d");
-  const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
-  let enabled=!reduced&&localStorage.getItem("qa_motion")!=="off";
-  let mode=0,lastSwitch=performance.now(),raf=0;
-  const paddle={y:52},ball={x:124,y:72,vx:1.65,vy:1.15};
-  let pieces=Array.from({length:9},(_,i)=>({x:(i%6)*20+8,y:100-Math.floor(i/6)*16,w:16,h:12}));
-
-  const toggle=document.getElementById("qaMotionToggle");
-  const label=document.getElementById("qaAmbientLabel");
-  function paintStatic(){
-    ctx.clearRect(0,0,248,144);
-    ctx.fillStyle="rgba(88,217,255,.15)";ctx.fillRect(0,0,248,144);
-    ctx.fillStyle="#ff6fde";ctx.fillRect(18,110,20,14);ctx.fillRect(40,110,20,14);
-    ctx.fillStyle="#58d9ff";ctx.fillRect(202,18,22,22);
-  }
-  function frame(t){
-    if(!enabled){paintStatic();return}
-    if(t-lastSwitch>18000){mode=1-mode;lastSwitch=t}
-    ctx.clearRect(0,0,248,144);
-    if(mode===0){
-      label.textContent="QUALITY PONG";
-      paddle.y=50+Math.sin(t/550)*28;
-      ctx.fillStyle="rgba(88,217,255,.22)";ctx.fillRect(0,0,248,144);
-      ctx.fillStyle="#58d9ff";ctx.fillRect(9,paddle.y,5,38);
-      ctx.fillStyle="#ff5bd8";ctx.fillRect(234,144-paddle.y-38,5,38);
-      ball.x+=ball.vx;ball.y+=ball.vy;
-      if(ball.y<7||ball.y>137)ball.vy*=-1;
-      if(ball.x<16||ball.x>232)ball.vx*=-1;
-      ctx.beginPath();ctx.arc(ball.x,ball.y,5,0,Math.PI*2);ctx.fillStyle="#ffd36b";ctx.fill();
-    }else{
-      label.textContent="QUALITY BLOCKS";
-      ctx.fillStyle="rgba(143,107,255,.14)";ctx.fillRect(0,0,248,144);
-      const fall=(t/38)%130;
-      ctx.fillStyle="#ff5bd8";ctx.fillRect(150,fall-20,17,17);ctx.fillRect(169,fall-20,17,17);ctx.fillRect(169,fall-1,17,17);
-      pieces.forEach((p,i)=>{ctx.fillStyle=i%2?"#58d9ff":"#9a6bff";ctx.fillRect(p.x,p.y,p.w,p.h)});
-    }
-    raf=requestAnimationFrame(frame);
-  }
-  toggle.textContent=enabled?"◉":"○";
-  toggle.onclick=()=>{
-    enabled=!enabled;localStorage.setItem("qa_motion",enabled?"on":"off");toggle.textContent=enabled?"◉":"○";
-    cancelAnimationFrame(raf); if(enabled)raf=requestAnimationFrame(frame);else paintStatic();
-  };
-  if(enabled)raf=requestAnimationFrame(frame);else paintStatic();
 }
 
 const nativeFetch=window.fetch.bind(window);
