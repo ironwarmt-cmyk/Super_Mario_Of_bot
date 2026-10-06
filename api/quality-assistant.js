@@ -6,7 +6,8 @@ import {
   heartbeatQualityAssistantSession,
   stopQualityAssistantSession,
   listQualityAssistantMessages,
-  saveQualityAssistantMessage
+  saveQualityAssistantMessage,
+  createQualityEmergencyEvidenceUrl
 } from "../lib/db.js";
 import {
   QUALITY_AGENT_SPECIALISTS,
@@ -71,6 +72,88 @@ function historyAsInput(history, userMessage) {
   }
   items.push({ role: "user", content: userMessage });
   return items;
+}
+
+function cleanEmergencyJson(text) {
+  const raw=String(text||"").trim();
+  const fenced=/^```(?:json)?\s*([\s\S]*?)\s*```$/i.exec(raw);
+  return fenced?fenced[1].trim():raw;
+}
+
+function emergencyInstructions({ standard, version, auditDate, context }) {
+  return `You are the Emergency Audit Support analyst for a food-industry Quality Assurance application.
+Audit timing is urgent.
+Standard: ${standard}
+Applicable version / transition note: ${version}
+Audit date: ${auditDate||"not specified"}
+Site context: ${context||"none"}
+
+Rules:
+- This is pre-audit readiness support, not certification and not a guarantee of outcome.
+- Analyze ONLY the supplied evidence plus current official requirements found through web search.
+- Separate "document exists" from "implemented and evidenced".
+- Identify contradictions, obsolete records, missing verification, weak effectiveness checks and likely auditor follow-up.
+- Prioritize CRITICAL/HIGH issues that could materially threaten audit outcome.
+- Do not invent clause numbers. If uncertain, describe the requirement without a clause number.
+- Prefer official standard-owner sources for current requirements.
+- Actions must be realistic before the stated audit date.
+Return VALID JSON ONLY:
+{
+ "summary":"...",
+ "risk_level":"RED|AMBER|GREEN",
+ "readiness_delta":0,
+ "findings":[{"severity":"CRITICAL|HIGH|MEDIUM|LOW","area":"...","issue":"...","evidence":"...","action":"...","owner_hint":"...","deadline_hint":"D-1"}],
+ "missing_evidence":["..."],
+ "auditor_questions":["..."],
+ "next_steps":["..."]
+}
+readiness_delta must be between -30 and 10.`;
+}
+
+async function callEmergencyAI({ standard, version, auditDate, context, imageData, fileUrl, fileName }) {
+  const apiKey=process.env.OPENAI_API_KEY;
+  if(!apiKey)throw new Error("OPENAI_API_KEY is not configured");
+  const model=process.env.OPENAI_QUALITY_MODEL||"gpt-6.1-sol";
+  const content=[{type:"input_text",text:emergencyInstructions({standard,version,auditDate,context})}];
+  if(imageData){
+    if(!/^data:image\/(png|jpeg|jpg|webp);base64,/i.test(imageData))throw new Error("Invalid screen image");
+    if(imageData.length>7_000_000)throw new Error("Screen capture is too large");
+    content.push({type:"input_image",image_url:imageData,detail:"high"});
+  }
+  if(fileUrl){
+    const lower=String(fileName||"").toLowerCase();
+    if(/\.(png|jpe?g|webp)$/.test(lower)){
+      content.push({type:"input_image",image_url:fileUrl,detail:"high"});
+    }else{
+      content.push({type:"input_file",file_url:fileUrl,filename:String(fileName||"evidence")});
+    }
+  }
+  const response=await fetch("https://api.openai.com/v1/responses",{
+    method:"POST",
+    headers:{Authorization:`Bearer ${apiKey}`,"Content-Type":"application/json"},
+    body:JSON.stringify({
+      model,
+      input:[{role:"user",content}],
+      tools:[{type:"web_search"}],
+      tool_choice:"auto",
+      max_output_tokens:2600,
+      store:false
+    })
+  });
+  const payload=await response.json();
+  if(!response.ok)throw new Error(payload?.error?.message||`OpenAI request failed with HTTP ${response.status}`);
+  const raw=extractResponseText(payload);
+  let result;
+  try{result=JSON.parse(cleanEmergencyJson(raw))}catch{
+    result={summary:raw,risk_level:"AMBER",readiness_delta:0,findings:[],missing_evidence:[],auditor_questions:[],next_steps:[]};
+  }
+  return {
+    ...result,
+    readiness_delta:Math.max(-30,Math.min(10,Number(result?.readiness_delta||0))),
+    model:payload?.model||model,
+    analyzed_at:new Date().toISOString(),
+    sources:extractSources(payload)
+  };
 }
 
 async function callQualityAI({ specialist, locale, history, message }) {
@@ -149,6 +232,30 @@ export default async function handler(req, res) {
   const specialist = specialistKey(req.body?.specialist);
 
   try {
+    if (action === "emergency_analyze") {
+      const standard=String(req.body?.standard||"").slice(0,160);
+      const version=String(req.body?.version||"").slice(0,200);
+      const auditDate=String(req.body?.audit_date||"").slice(0,20);
+      const context=String(req.body?.context||"").slice(0,5000);
+      const mode=String(req.body?.mode||"");
+      let imageData=null,fileUrl=null,fileName=null;
+
+      if(mode==="document"){
+        const path=String(req.body?.path||"");
+        fileName=String(req.body?.file_name||"evidence").slice(0,180);
+        const signed=await createQualityEmergencyEvidenceUrl(user.id,path);
+        fileUrl=signed?.signed_url||null;
+        if(!fileUrl)throw new Error("Could not create a private evidence URL");
+      } else if(mode==="screen"){
+        imageData=String(req.body?.image_data||"");
+      } else if(mode!=="text"){
+        return json(res,400,{ok:false,error:"Invalid Emergency analysis mode"});
+      }
+
+      const analysis=await callEmergencyAI({standard,version,auditDate,context,imageData,fileUrl,fileName});
+      return json(res,200,{ok:true,analysis});
+    }
+
     if (action === "status") {
       const [profile, status, history] = await Promise.all([
         getUserProfile(user.id),
