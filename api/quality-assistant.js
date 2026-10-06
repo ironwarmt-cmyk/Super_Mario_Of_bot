@@ -1,3 +1,4 @@
+import { getVercelOidcToken } from "@vercel/oidc";
 import { resolveQualityIdentity } from "../lib/quality-auth.js";
 import {
   getUserProfile,
@@ -110,7 +111,7 @@ Return VALID JSON ONLY:
 readiness_delta must be between -30 and 10.`;
 }
 
-function aiTransport() {
+async function aiTransport() {
   const openaiKey=String(process.env.OPENAI_API_KEY||"").trim();
   if(openaiKey){
     return {
@@ -121,21 +122,35 @@ function aiTransport() {
     };
   }
 
-  const gatewayToken=String(process.env.AI_GATEWAY_API_KEY||process.env.VERCEL_OIDC_TOKEN||"").trim();
-  if(gatewayToken){
+  const explicitGatewayToken=String(process.env.AI_GATEWAY_API_KEY||process.env.VERCEL_OIDC_TOKEN||"").trim();
+  if(explicitGatewayToken){
     return {
       provider:"vercel-ai-gateway",
       url:"https://ai-gateway.vercel.sh/v1/responses",
-      token:gatewayToken,
+      token:explicitGatewayToken,
       model:String(process.env.OPENAI_QUALITY_MODEL_GATEWAY||"openai/gpt-5.6-sol")
     };
+  }
+
+  try {
+    const oidcToken=String(await getVercelOidcToken()||"").trim();
+    if(oidcToken){
+      return {
+        provider:"vercel-ai-gateway-oidc",
+        url:"https://ai-gateway.vercel.sh/v1/responses",
+        token:oidcToken,
+        model:String(process.env.OPENAI_QUALITY_MODEL_GATEWAY||"openai/gpt-5.6-sol")
+      };
+    }
+  } catch (error) {
+    console.error("quality_ai_oidc_unavailable",error instanceof Error?error.message:error);
   }
 
   throw new Error("QUALITY_AI_UNAVAILABLE");
 }
 
 async function postAIResponse(body,{allowWebSearch=true}={}) {
-  const transport=aiTransport();
+  const transport=await aiTransport();
   const requestBody={...body,model:transport.model};
   if(allowWebSearch){
     requestBody.tools=[{type:"web_search"}];
@@ -314,8 +329,8 @@ export default async function handler(req, res) {
     return json(res, 200, {
       ok: true,
       service: "Quality specialist assistant",
-      aiConfigured: Boolean(process.env.OPENAI_API_KEY || process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN),
-      aiProvider: process.env.OPENAI_API_KEY ? "openai" : (process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN ? "vercel-ai-gateway" : "unavailable")
+      aiConfigured: Boolean(process.env.OPENAI_API_KEY || process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN || process.env.VERCEL),
+      aiProvider: process.env.OPENAI_API_KEY ? "openai" : (process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN ? "vercel-ai-gateway" : (process.env.VERCEL ? "vercel-ai-gateway-oidc" : "unavailable"))
     });
   }
 
