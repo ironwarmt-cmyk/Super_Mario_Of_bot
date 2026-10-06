@@ -52,3 +52,22 @@ alter table public.quality_memberships
   add column if not exists provider_customer_id text;
 create unique index if not exists quality_memberships_provider_subscription_uidx
   on public.quality_memberships(provider_subscription_id) where provider_subscription_id is not null;
+
+create table if not exists public.quality_stripe_checkout_intents (
+  id uuid primary key default gen_random_uuid(),
+  token text not null unique,
+  telegram_user_id bigint not null references public.telegram_users(telegram_user_id) on delete cascade,
+  purchase_kind text not null check (purchase_kind in ('plan','product')),
+  purchase_reference text not null,
+  stripe_checkout_session_id text unique,
+  created_at timestamptz not null default now(),
+  expires_at timestamptz not null default (now() + interval '2 hours'),
+  consumed_at timestamptz
+);
+alter table public.quality_stripe_checkout_intents enable row level security;
+revoke all on public.quality_stripe_checkout_intents from anon, authenticated;
+grant all on public.quality_stripe_checkout_intents to service_role;
+create index if not exists quality_stripe_checkout_intents_user_idx
+  on public.quality_stripe_checkout_intents(telegram_user_id);
+create index if not exists quality_stripe_checkout_intents_expiry_idx
+  on public.quality_stripe_checkout_intents(expires_at);

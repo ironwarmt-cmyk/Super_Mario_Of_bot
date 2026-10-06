@@ -3,6 +3,7 @@ import {
   markQualityPhysicalOrderPaid,
   recordQualityStripePlanPayment,
   recordQualityStripeProductPayment,
+  resolveQualityStripeCheckoutIntent,
   syncQualityStripeSubscription
 } from "../lib/db.js";
 
@@ -42,13 +43,9 @@ function isoFromUnix(value) {
   return Number.isFinite(n) && n>0 ? new Date(n*1000).toISOString() : null;
 }
 
-function parseClientReference(value) {
-  const raw=String(value||"");
-  let m=/^quality_(-?\d+)$/.exec(raw);
-  if (m) return { userId:Number(m[1]), kind:"plan", reference:null };
-  m=/^quality_(-?\d+)_product_([a-z0-9-]+)$/.exec(raw);
-  if (m) return { userId:Number(m[1]), kind:"product", reference:m[2] };
-  return null;
+function checkoutToken(value) {
+  const m=/^qa_([a-f0-9]{48})$/.exec(String(value||""));
+  return m ? m[1] : "";
 }
 
 function invoiceSubscriptionId(invoice) {
@@ -75,26 +72,36 @@ function subscriptionPeriod(subscription) {
 
 async function handleCheckoutSession(session) {
   const meta=session?.metadata || {};
-  const ref=parseClientReference(session?.client_reference_id);
+  const token=checkoutToken(session?.client_reference_id);
 
-  if (meta.quality_app === "quality_assurance_support" && meta.quality_kind === "plan") {
-    if (!ref || ref.kind !== "plan") return;
-    await recordQualityStripePlanPayment(ref.userId,{
-      plan_slug:String(meta.quality_ref||""),
-      checkout_session_id:String(session.id||""),
-      subscription_id:objectId(session.subscription),
-      customer_id:objectId(session.customer),
-      amount_total:Number(session.amount_total||0),
-      currency:String(session.currency||"").toLowerCase()
-    });
-    return;
-  }
+  if (
+    meta.quality_app === "quality_assurance_support" &&
+    (meta.quality_kind === "plan" || meta.quality_kind === "product_type")
+  ) {
+    if (!token || !session?.id) throw new Error("Missing Quality checkout intent reference");
+    const intent=await resolveQualityStripeCheckoutIntent(token,String(session.id));
 
-  if (meta.quality_app === "quality_assurance_support" && meta.quality_kind === "product_type") {
-    if (!ref || ref.kind !== "product" || !ref.reference) return;
-    await recordQualityStripeProductPayment(ref.userId,{
-      product_slug:ref.reference,
-      checkout_session_id:String(session.id||""),
+    if (meta.quality_kind === "plan") {
+      if (intent.purchase_kind !== "plan" || intent.purchase_reference !== String(meta.quality_ref||"").toLowerCase()) {
+        throw new Error("Quality plan checkout intent mismatch");
+      }
+      await recordQualityStripePlanPayment(Number(intent.telegram_user_id),{
+        plan_slug:intent.purchase_reference,
+        checkout_session_id:String(session.id),
+        subscription_id:objectId(session.subscription),
+        customer_id:objectId(session.customer),
+        amount_total:Number(session.amount_total||0),
+        currency:String(session.currency||"").toLowerCase()
+      });
+      return;
+    }
+
+    if (intent.purchase_kind !== "product") {
+      throw new Error("Quality product checkout intent mismatch");
+    }
+    await recordQualityStripeProductPayment(Number(intent.telegram_user_id),{
+      product_slug:intent.purchase_reference,
+      checkout_session_id:String(session.id),
       payment_intent_id:objectId(session.payment_intent),
       customer_id:objectId(session.customer),
       amount_total:Number(session.amount_total||0),

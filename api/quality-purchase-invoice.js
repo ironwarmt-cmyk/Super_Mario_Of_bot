@@ -1,6 +1,8 @@
+import crypto from "node:crypto";
 import { resolveQualityIdentity } from "../lib/quality-auth.js";
 import {
   consumeQualityCheckoutConsent,
+  createQualityStripeCheckoutIntent,
   getQualityPlan,
   getQualityProduct,
   validateQualityCheckoutConsent
@@ -17,9 +19,13 @@ const PRODUCT_LINKS = Object.freeze({
   training: "https://buy.stripe.com/9B6bJ05Oh0Bk9YG9OCdby0h"
 });
 
-function checkoutUrl(base, clientReferenceId) {
+function newCheckoutToken() {
+  return crypto.randomBytes(24).toString("hex");
+}
+
+function checkoutUrl(base, token) {
   const url = new URL(base);
-  url.searchParams.set("client_reference_id", clientReferenceId);
+  url.searchParams.set("client_reference_id", "qa_" + token);
   url.searchParams.set("locale", "pl");
   return url.toString();
 }
@@ -56,8 +62,11 @@ export default async function handler(req, res) {
         return res.status(403).json({ ok:false, error:"Required legal consents are missing" });
       }
 
+      const token = newCheckoutToken();
+      await createQualityStripeCheckoutIntent(userId, token, "plan", plan.slug);
       await consumeQualityCheckoutConsent(userId, consentToken);
-      const url = checkoutUrl(link, `quality_${userId}`);
+
+      const url = checkoutUrl(link, token);
       return res.status(200).json({
         ok:true,
         purchase_kind:"plan",
@@ -79,15 +88,16 @@ export default async function handler(req, res) {
         return res.status(403).json({ ok:false, error:"Required legal consents are missing" });
       }
 
-      const link = product.product_type === "training"
-        ? PRODUCT_LINKS.training
-        : PRODUCT_LINKS.document;
+      const link = product.product_type === "training" ? PRODUCT_LINKS.training : PRODUCT_LINKS.document;
       if (!link) {
         return res.status(503).json({ ok:false, error:"Web checkout is temporarily unavailable for this product." });
       }
 
+      const token = newCheckoutToken();
+      await createQualityStripeCheckoutIntent(userId, token, "product", product.slug);
       await consumeQualityCheckoutConsent(userId, consentToken);
-      const url = checkoutUrl(link, `quality_${userId}_product_${product.slug}`);
+
+      const url = checkoutUrl(link, token);
       return res.status(200).json({
         ok:true,
         purchase_kind:purchaseKind,

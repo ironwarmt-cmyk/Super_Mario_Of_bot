@@ -671,6 +671,141 @@ Deno.serve(async (req) => {
 
     if (action === "get_quality_membership") return json({ ok: true, data: await readQualityMembership(supabase, body?.telegram_user_id) });
 
+    if (action === "create_quality_stripe_checkout_intent") {
+      const telegramUserId = Number(body?.telegram_user_id);
+      const token = String(body?.token || "").trim();
+      const purchaseKind = String(body?.purchase_kind || "").toLowerCase();
+      const purchaseReference = String(body?.purchase_reference || "").toLowerCase();
+
+      if (
+        !Number.isSafeInteger(telegramUserId) ||
+        telegramUserId === 0 ||
+        !/^[a-f0-9]{48}$/.test(token) ||
+        !["plan","product"].includes(purchaseKind) ||
+        !/^[a-z0-9-]+$/.test(purchaseReference)
+      ) {
+        return json({ ok:false, error:"Invalid Stripe checkout intent" }, 400);
+      }
+
+      const { data:userRow, error:userError } = await supabase
+        .from("telegram_users")
+        .select("telegram_user_id")
+        .eq("telegram_user_id", telegramUserId)
+        .maybeSingle();
+      if (userError) throw userError;
+      if (!userRow) return json({ ok:false, error:"Shared user not found" }, 404);
+
+      if (purchaseKind === "plan") {
+        const { data:plan, error:planError } = await supabase
+          .from("quality_plans")
+          .select("slug,active,checkout_enabled")
+          .eq("slug", purchaseReference)
+          .maybeSingle();
+        if (planError) throw planError;
+        if (!plan?.active || !plan?.checkout_enabled) {
+          return json({ ok:false, error:"Plan unavailable" }, 404);
+        }
+      } else {
+        const product = await getQualityProductBySlug(supabase, purchaseReference);
+        if (!product?.active || !product?.standalone_purchase_enabled) {
+          return json({ ok:false, error:"Product unavailable" }, 404);
+        }
+      }
+
+      const { data:intent, error:intentError } = await supabase
+        .from("quality_stripe_checkout_intents")
+        .insert({
+          token,
+          telegram_user_id:telegramUserId,
+          purchase_kind:purchaseKind,
+          purchase_reference:purchaseReference,
+          expires_at:new Date(Date.now()+2*60*60*1000).toISOString()
+        })
+        .select("token,expires_at")
+        .single();
+      if (intentError) throw intentError;
+      return json({ ok:true, data:intent });
+    }
+
+    if (action === "resolve_quality_stripe_checkout_intent") {
+      const token = String(body?.token || "").trim();
+      const sessionId = String(body?.stripe_checkout_session_id || "").trim();
+      if (!/^[a-f0-9]{48}$/.test(token) || !/^cs_/.test(sessionId)) {
+        return json({ ok:false, error:"Invalid Stripe checkout reference" }, 400);
+      }
+
+      const { data:intent, error:readError } = await supabase
+        .from("quality_stripe_checkout_intents")
+        .select("*")
+        .eq("token", token)
+        .maybeSingle();
+      if (readError) throw readError;
+      if (!intent) return json({ ok:false, error:"Checkout intent not found" }, 404);
+
+      if (intent.consumed_at) {
+        if (String(intent.stripe_checkout_session_id || "") !== sessionId) {
+          return json({ ok:false, error:"Checkout intent already consumed" }, 409);
+        }
+        return json({
+          ok:true,
+          data:{
+            telegram_user_id:Number(intent.telegram_user_id),
+            purchase_kind:intent.purchase_kind,
+            purchase_reference:intent.purchase_reference,
+            duplicate:true
+          }
+        });
+      }
+
+      if (!intent.expires_at || new Date(intent.expires_at).getTime() <= Date.now()) {
+        return json({ ok:false, error:"Checkout intent expired" }, 410);
+      }
+
+      const { data:consumed, error:updateError } = await supabase
+        .from("quality_stripe_checkout_intents")
+        .update({
+          stripe_checkout_session_id:sessionId,
+          consumed_at:new Date().toISOString()
+        })
+        .eq("id", intent.id)
+        .is("consumed_at", null)
+        .gt("expires_at", new Date().toISOString())
+        .select("*")
+        .maybeSingle();
+      if (updateError) throw updateError;
+
+      if (!consumed) {
+        const { data:race, error:raceError } = await supabase
+          .from("quality_stripe_checkout_intents")
+          .select("*")
+          .eq("id", intent.id)
+          .maybeSingle();
+        if (raceError) throw raceError;
+        if (race?.consumed_at && String(race.stripe_checkout_session_id || "") === sessionId) {
+          return json({
+            ok:true,
+            data:{
+              telegram_user_id:Number(race.telegram_user_id),
+              purchase_kind:race.purchase_kind,
+              purchase_reference:race.purchase_reference,
+              duplicate:true
+            }
+          });
+        }
+        return json({ ok:false, error:"Checkout intent could not be consumed" }, 409);
+      }
+
+      return json({
+        ok:true,
+        data:{
+          telegram_user_id:Number(consumed.telegram_user_id),
+          purchase_kind:consumed.purchase_kind,
+          purchase_reference:consumed.purchase_reference,
+          duplicate:false
+        }
+      });
+    }
+
     if (action === "record_quality_stripe_plan_payment") {
       const telegramUserId = Number(body?.telegram_user_id);
       const payment = body?.payment || {};
