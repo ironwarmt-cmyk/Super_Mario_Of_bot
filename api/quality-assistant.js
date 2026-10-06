@@ -110,99 +110,175 @@ Return VALID JSON ONLY:
 readiness_delta must be between -30 and 10.`;
 }
 
+function aiTransport() {
+  const openaiKey=String(process.env.OPENAI_API_KEY||"").trim();
+  if(openaiKey){
+    return {
+      provider:"openai",
+      url:"https://api.openai.com/v1/responses",
+      token:openaiKey,
+      model:String(process.env.OPENAI_QUALITY_MODEL||"gpt-5.6-sol")
+    };
+  }
+
+  const gatewayToken=String(process.env.AI_GATEWAY_API_KEY||process.env.VERCEL_OIDC_TOKEN||"").trim();
+  if(gatewayToken){
+    return {
+      provider:"vercel-ai-gateway",
+      url:"https://ai-gateway.vercel.sh/v1/responses",
+      token:gatewayToken,
+      model:String(process.env.OPENAI_QUALITY_MODEL_GATEWAY||"openai/gpt-5.6-sol")
+    };
+  }
+
+  throw new Error("QUALITY_AI_UNAVAILABLE");
+}
+
+async function postAIResponse(body,{allowWebSearch=true}={}) {
+  const transport=aiTransport();
+  const requestBody={...body,model:transport.model};
+  if(allowWebSearch){
+    requestBody.tools=[{type:"web_search"}];
+    requestBody.tool_choice="auto";
+  }
+
+  async function send(payload){
+    const response=await fetch(transport.url,{
+      method:"POST",
+      headers:{
+        Authorization:`Bearer ${transport.token}`,
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify(payload),
+      signal:AbortSignal.timeout(55000)
+    });
+    const data=await response.json().catch(()=>({}));
+    return {response,data};
+  }
+
+  let attempt=await send(requestBody);
+  if(
+    !attempt.response.ok &&
+    allowWebSearch &&
+    transport.provider==="vercel-ai-gateway" &&
+    [400,404,422].includes(attempt.response.status)
+  ){
+    const withoutTools={...requestBody};
+    delete withoutTools.tools;
+    delete withoutTools.tool_choice;
+    attempt=await send(withoutTools);
+  }
+
+  if(!attempt.response.ok){
+    throw new Error(
+      attempt.data?.error?.message ||
+      attempt.data?.message ||
+      `AI request failed with HTTP ${attempt.response.status}`
+    );
+  }
+
+  return {
+    payload:attempt.data,
+    provider:transport.provider,
+    model:attempt.data?.model||transport.model
+  };
+}
+
+function mimeFromName(name=""){
+  const lower=String(name).toLowerCase();
+  if(lower.endsWith(".pdf"))return "application/pdf";
+  if(lower.endsWith(".docx"))return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+  if(lower.endsWith(".xlsx"))return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+  if(lower.endsWith(".csv"))return "text/csv";
+  if(lower.endsWith(".txt"))return "text/plain";
+  if(lower.endsWith(".png"))return "image/png";
+  if(lower.endsWith(".webp"))return "image/webp";
+  if(lower.endsWith(".jpg")||lower.endsWith(".jpeg"))return "image/jpeg";
+  return "application/octet-stream";
+}
+
+async function privateEvidenceInput(fileUrl,fileName){
+  const response=await fetch(fileUrl,{signal:AbortSignal.timeout(20000)});
+  if(!response.ok)throw new Error("Nie udało się odczytać prywatnego pliku do analizy.");
+  const bytes=Buffer.from(await response.arrayBuffer());
+  if(bytes.length>12*1024*1024){
+    throw new Error("Plik jest zbyt duży do analizy AI. Maksymalnie 12 MB.");
+  }
+  const mime=String(response.headers.get("content-type")||"").split(";")[0]||mimeFromName(fileName);
+  const dataUrl=`data:${mime};base64,${bytes.toString("base64")}`;
+  return {mime,dataUrl};
+}
+
 async function callEmergencyAI({ standard, version, auditDate, context, imageData, fileUrl, fileName }) {
-  const apiKey=process.env.OPENAI_API_KEY;
-  if(!apiKey)throw new Error("OPENAI_API_KEY is not configured");
-  const model=process.env.OPENAI_QUALITY_MODEL||"gpt-6.1-sol";
   const content=[{type:"input_text",text:emergencyInstructions({standard,version,auditDate,context})}];
+
   if(imageData){
-    if(!/^data:image\/(png|jpeg|jpg|webp);base64,/i.test(imageData))throw new Error("Invalid screen image");
-    if(imageData.length>7_000_000)throw new Error("Screen capture is too large");
+    if(!/^data:image\/(png|jpeg|jpg|webp);base64,/i.test(imageData))throw new Error("Nieprawidłowy obraz ekranu.");
+    if(imageData.length>7_000_000)throw new Error("Zrzut ekranu jest zbyt duży do analizy.");
     content.push({type:"input_image",image_url:imageData,detail:"high"});
   }
+
   if(fileUrl){
-    const lower=String(fileName||"").toLowerCase();
-    if(/\.(png|jpe?g|webp)$/.test(lower)){
-      content.push({type:"input_image",image_url:fileUrl,detail:"high"});
+    const evidence=await privateEvidenceInput(fileUrl,fileName);
+    if(evidence.mime.startsWith("image/")){
+      content.push({type:"input_image",image_url:evidence.dataUrl,detail:"high"});
     }else{
-      content.push({type:"input_file",file_url:fileUrl,filename:String(fileName||"evidence")});
+      content.push({
+        type:"input_file",
+        filename:String(fileName||"evidence").slice(0,180),
+        file_data:evidence.dataUrl
+      });
     }
   }
-  const response=await fetch("https://api.openai.com/v1/responses",{
-    method:"POST",
-    headers:{Authorization:`Bearer ${apiKey}`,"Content-Type":"application/json"},
-    body:JSON.stringify({
-      model,
-      input:[{role:"user",content}],
-      tools:[{type:"web_search"}],
-      tool_choice:"auto",
-      max_output_tokens:2600,
-      store:false
-    })
-  });
-  const payload=await response.json();
-  if(!response.ok)throw new Error(payload?.error?.message||`OpenAI request failed with HTTP ${response.status}`);
-  const raw=extractResponseText(payload);
+
+  const ai=await postAIResponse({
+    input:[{role:"user",content}],
+    max_output_tokens:2600,
+    store:false
+  },{allowWebSearch:true});
+
+  const raw=extractResponseText(ai.payload);
+  if(!raw)throw new Error("AI nie zwróciło wyniku analizy.");
   let result;
-  try{result=JSON.parse(cleanEmergencyJson(raw))}catch{
+  try{
+    result=JSON.parse(cleanEmergencyJson(raw));
+  }catch{
     result={summary:raw,risk_level:"AMBER",readiness_delta:0,findings:[],missing_evidence:[],auditor_questions:[],next_steps:[]};
   }
+
   return {
     ...result,
     readiness_delta:Math.max(-30,Math.min(10,Number(result?.readiness_delta||0))),
-    model:payload?.model||model,
+    model:ai.model,
+    provider:ai.provider,
     analyzed_at:new Date().toISOString(),
-    sources:extractSources(payload)
+    sources:extractSources(ai.payload)
   };
 }
 
 async function callQualityAI({ specialist, locale, history, message }) {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    throw new Error("OPENAI_API_KEY is not configured");
-  }
-
-  const model = process.env.OPENAI_QUALITY_MODEL || "gpt-6.1-sol";
   const internalKnowledge = await loadQualityKnowledge(specialist);
   const instructions =
     buildQualityAgentInstructions(specialist, locale) +
     "\n\nINTERNAL IMPLEMENTATION KNOWLEDGE\n" +
-    "Use the following project material as internal implementation context. It is not proof that an external legal or certification requirement is current; verify current external requirements with official sources.\n\n" +
+    "Use the following project material as internal implementation context. It is not proof that an external legal or certification requirement is current; verify current external requirements with official sources when live search is available.\n\n" +
     internalKnowledge;
 
-  const response = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      model,
-      instructions,
-      input: historyAsInput(history, message),
-      tools: [{ type: "web_search" }],
-      tool_choice: "auto",
-      max_output_tokens: 2200,
-      store: false
-    })
-  });
+  const ai=await postAIResponse({
+    instructions,
+    input:historyAsInput(history,message),
+    max_output_tokens:2200,
+    store:false
+  },{allowWebSearch:true});
 
-  const payload = await response.json();
-
-  if (!response.ok) {
-    throw new Error(
-      payload?.error?.message ||
-        `OpenAI request failed with HTTP ${response.status}`
-    );
-  }
-
-  const text = extractResponseText(payload);
-  if (!text) throw new Error("AI returned an empty response");
+  const text=extractResponseText(ai.payload);
+  if(!text)throw new Error("AI nie zwróciło odpowiedzi.");
 
   return {
     text,
-    sources: extractSources(payload),
-    model: payload?.model || model
+    sources:extractSources(ai.payload),
+    model:ai.model,
+    provider:ai.provider
   };
 }
 
@@ -211,7 +287,8 @@ export default async function handler(req, res) {
     return json(res, 200, {
       ok: true,
       service: "Quality specialist assistant",
-      aiConfigured: Boolean(process.env.OPENAI_API_KEY)
+      aiConfigured: Boolean(process.env.OPENAI_API_KEY || process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN),
+      aiProvider: process.env.OPENAI_API_KEY ? "openai" : (process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN ? "vercel-ai-gateway" : "unavailable")
     });
   }
 
@@ -344,7 +421,8 @@ export default async function handler(req, res) {
         answer.text,
         {
           sources: answer.sources,
-          model: answer.model
+          model: answer.model,
+          provider: answer.provider
         }
       );
 
@@ -367,10 +445,13 @@ export default async function handler(req, res) {
     const status =
       /membership|required|included|allowance|exhausted/i.test(message)
         ? 403
-        : /OPENAI_API_KEY/i.test(message)
+        : /QUALITY_AI_UNAVAILABLE/i.test(message)
           ? 503
           : 500;
 
-    return json(res, status, { ok: false, error: message });
+    const publicMessage=/QUALITY_AI_UNAVAILABLE/i.test(message)
+      ? "Usługa AI jest chwilowo niedostępna. Spróbuj ponownie za moment."
+      : message;
+    return json(res, status, { ok: false, error: publicMessage });
   }
 }
