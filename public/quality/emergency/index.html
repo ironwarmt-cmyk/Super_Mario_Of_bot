@@ -110,14 +110,62 @@ const STANDARDS={
   customer:{name:"Audyt klienta / retailer",version:"Customer / second-party audit",specialist:"audit",note:"Priorytet: wymagania klienta, specyfikacja kontraktowa, ostatnie reklamacje/OOS, product integrity, KPI, traceability i skuteczność zamknięcia poprzednich findings."}
 };
 const STANDARD_FOCUS={
-  ifs8:["KO i wymagania mogące dać Major","Food Safety Culture i odpowiedzialność kierownictwa","HACCP/CCP oraz walidacja i weryfikacja","Traceability + mass balance + withdrawal","Food Fraud / Food Defence / alergeny"],
-  brc9:["Fundamental Requirements","Senior management commitment i site plan","HACCP i food safety plan","GMP/site standards + foreign body","Product/process control, allergens i personnel"],
-  fssc6:["ISO 22000 FSMS","PRP wg właściwego ISO/TS 22002-x dla V6","FSSC Additional Requirements","Internal audit + management review + objectives","V7 gap: ISO 22002-100:2025 + właściwy sektor"],
-  iso22000:["Context/leadership","Risk & opportunities / objectives","PRP + operational planning","Hazard analysis / OPRP / CCP","Performance evaluation + improvement"],
-  ifslog3:["Scope / outsourced processes","Temperature/cold chain","Hygiene, storage, vehicles","Traceability + product defence","Supplier/service-provider controls"],
-  brcsd4:["Product safety management system","Site/storage/vehicle standards","Traceability and incident management","Contracted services","Product integrity/security"],
-  haccp:["HACCP team and scope","Flow diagram verification","Hazard analysis","CCP/critical limits/monitoring","Verification/validation/records"],
-  customer:["Customer-specific requirements","Open complaints and OOS","Specification/label conformity","Traceability and recall","Previous audit findings / KPI commitments"]
+  ifs8:[
+    "KO/Major readiness: przypisz każde wymaganie krytyczne do konkretnego dowodu i właściciela; sprawdź otwarte odchylenia i eskalację.",
+    "Food Safety Culture: cele, działania, komunikacja, pomiar skuteczności i dowody zaangażowania kierownictwa.",
+    "HACCP: zweryfikowany flow, hazard analysis, CCP, limity, monitoring, korekcje, walidacja i weryfikacja.",
+    "Traceability/withdrawal: pełny test one-step-back/one-step-forward, mass balance, czas, decyzje i komunikacja.",
+    "Food Fraud / Food Defence / alergeny: aktualne oceny ryzyka, plany, testy skuteczności i dowody wdrożenia."
+  ],
+  brc9:[
+    "Fundamental Requirements: zmapuj każdy fundament do właściciela, dowodu wdrożenia i ostatniej weryfikacji skuteczności.",
+    "Senior management commitment: cele, zasoby, review, food safety culture plan, komunikacja i follow-up decyzji.",
+    "HACCP/Food Safety Plan: flow, hazards, CCP, validation, verification i reakcje na odchylenia.",
+    "Site Standards/GMP: fabric, hygiene, maintenance, pest, glass/brittle, foreign body, chemical control i housekeeping.",
+    "Product/Process Control + allergens/personnel: specs, labels, change control, release, training i zachowania operatorów."
+  ],
+  fssc6:[
+    "ISO 22000 FSMS: context, leadership, objectives, risks/opportunities, operational control, performance evaluation i improvement.",
+    "PRP dla V6: właściwy ISO/TS 22002-x, wdrożenie na hali oraz zapisy weryfikacji.",
+    "FSSC Additional Requirements: przypisz każdy wymagany obszar do dowodu, statusu i odpowiedzialności.",
+    "Internal audit + management review + objectives: kompletność inputs, decisions, resources, follow-up i effectiveness.",
+    "Transition V7: osobny GAP do ISO 22002-100:2025 + właściwego ISO 22002-x:2025, bez mieszania go z bazą audytu V6."
+  ],
+  iso22000:[
+    "Context/leadership: zainteresowane strony, scope, polityka, odpowiedzialności i zaangażowanie kierownictwa.",
+    "Risks & opportunities / objectives: mierniki, plan działań, monitoring i przegląd wyników.",
+    "PRP + operational planning: wdrożenie, monitoring, verification i reakcja na utratę kontroli.",
+    "Hazard analysis / OPRP / CCP: logika doboru środków kontroli, limity/kryteria, monitoring, validation/verification.",
+    "Performance evaluation + improvement: internal audit, management review, NC/CAPA, trend i continuous improvement."
+  ],
+  ifslog3:[
+    "Scope + outsourced processes: wszystkie lokalizacje, usługi, podwykonawcy, odpowiedzialności i umowy.",
+    "Temperature/cold chain: mapowanie, monitoring, alarmy, kalibracje, odchylenia i decyzje disposition.",
+    "Hygiene/storage/vehicles: warunki, cleaning, pest, loading/unloading, segregacja i product status.",
+    "Traceability + product defence: test, zabezpieczenia, incydenty, recall/withdrawal i communication.",
+    "Supplier/service-provider controls: qualification, KPI, complaints, corrective actions i re-evaluation."
+  ],
+  brcsd4:[
+    "Product safety management system: scope, responsibilities, document control, objectives i review.",
+    "Site/storage/vehicle standards: condition, hygiene, temperature, security, loading, segregation i maintenance.",
+    "Traceability + incident management: mock recall, crisis response, communication i product status control.",
+    "Contracted services: approval, specification, monitoring, performance, deviations i CAPA.",
+    "Product integrity/security: vulnerability, defence, seal/security controls i escalation."
+  ],
+  haccp:[
+    "HACCP team/scope: kompetencje, opis produktu, intended use, regulatory/customer requirements.",
+    "Flow diagram: aktualność, wszystkie reworki/odpady/outsourcing i potwierdzenie on-site.",
+    "Hazard analysis: biological/chemical/physical/allergen hazards, rationale, likelihood/severity i controls.",
+    "CCP: critical limits, monitoring, responsibility, correction/corrective action i records.",
+    "Verification/validation: plan, częstotliwość, kompetencje, review zmian i dowody skuteczności."
+  ],
+  customer:[
+    "Customer-specific requirements: aktualna specyfikacja, portal/contract requirements, deviations i approvals.",
+    "Complaints/OOS: najnowsze przypadki, trend, RCA, CAPA, response time i effectiveness.",
+    "Specification/label conformity: master data, artwork, allergen declaration, claims i release controls.",
+    "Traceability/recall: customer codes, mass balance, mock withdrawal i komunikacja.",
+    "Previous findings/KPI commitments: zamknięcie, dowody trwałości zmian i brak powrotu problemu."
+  ]
 };
 const DAY_TEMPLATE=[
  {d:7,title:"D‑7 · Scope & Baseline GAP",tasks:["Potwierdź zakres audytu, produkty, procesy, zmiany od ostatniego audytu i skład zespołu.","Zbierz poprzedni raport audytu, wszystkie otwarte CAPA, reklamacje, incydenty, wycofania i pisma urzędowe.","Wykonaj szybki GAP względem właściwej wersji standardu i utwórz listę RED / AMBER / GREEN.","Zamroź listę 10 największych ryzyk — każde musi mieć właściciela i deadline." ]},
@@ -135,7 +183,24 @@ function defaultDate(){const d=new Date();d.setDate(d.getDate()+7);return d.toIS
 function makeTasks(key){
  const focus=STANDARD_FOCUS[key]||[];
  const out=[];
- DAY_TEMPLATE.forEach(day=>day.tasks.forEach((title,i)=>out.push({id:`${day.d}-${i}`,day:day.d,dayTitle:day.title,title,why:i===3&&day.d===4?"Standard focus: "+focus.join(" · "):"Dowód wymagany: dokument/zapis/obserwacja + osoba odpowiedzialna.",severity:(day.d>=5&&i<2)?"HIGH":(day.d===7&&i===2)?"CRITICAL":"MEDIUM",weight:(day.d>=5&&i<2)?3:(day.d===7&&i===2)?4:1})));
+ DAY_TEMPLATE.forEach(day=>day.tasks.forEach((title,i)=>out.push({
+   id:`${day.d}-${i}`,
+   day:day.d,
+   dayTitle:day.title,
+   title,
+   why:"Dowód wymagany: dokument/zapis/obserwacja + osoba odpowiedzialna.",
+   severity:(day.d>=5&&i<2)?"HIGH":(day.d===7&&i===2)?"CRITICAL":"MEDIUM",
+   weight:(day.d>=5&&i<2)?3:(day.d===7&&i===2)?4:1
+ })));
+ focus.forEach((title,i)=>out.push({
+   id:`4-focus-${i}`,
+   day:4,
+   dayTitle:"D‑4 · Standard Deep Dive",
+   title,
+   why:"Pokaż auditorowi dowód wdrożenia oraz ostatnią weryfikację skuteczności — nie tylko procedurę.",
+   severity:i<2?"HIGH":"MEDIUM",
+   weight:i<2?3:2
+ }));
  return out;
 }
 function taskState(){return current?.task_state||{}}
