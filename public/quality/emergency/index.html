@@ -212,8 +212,11 @@ function readiness(){
 }
 async function headers(extra={}){return await QualityAuth.headers(extra)}
 async function emergency(action,payload={}){
- const r=await fetch("/api/quality-emergency",{method:"POST",headers:await headers({"content-type":"application/json"}),body:JSON.stringify({action,...payload})});
- const d=await r.json().catch(()=>({}));if(!r.ok||!d.ok)throw new Error(d.error||"Emergency API error");return d;
+ const analyze=action==="analyze";
+ const url=analyze?"/api/quality-assistant":"/api/quality-account?mode=emergency";
+ const body=analyze?{action:"emergency_analyze",...payload}:{action,...payload};
+ const r=await fetch(url,{method:"POST",headers:await headers({"content-type":"application/json"}),body:JSON.stringify(body)});
+ const d=await r.json().catch(()=>({}));if(!r.ok||!d.ok)throw new Error(d.error||"Emergency Support error");return d;
 }
 async function save(){
  if(!current)return;
@@ -286,7 +289,7 @@ function exportPack(){
 async function init(){
  if(!(await QualityAuth.isAuthenticated())){location.href="/login?next="+encodeURIComponent(location.pathname+location.search);return}
  $("auditDate").value=defaultDate();renderStandards();
- try{const r=await fetch("/api/quality-emergency",{headers:await headers()});const d=await r.json();if(r.ok&&d.ok&&d.data){current=d.data;selected=current.standard_key;paint()}}catch{}
+ try{const r=await fetch("/api/quality-account?mode=emergency",{headers:await headers()});const d=await r.json();if(r.ok&&d.ok&&d.data){current=d.data;selected=current.standard_key;paint()}}catch{}
 }
 $("startCase").onclick=async()=>{const std=STANDARDS[selected];current={standard_key:selected,standard_version:std.version,audit_date:$("auditDate").value||defaultDate(),status:"active",readiness_score:0,task_state:{},evidence_log:[],notes:{scope:$("scopeNote").value||""},reminders_enabled:false};await save()};
 $("calendarBtn").onclick=makeIcs;$("exportBtn").onclick=exportPack;
