@@ -78,11 +78,18 @@ input,textarea,select{width:100%;border:1px solid var(--line);background:#08131d
           <button class="btn" id="analyzeFile" style="margin-top:10px">Analizuj dokument</button>
         </div>
         <div class="ai-box">
-          <h3>Udostępnij ekran</h3>
-          <p class="muted">Udostępnianie uruchamiasz sam. AI nie nagrywa ekranu w tle — analizowana jest tylko klatka wysłana przyciskiem.</p>
-          <div class="row"><button class="btn dark" id="shareScreen">Udostępnij ekran</button><button class="btn" id="analyzeScreen" disabled>Analizuj aktualny ekran</button><button class="btn dark" id="stopScreen" disabled>Stop</button></div>
+          <h3>Udostępnij ekran / pokaż zrzut</h3>
+          <p class="muted" id="screenHelp">Na komputerze możesz udostępnić ekran na żywo. Na iPhone/iPad wybierz zrzut ekranu z galerii — AI przeanalizuje go tym samym trybem.</p>
+          <div class="row">
+            <button class="btn dark" id="shareScreen">Udostępnij ekran</button>
+            <button class="btn dark" id="pickScreenshot">Wybierz zrzut ekranu</button>
+            <button class="btn" id="analyzeScreen" disabled>Analizuj obraz</button>
+            <button class="btn dark" id="stopScreen" disabled>Wyczyść</button>
+          </div>
+          <input id="screenshotInput" type="file" accept="image/png,image/jpeg,image/webp" class="hidden">
           <video id="screenVideo" class="screen-preview hidden" autoplay muted playsinline></video>
-          <textarea id="screenContext" rows="3" style="margin-top:10px" placeholder="np. oceń ten rejestr CCP / layout dokumentacji / dashboard reklamacji"></textarea>
+          <img id="screenshotPreview" class="screen-preview hidden" alt="Podgląd zrzutu ekranu">
+          <textarea id="screenContext" rows="3" style="margin-top:10px" placeholder="np. oceń ten rejestr CCP / dashboard reklamacji / ekran systemu"></textarea>
         </div>
       </div>
       <div class="ai-box" style="margin-top:14px">
@@ -176,7 +183,7 @@ const DAY_TEMPLATE=[
  {d:2,title:"D‑2 · CAPA Sprint",tasks:["Zamknij wszystkie CRITICAL/HIGH możliwe do realnego zamknięcia; nie maskuj problemów dokumentem bez wdrożenia.","Dla każdego otwartego problemu przygotuj: containment, RCA, CAPA, owner, termin i dowód postępu.","Uzupełnij brakujące zapisy i szkolenia tylko wtedy, gdy faktycznie zostały wykonane.","Zrób drugi red-team walk i sprawdź, czy działania nie wygenerowały nowych niespójności." ]},
  {d:1,title:"D‑1 · Audit Ready",tasks:["Zbuduj Evidence Pack: scope, certyfikat, organigram, HACCP, CCP/OPRP records, traceability, recalls, complaints, internal audits, management review, CAPA.","Przygotuj audit room / dostęp do systemu: indeks dokumentów i osoby odpowiedzialne za obszary.","Sprawdź ostatni raz GMP i punkty wysokiego ryzyka na produkcji; usuń tylko realne niezgodności, nie ukrywaj stanu faktycznego.","Przeprowadź 30-minutowy final mock opening meeting i listę trudnych pytań auditora." ]}
 ];
-let selected=null,current=null,screenStream=null,accountInfo=null;
+let selected=null,current=null,screenStream=null,screenImageData=null,accountInfo=null;
 const $=id=>document.getElementById(id);
 function esc(v=""){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]))}
 function defaultDate(){const d=new Date();d.setDate(d.getDate()+7);return d.toISOString().slice(0,10)}
@@ -294,9 +301,98 @@ async function init(){
 $("startCase").onclick=async()=>{const std=STANDARDS[selected];current={standard_key:selected,standard_version:std.version,audit_date:$("auditDate").value||defaultDate(),status:"active",readiness_score:0,task_state:{},evidence_log:[],notes:{scope:$("scopeNote").value||""},reminders_enabled:false};await save()};
 $("calendarBtn").onclick=makeIcs;$("exportBtn").onclick=exportPack;
 $("analyzeFile").onclick=async()=>{const f=$("fileInput").files?.[0];if(!f)return alert("Wybierz plik.");if(f.size>15*1024*1024)return alert("Maksymalny rozmiar pliku: 15 MB.");$("analyzeFile").disabled=true;let obj=null;try{obj=await upload(f);await analyze({mode:"document",path:obj.path,file_name:f.name,context:$("docContext").value||current.notes?.scope||""},"Dokument: "+f.name)}finally{if(obj&&$("deleteAfter").checked)await removeUploaded(obj);$("analyzeFile").disabled=false}};
-$("shareScreen").onclick=async()=>{try{screenStream=await navigator.mediaDevices.getDisplayMedia({video:true,audio:false});$("screenVideo").srcObject=screenStream;$("screenVideo").classList.remove("hidden");$("analyzeScreen").disabled=false;$("stopScreen").disabled=false;screenStream.getVideoTracks()[0].onended=()=>$("stopScreen").click()}catch(e){$("analysisStatus").textContent="Udostępnianie anulowane."}};
-$("stopScreen").onclick=()=>{screenStream?.getTracks().forEach(t=>t.stop());screenStream=null;$("screenVideo").srcObject=null;$("screenVideo").classList.add("hidden");$("analyzeScreen").disabled=true;$("stopScreen").disabled=true};
-$("analyzeScreen").onclick=async()=>{const v=$("screenVideo");if(!screenStream||!v.videoWidth)return;const c=document.createElement("canvas");const max=1600,scale=Math.min(1,max/v.videoWidth);c.width=Math.round(v.videoWidth*scale);c.height=Math.round(v.videoHeight*scale);c.getContext("2d").drawImage(v,0,0,c.width,c.height);await analyze({mode:"screen",image_data:c.toDataURL("image/jpeg",.82),context:$("screenContext").value||current.notes?.scope||""},"Screen review")};
+function screenShareSupported(){
+ return Boolean(navigator.mediaDevices && typeof navigator.mediaDevices.getDisplayMedia==="function");
+}
+function resetScreenEvidence(){
+ screenStream?.getTracks().forEach(t=>t.stop());
+ screenStream=null;
+ screenImageData=null;
+ $("screenVideo").srcObject=null;
+ $("screenVideo").classList.add("hidden");
+ $("screenshotPreview").src="";
+ $("screenshotPreview").classList.add("hidden");
+ $("screenshotInput").value="";
+ $("analyzeScreen").disabled=true;
+ $("stopScreen").disabled=true;
+}
+async function imageFileToDataUrl(file){
+ if(!file||!/^image\/(png|jpeg|webp)$/i.test(file.type||""))throw new Error("Wybierz obraz PNG, JPG lub WEBP.");
+ if(file.size>8*1024*1024)throw new Error("Zrzut ekranu jest zbyt duży. Maksymalnie 8 MB.");
+ return await new Promise((resolve,reject)=>{
+   const reader=new FileReader();
+   reader.onload=()=>resolve(String(reader.result||""));
+   reader.onerror=()=>reject(new Error("Nie udało się odczytać obrazu."));
+   reader.readAsDataURL(file);
+ });
+}
+$("pickScreenshot").onclick=()=>$("screenshotInput").click();
+$("screenshotInput").onchange=async()=>{
+ try{
+   const file=$("screenshotInput").files?.[0];
+   if(!file)return;
+   resetScreenEvidence();
+   screenImageData=await imageFileToDataUrl(file);
+   $("screenshotPreview").src=screenImageData;
+   $("screenshotPreview").classList.remove("hidden");
+   $("analyzeScreen").disabled=false;
+   $("stopScreen").disabled=false;
+   $("analysisStatus").textContent="Zrzut ekranu gotowy do analizy.";
+ }catch(e){
+   $("analysisStatus").textContent="Błąd: "+(e.message||e);
+ }
+};
+$("shareScreen").onclick=async()=>{
+ if(!screenShareSupported()){
+   $("analysisStatus").textContent="Na tym urządzeniu przeglądarka nie obsługuje bezpośredniego udostępniania ekranu. Wybierz zrzut ekranu z galerii.";
+   $("screenshotInput").click();
+   return;
+ }
+ try{
+   resetScreenEvidence();
+   screenStream=await navigator.mediaDevices.getDisplayMedia({video:true,audio:false});
+   $("screenVideo").srcObject=screenStream;
+   $("screenVideo").classList.remove("hidden");
+   $("analyzeScreen").disabled=false;
+   $("stopScreen").disabled=false;
+   screenStream.getVideoTracks()[0].onended=()=>{
+     screenStream=null;
+     $("screenVideo").srcObject=null;
+     $("screenVideo").classList.add("hidden");
+     if(!screenImageData)$("analyzeScreen").disabled=true;
+   };
+ }catch(e){
+   $("analysisStatus").textContent=e?.name==="NotAllowedError"
+     ?"Udostępnianie anulowane. Możesz zamiast tego wybrać zrzut ekranu."
+     :"Ta przeglądarka nie uruchomiła udostępniania ekranu. Wybierz zrzut ekranu.";
+ }
+};
+$("stopScreen").onclick=resetScreenEvidence;
+$("analyzeScreen").onclick=async()=>{
+ let imageData=screenImageData;
+ if(!imageData&&screenStream){
+   const v=$("screenVideo");
+   if(!v.videoWidth){
+     $("analysisStatus").textContent="Poczekaj chwilę, aż podgląd będzie gotowy.";
+     return;
+   }
+   const c=document.createElement("canvas");
+   const max=1600,scale=Math.min(1,max/v.videoWidth);
+   c.width=Math.max(1,Math.round(v.videoWidth*scale));
+   c.height=Math.max(1,Math.round(v.videoHeight*scale));
+   c.getContext("2d").drawImage(v,0,0,c.width,c.height);
+   imageData=c.toDataURL("image/jpeg",.82);
+ }
+ if(!imageData){
+   $("analysisStatus").textContent="Najpierw udostępnij ekran albo wybierz zrzut ekranu.";
+   return;
+ }
+ await analyze({mode:"screen",image_data:imageData,context:$("screenContext").value||current.notes?.scope||""},"Screen review");
+};
+if(!screenShareSupported()){
+ $("shareScreen").textContent="Wybierz zrzut ekranu";
+ $("screenHelp").textContent="Na tym urządzeniu bezpośrednie udostępnianie ekranu przez przeglądarkę nie jest dostępne. Wybierz zrzut ekranu z galerii — AI przeanalizuje go tym samym trybem.";
+}
 $("auditorQuestions").onclick=()=>analyze({mode:"text",context:"Act as a hostile but fair certification auditor. Generate the hardest evidence-based questions for the current 7-day plan, especially unfinished CRITICAL/HIGH areas. "+(current.notes?.scope||"")},"Auditor questions");
 $("redTeam").onclick=()=>analyze({mode:"text",context:"RED TEAM. Search for likely blind spots and contradictions in the preparation plan and evidence log. Prioritize things that could still fail next week's audit. Current evidence summaries: "+JSON.stringify((current.evidence_log||[]).slice(-12))},"Red Team");
 init();
