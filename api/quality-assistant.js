@@ -8,7 +8,9 @@ import {
   stopQualityAssistantSession,
   listQualityAssistantMessages,
   saveQualityAssistantMessage,
-  createQualityEmergencyEvidenceUrl
+  createQualityEmergencyEvidenceUrl,
+  reserveQualityEmergencyAi,
+  settleQualityEmergencyAi
 } from "../lib/db.js";
 import {
   QUALITY_AGENT_SPECIALISTS,
@@ -111,14 +113,15 @@ Return VALID JSON ONLY:
 readiness_delta must be between -30 and 10.`;
 }
 
-async function aiTransport() {
+async function aiTransport(requestedModel=null) {
   const openaiKey=String(process.env.OPENAI_API_KEY||"").trim();
   if(openaiKey){
+    const directModel=String(requestedModel||process.env.OPENAI_QUALITY_MODEL||"gpt-5.6-sol").replace(/^openai\//,"");
     return {
       provider:"openai",
       url:"https://api.openai.com/v1/responses",
       token:openaiKey,
-      model:String(process.env.OPENAI_QUALITY_MODEL||"gpt-5.6-sol")
+      model:directModel
     };
   }
 
@@ -128,7 +131,7 @@ async function aiTransport() {
       provider:"vercel-ai-gateway",
       url:"https://ai-gateway.vercel.sh/v1/responses",
       token:explicitGatewayToken,
-      model:String(process.env.OPENAI_QUALITY_MODEL_GATEWAY||"openai/gpt-5.6-sol")
+      model:String(requestedModel||process.env.OPENAI_QUALITY_MODEL_GATEWAY||"openai/gpt-5.6-sol")
     };
   }
 
@@ -139,7 +142,7 @@ async function aiTransport() {
         provider:"vercel-ai-gateway-oidc",
         url:"https://ai-gateway.vercel.sh/v1/responses",
         token:oidcToken,
-        model:String(process.env.OPENAI_QUALITY_MODEL_GATEWAY||"openai/gpt-5.6-sol")
+        model:String(requestedModel||process.env.OPENAI_QUALITY_MODEL_GATEWAY||"openai/gpt-5.6-sol")
       };
     }
   } catch (error) {
@@ -149,8 +152,8 @@ async function aiTransport() {
   throw new Error("QUALITY_AI_UNAVAILABLE");
 }
 
-async function postAIResponse(body,{allowWebSearch=true}={}) {
-  const transport=await aiTransport();
+async function postAIResponse(body,{allowWebSearch=true,model=null}={}) {
+  const transport=await aiTransport(model);
   const requestBody={...body,model:transport.model};
   if(allowWebSearch){
     requestBody.tools=[{type:"web_search"}];
@@ -175,7 +178,7 @@ async function postAIResponse(body,{allowWebSearch=true}={}) {
   if(
     !attempt.response.ok &&
     allowWebSearch &&
-    transport.provider==="vercel-ai-gateway" &&
+    transport.provider.startsWith("vercel-ai-gateway") &&
     [400,404,422].includes(attempt.response.status)
   ){
     const withoutTools={...requestBody};
@@ -197,6 +200,28 @@ async function postAIResponse(body,{allowWebSearch=true}={}) {
     provider:transport.provider,
     model:attempt.data?.model||transport.model
   };
+}
+
+function emergencyModel(profile="evidence"){
+  return ["red_team","auditor"].includes(String(profile||"").toLowerCase())
+    ? "openai/gpt-5.6-sol"
+    : "openai/gpt-5.6-luna";
+}
+
+function estimateEmergencyProviderCostGrosz(model,inputTokens,outputTokens){
+  const key=String(model||"").toLowerCase();
+  let inputPerM=5,outputPerM=25;
+  if(key.includes("gpt-5.6-luna")){inputPerM=0.20;outputPerM=1.20;}
+  else if(key.includes("gpt-5.6-sol")){inputPerM=4;outputPerM=20;}
+  else if(key.includes("gpt-6-luna")){inputPerM=0.10;outputPerM=0.50;}
+  else if(key.includes("gpt-6-sol")){inputPerM=2;outputPerM=10;}
+
+  const tokenUsd=(Math.max(0,inputTokens)/1_000_000)*inputPerM+
+    (Math.max(0,outputTokens)/1_000_000)*outputPerM;
+  const webSearchUsd=0.01;
+  const usdPln=Math.max(3,Number(process.env.QUALITY_AI_USD_PLN_RATE||4.25));
+  const safetyFactor=1.15;
+  return Math.max(5,Math.ceil((tokenUsd+webSearchUsd)*usdPln*100*safetyFactor));
 }
 
 function mimeFromName(name=""){
@@ -224,7 +249,7 @@ async function privateEvidenceInput(fileUrl,fileName){
   return {mime,dataUrl};
 }
 
-async function callEmergencyAI({ standard, version, auditDate, context, imageData, fileUrl, fileName }) {
+async function callEmergencyAI({ standard, version, auditDate, context, imageData, fileUrl, fileName, profile }) {
   const content=[{type:"input_text",text:emergencyInstructions({standard,version,auditDate,context})}];
 
   if(imageData){
@@ -246,11 +271,12 @@ async function callEmergencyAI({ standard, version, auditDate, context, imageDat
     }
   }
 
+  const requestedModel=emergencyModel(profile);
   const ai=await postAIResponse({
     input:[{role:"user",content}],
     max_output_tokens:2600,
     store:false
-  },{allowWebSearch:true});
+  },{allowWebSearch:true,model:requestedModel});
 
   const raw=extractResponseText(ai.payload);
   if(!raw)throw new Error("AI nie zwróciło wyniku analizy.");
@@ -267,7 +293,16 @@ async function callEmergencyAI({ standard, version, auditDate, context, imageDat
     model:ai.model,
     provider:ai.provider,
     analyzed_at:new Date().toISOString(),
-    sources:extractSources(ai.payload)
+    sources:extractSources(ai.payload),
+    _usage:{
+      input_tokens:Number(ai.payload?.usage?.input_tokens||0),
+      output_tokens:Number(ai.payload?.usage?.output_tokens||0),
+      estimated_provider_cost_grosz:estimateEmergencyProviderCostGrosz(
+        ai.model,
+        Number(ai.payload?.usage?.input_tokens||0),
+        Number(ai.payload?.usage?.output_tokens||0)
+      )
+    }
   };
 }
 
@@ -330,22 +365,53 @@ export default async function handler(req, res) {
       const auditDate=String(req.body?.audit_date||"").slice(0,20);
       const context=String(req.body?.context||"").slice(0,5000);
       const mode=String(req.body?.mode||"");
-      let imageData=null,fileUrl=null,fileName=null;
+      const profile=String(req.body?.profile||"evidence").slice(0,40);
+      let imageData=null,fileUrl=null,fileName=null,reservation=null;
 
-      if(mode==="document"){
-        const path=String(req.body?.path||"");
-        fileName=String(req.body?.file_name||"evidence").slice(0,180);
-        const signed=await createQualityEmergencyEvidenceUrl(user.id,path);
-        fileUrl=signed?.signed_url||null;
-        if(!fileUrl)throw new Error("Could not create a private evidence URL");
-      } else if(mode==="screen"){
-        imageData=String(req.body?.image_data||"");
-      } else if(mode!=="text"){
+      if(!["document","screen","text"].includes(mode)){
         return json(res,400,{ok:false,error:"Invalid Emergency analysis mode"});
       }
 
-      const analysis=await callEmergencyAI({standard,version,auditDate,context,imageData,fileUrl,fileName});
-      return json(res,200,{ok:true,analysis});
+      try{
+        reservation=await reserveQualityEmergencyAi(user.id,mode);
+
+        if(mode==="document"){
+          const path=String(req.body?.path||"");
+          fileName=String(req.body?.file_name||"evidence").slice(0,180);
+          const signed=await createQualityEmergencyEvidenceUrl(user.id,path);
+          fileUrl=signed?.signed_url||null;
+          if(!fileUrl)throw new Error("Could not create a private evidence URL");
+        } else if(mode==="screen"){
+          imageData=String(req.body?.image_data||"");
+        }
+
+        const analysis=await callEmergencyAI({
+          standard,version,auditDate,context,imageData,fileUrl,fileName,profile
+        });
+
+        const usage=analysis?._usage||{};
+        const budget=await settleQualityEmergencyAi(reservation.usage_id,{
+          model:analysis.model||"",
+          input_tokens:Number(usage.input_tokens||0),
+          output_tokens:Number(usage.output_tokens||0),
+          estimated_provider_cost_grosz:Number(usage.estimated_provider_cost_grosz||0),
+          success:true
+        });
+        delete analysis._usage;
+
+        return json(res,200,{ok:true,analysis,ai_budget:budget});
+      }catch(error){
+        if(reservation?.usage_id){
+          await settleQualityEmergencyAi(reservation.usage_id,{
+            model:"",
+            input_tokens:0,
+            output_tokens:0,
+            estimated_provider_cost_grosz:0,
+            success:false
+          }).catch(()=>{});
+        }
+        throw error;
+      }
     }
 
     if (action === "status") {
@@ -458,17 +524,23 @@ export default async function handler(req, res) {
       error instanceof Error ? error.message : "Assistant error";
 
     const status =
-      /membership|required|included|allowance|exhausted/i.test(message)
-        ? 403
+      /Emergency package required|Emergency AI budget exhausted/i.test(message)
+        ? 402
+        : /membership|required|included|allowance|exhausted/i.test(message)
+          ? 403
         : /QUALITY_AI_UNAVAILABLE/i.test(message)
           ? 503
           : 500;
 
-    const publicMessage=/QUALITY_AI_UNAVAILABLE/i.test(message)
-      ? "Analiza AI nie jest jeszcze aktywna po stronie serwera."
-      : /valid credit card|billing|free credits/i.test(message)
-        ? "Analiza AI oczekuje na aktywację rozliczeń usługi AI po stronie administratora."
-        : message;
+    const publicMessage=/Emergency package required/i.test(message)
+      ? "Do analizy AI wymagany jest aktywny pakiet Emergency Support — 7 dni."
+      : /Emergency AI budget exhausted/i.test(message)
+        ? "Budżet AI w tym pakiecie został wykorzystany. Możesz dokupić kolejny 7-dniowy pakiet."
+        : /QUALITY_AI_UNAVAILABLE/i.test(message)
+          ? "Analiza AI nie jest jeszcze aktywna po stronie serwera."
+          : /valid credit card|billing|free credits/i.test(message)
+            ? "Analiza AI oczekuje na aktywację rozliczeń usługi AI po stronie administratora."
+            : message;
     return json(res, status, { ok: false, error: publicMessage });
   }
 }
