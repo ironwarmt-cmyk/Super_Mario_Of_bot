@@ -30,7 +30,18 @@ input,textarea,select{width:100%;border:1px solid var(--line);background:#08131d
     <div class="notice"><b>Zasada Emergency:</b> najpierw ryzyka CRITICAL/HIGH i dowody wdrożenia, dopiero potem kosmetyka dokumentacji. „Mamy procedurę” nie znaczy „mamy skutecznie działający system”.</div>
   </section>
 
-  <section class="panel" id="selectPanel">
+  <section class="panel hidden" id="paywallPanel" style="border-color:#ff5f6d88;background:linear-gradient(145deg,#241219,#0d1b2a)">
+    <div class="eyebrow">PAKIET 7-DNIOWY</div>
+    <h2>Emergency Support · 199 zł</h2>
+    <p class="muted">Jednorazowy dostęp na 7 dni do pełnego przygotowania przed audytem: plan D‑7 → D‑1, checklisty, War Room, AI Evidence Review, Red Team, trudne pytania auditora, Mock Audit i Audit Pack.</p>
+    <div class="notice"><b>AI jest częścią pakietu.</b> System kontroluje limit kosztowy po stronie serwera, aby analiza nie generowała niekontrolowanych opłat.</div>
+    <div class="row">
+      <a class="btn red" id="buyEmergency" href="/quality/checkout/?kind=emergency&ref=emergency_audit_7d">KUP I ODBLOKUJ · 199 ZŁ</a>
+      <span class="muted" id="paymentState"></span>
+    </div>
+  </section>
+
+  <section class="panel hidden" id="selectPanel">
     <h2>1. Jaki audyt masz przed sobą?</h2>
     <div class="standard-grid" id="standards"></div>
     <div class="setup" style="margin-top:14px">
@@ -50,8 +61,10 @@ input,textarea,select{width:100%;border:1px solid var(--line);background:#08131d
         <div class="metric"><small>CRITICAL/HIGH otwarte</small><b class="red" id="highOpen">0</b></div>
         <div class="metric"><small>Zadania</small><b id="taskProgress">0/0</b></div>
         <div class="metric"><small>Dowody AI</small><b id="evidenceCount">0</b></div>
+        <div class="metric"><small>Budżet AI</small><b id="aiBudgetLeft">—</b></div>
       </div>
       <div class="progress" style="margin-top:14px"><i id="progressBar"></i></div>
+      <div class="muted" id="accessMeta" style="margin-top:10px"></div>
       <div class="row" style="margin-top:14px">
         <button class="btn dark" id="calendarBtn">Dodaj przypomnienia do kalendarza</button>
         <a class="btn dark" id="copilotBtn" href="/quality/assistant/?specialist=audit">Quality Copilot</a>
@@ -183,7 +196,7 @@ const DAY_TEMPLATE=[
  {d:2,title:"D‑2 · CAPA Sprint",tasks:["Zamknij wszystkie CRITICAL/HIGH możliwe do realnego zamknięcia; nie maskuj problemów dokumentem bez wdrożenia.","Dla każdego otwartego problemu przygotuj: containment, RCA, CAPA, owner, termin i dowód postępu.","Uzupełnij brakujące zapisy i szkolenia tylko wtedy, gdy faktycznie zostały wykonane.","Zrób drugi red-team walk i sprawdź, czy działania nie wygenerowały nowych niespójności." ]},
  {d:1,title:"D‑1 · Audit Ready",tasks:["Zbuduj Evidence Pack: scope, certyfikat, organigram, HACCP, CCP/OPRP records, traceability, recalls, complaints, internal audits, management review, CAPA.","Przygotuj audit room / dostęp do systemu: indeks dokumentów i osoby odpowiedzialne za obszary.","Sprawdź ostatni raz GMP i punkty wysokiego ryzyka na produkcji; usuń tylko realne niezgodności, nie ukrywaj stanu faktycznego.","Przeprowadź 30-minutowy final mock opening meeting i listę trudnych pytań auditora." ]}
 ];
-let selected=null,current=null,screenStream=null,screenImageData=null,accountInfo=null;
+let selected=null,current=null,currentAccess=null,screenStream=null,screenImageData=null,accountInfo=null;
 const $=id=>document.getElementById(id);
 function esc(v=""){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]))}
 function defaultDate(){const d=new Date();d.setDate(d.getDate()+7);return d.toISOString().slice(0,10)}
@@ -223,12 +236,24 @@ async function emergency(action,payload={}){
  const url=analyze?"/api/quality-assistant":"/api/quality-account?mode=emergency";
  const body=analyze?{action:"emergency_analyze",...payload}:{action,...payload};
  const r=await fetch(url,{method:"POST",headers:await headers({"content-type":"application/json"}),body:JSON.stringify(body)});
- const d=await r.json().catch(()=>({}));if(!r.ok||!d.ok)throw new Error(d.error||"Emergency Support error");return d;
+ const d=await r.json().catch(()=>({}));
+ if(!r.ok||!d.ok){
+   const err=new Error(d.error||"Emergency Support error");
+   err.status=r.status;err.payload=d;throw err;
+ }
+ if(d.access)currentAccess=d.access;
+ if(d.ai_budget){
+   currentAccess=currentAccess||{};
+   if(Number.isFinite(Number(d.ai_budget.ai_remaining_grosz)))currentAccess.ai_remaining_grosz=Number(d.ai_budget.ai_remaining_grosz);
+   if(Number.isFinite(Number(d.ai_budget.ai_budget_grosz)))currentAccess.ai_budget_grosz=Number(d.ai_budget.ai_budget_grosz);
+   if(Number.isFinite(Number(d.ai_budget.ai_spent_grosz)))currentAccess.ai_spent_grosz=Number(d.ai_budget.ai_spent_grosz);
+ }
+ return d;
 }
 async function save(){
  if(!current)return;
  current.readiness_score=readiness();
- const d=await emergency("save",{payload:current});current=d.data;paint();
+ const d=await emergency("save",{payload:current});current=d.data;if(d.access)currentAccess=d.access;paint();
 }
 function renderStandards(){
  $("standards").innerHTML=Object.entries(STANDARDS).map(([k,s])=>`<button class="standard ${selected===k?"active":""}" data-key="${k}"><b>${esc(s.name)}</b><small>${esc(s.version)}</small><small>${esc(s.note)}</small></button>`).join("");
@@ -237,8 +262,19 @@ function renderStandards(){
 function daysLeft(){
  const a=new Date(current.audit_date+"T12:00:00"),n=new Date();return Math.ceil((a-n)/(86400000));
 }
+function paintAccess(){
+ if(!currentAccess?.active)return;
+ const total=Math.max(1,Number(currentAccess.ai_budget_grosz||2000));
+ const left=Math.max(0,Number(currentAccess.ai_remaining_grosz ?? (total-Number(currentAccess.ai_spent_grosz||0)-Number(currentAccess.ai_reserved_grosz||0))));
+ const pct=Math.max(0,Math.min(100,Math.round((left/total)*100)));
+ $("aiBudgetLeft").textContent=pct+"%";
+ const until=currentAccess.expires_at?new Date(currentAccess.expires_at):null;
+ $("accessMeta").textContent=until&&Number.isFinite(until.getTime())
+   ?"Pakiet aktywny do "+until.toLocaleString("pl-PL")+". Pozostały budżet AI: "+pct+"%."
+   :"Pakiet Emergency Support jest aktywny.";
+}
 function paint(){
- if(!current)return;$("caseArea").classList.remove("hidden");$("selectPanel").classList.add("hidden");
+ if(!current)return;paintAccess();$("caseArea").classList.remove("hidden");$("selectPanel").classList.add("hidden");
  const std=STANDARDS[current.standard_key]||{name:current.standard_key,version:current.standard_version,note:""};
  $("caseStandard").textContent=std.name+" · "+std.version;$("standardNote").textContent=std.note;
  $("copilotBtn").href="/quality/assistant/?specialist="+encodeURIComponent(std.specialist||"audit");
@@ -281,9 +317,16 @@ async function upload(file){
 async function removeUploaded(obj){
  try{const url=obj.cfg.url+"/storage/v1/object/quality-emergency-evidence/"+obj.path.split("/").map(encodeURIComponent).join("/");await fetch(url,{method:"DELETE",headers:await headers({apikey:obj.cfg.publishableKey})})}catch{}
 }
-async function analyze(payload,label){
+async function analyze(payload,label,profile="evidence"){
  $("analysisStatus").textContent="AI analizuje dowód i szuka luk…";$("analysisResult").innerHTML="";
- try{const d=await emergency("analyze",{standard:STANDARDS[current.standard_key].name,version:STANDARDS[current.standard_key].version,audit_date:current.audit_date,...payload});showAnalysis(d.analysis);await logAnalysis(label,d.analysis);return d.analysis}catch(e){$("analysisStatus").textContent="Błąd: "+e.message;throw e}
+ try{
+   const d=await emergency("analyze",{standard:STANDARDS[current.standard_key].name,version:STANDARDS[current.standard_key].version,audit_date:current.audit_date,profile,...payload});
+   showAnalysis(d.analysis);paintAccess();await logAnalysis(label,d.analysis);return d.analysis;
+ }catch(e){
+   if(e.status===402)$("analysisStatus").textContent=e.message;
+   else $("analysisStatus").textContent="Błąd: "+e.message;
+   throw e;
+ }
 }
 function makeIcs(){
  const tasks=DAY_TEMPLATE;let body="BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Quality Emergency Support//PL\r\n";
@@ -293,10 +336,52 @@ function makeIcs(){
 function exportPack(){
  const std=STANDARDS[current.standard_key],tasks=makeTasks(current.standard_key),s=taskState();const html=`<!doctype html><meta charset="utf-8"><title>Audit Pack</title><style>body{font-family:Arial;max-width:900px;margin:30px auto;line-height:1.4}h1{color:#b21f2d}.open{color:#b21f2d}.done{color:#18794e}</style><h1>Audit Emergency Pack</h1><p><b>${esc(std.name)}</b> · ${esc(std.version)} · audyt ${esc(current.audit_date)}</p><h2>Gotowość: ${readiness()}%</h2><h2>Checklist</h2><ul>${tasks.map(t=>`<li class="${s[t.id]?.done?"done":"open"}">[${s[t.id]?.done?"DONE":"OPEN"}] ${esc(t.severity)} · ${esc(t.title)}</li>`).join("")}</ul><h2>Evidence Log</h2>${(current.evidence_log||[]).map(e=>`<p><b>${esc(e.risk)} · ${esc(e.label)}</b><br>${esc(e.summary)}</p>`).join("")}`;const b=new Blob([html],{type:"text/html"}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download="Quality-Audit-Pack.html";a.click();URL.revokeObjectURL(u);
 }
+async function loadEmergencyAccess(){
+ const r=await fetch("/api/quality-account?mode=emergency",{headers:await headers()});
+ const d=await r.json().catch(()=>({}));
+ if(!r.ok||!d.ok)throw new Error(d.error||"Nie udało się sprawdzić dostępu.");
+ currentAccess=d.access||null;
+ current=d.data||null;
+ return d;
+}
+function showPaywall(message=""){
+ $("paywallPanel").classList.remove("hidden");
+ $("selectPanel").classList.add("hidden");
+ $("caseArea").classList.add("hidden");
+ $("paymentState").textContent=message;
+}
+function showEmergency(){
+ $("paywallPanel").classList.add("hidden");
+ if(current){
+   selected=current.standard_key;paint();
+ }else{
+   $("caseArea").classList.add("hidden");
+   $("selectPanel").classList.remove("hidden");
+   renderStandards();
+ }
+}
 async function init(){
  if(!(await QualityAuth.isAuthenticated())){location.href="/login?next="+encodeURIComponent(location.pathname+location.search);return}
  $("auditDate").value=defaultDate();renderStandards();
- try{const r=await fetch("/api/quality-account?mode=emergency",{headers:await headers()});const d=await r.json();if(r.ok&&d.ok&&d.data){current=d.data;selected=current.standard_key;paint()}}catch{}
+ const checkout=new URLSearchParams(location.search).get("checkout");
+ try{
+   let d=await loadEmergencyAccess();
+   if(!currentAccess?.active&&checkout==="success"){
+     showPaywall("Finalizuję płatność…");
+     for(let i=0;i<10&&!currentAccess?.active;i++){
+       await new Promise(r=>setTimeout(r,1500));
+       d=await loadEmergencyAccess();
+     }
+   }
+   if(currentAccess?.active){
+     history.replaceState({},document.title,location.pathname);
+     showEmergency();
+   }else{
+     showPaywall(checkout==="success"?"Płatność jest jeszcze finalizowana. Odśwież stronę za chwilę.":"");
+   }
+ }catch(e){
+   showPaywall(e.message||"Nie udało się sprawdzić dostępu.");
+ }
 }
 $("startCase").onclick=async()=>{const std=STANDARDS[selected];current={standard_key:selected,standard_version:std.version,audit_date:$("auditDate").value||defaultDate(),status:"active",readiness_score:0,task_state:{},evidence_log:[],notes:{scope:$("scopeNote").value||""},reminders_enabled:false};await save()};
 $("calendarBtn").onclick=makeIcs;$("exportBtn").onclick=exportPack;
@@ -393,8 +478,8 @@ if(!screenShareSupported()){
  $("shareScreen").textContent="Wybierz zrzut ekranu";
  $("screenHelp").textContent="Na tym urządzeniu bezpośrednie udostępnianie ekranu przez przeglądarkę nie jest dostępne. Wybierz zrzut ekranu z galerii — AI przeanalizuje go tym samym trybem.";
 }
-$("auditorQuestions").onclick=()=>analyze({mode:"text",context:"Act as a hostile but fair certification auditor. Generate the hardest evidence-based questions for the current 7-day plan, especially unfinished CRITICAL/HIGH areas. "+(current.notes?.scope||"")},"Auditor questions");
-$("redTeam").onclick=()=>analyze({mode:"text",context:"RED TEAM. Search for likely blind spots and contradictions in the preparation plan and evidence log. Prioritize things that could still fail next week's audit. Current evidence summaries: "+JSON.stringify((current.evidence_log||[]).slice(-12))},"Red Team");
+$("auditorQuestions").onclick=()=>analyze({mode:"text",context:"Act as a hostile but fair certification auditor. Generate the hardest evidence-based questions for the current 7-day plan, especially unfinished CRITICAL/HIGH areas. "+(current.notes?.scope||"")},"Auditor questions","auditor");
+$("redTeam").onclick=()=>analyze({mode:"text",context:"RED TEAM. Search for likely blind spots and contradictions in the preparation plan and evidence log. Prioritize things that could still fail next week's audit. Current evidence summaries: "+JSON.stringify((current.evidence_log||[]).slice(-12))},"Red Team","red_team");
 init();
 </script>
 </body>
