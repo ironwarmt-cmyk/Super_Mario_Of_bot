@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Audyt za 7 dni — Emergency Support</title>
+<script src="/quality/auth.js"></script>
+<link rel="stylesheet" href="/quality/theme.css?v=20261006-emergency">
+<style>
+:root{--bg:#07111c;--panel:#0d1b2a;--panel2:#10263a;--line:#203b54;--text:#f5f7fa;--muted:#9eb0c1;--green:#3bd6a2;--red:#ff5f6d;--amber:#ffd166;--blue:#54a7ff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 15% 0,#3b1520 0,transparent 31%),radial-gradient(circle at 88% 4%,#123858 0,transparent 28%),var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+.wrap{max-width:1180px;margin:auto;padding:20px 16px 110px}.top{display:flex;justify-content:space-between;gap:12px;align-items:center}.brand{font-weight:900;letter-spacing:.08em;color:var(--red);font-size:12px}.back{color:var(--text);text-decoration:none;font-weight:800}.hero{padding:34px 0 18px}.eyebrow{font-size:12px;font-weight:1000;letter-spacing:.12em;color:var(--red);text-transform:uppercase}h1{font-size:44px;line-height:1.03;margin:8px 0 12px}h2{margin:0 0 12px}.muted{color:var(--muted);line-height:1.55}.notice{border:1px solid #ff5f6d44;border-left:4px solid var(--red);background:#ff5f6d0d;border-radius:14px;padding:14px 16px;margin:14px 0}
+.panel{border:1px solid var(--line);background:linear-gradient(180deg,var(--panel),#091521);border-radius:22px;padding:18px;margin:14px 0}.standard-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.standard{border:1px solid var(--line);background:#0d1b2a;color:var(--text);border-radius:18px;padding:16px;text-align:left;min-height:150px;cursor:pointer}.standard:hover,.standard.active{border-color:var(--red);box-shadow:0 0 0 1px #ff5f6d44}.standard b{display:block;font-size:16px}.standard small{display:block;color:var(--muted);margin-top:8px;line-height:1.4}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.btn{border:0;border-radius:13px;padding:12px 15px;font-weight:900;cursor:pointer;background:var(--blue);color:#06111c;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}.btn.red{background:var(--red);color:white}.btn.green{background:var(--green);color:#04110c}.btn.dark{background:#162b41;color:var(--text);border:1px solid var(--line)}.btn:disabled{opacity:.45;cursor:not-allowed}
+input,textarea,select{width:100%;border:1px solid var(--line);background:#08131d;color:var(--text);border-radius:13px;padding:12px;font:inherit}.field{display:grid;gap:6px}.field label{font-size:12px;color:var(--muted);font-weight:800}.setup{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.war{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.metric{border:1px solid var(--line);border-radius:16px;background:#ffffff06;padding:14px}.metric small{display:block;color:var(--muted);font-size:11px;text-transform:uppercase}.metric b{font-size:24px}.red{color:var(--red)}.amber{color:var(--amber)}.green{color:var(--green)}
+.days{display:grid;gap:14px}.day{border:1px solid var(--line);border-radius:18px;overflow:hidden;background:#091521}.day-head{padding:14px 16px;background:#0e2232;display:flex;justify-content:space-between;gap:12px;align-items:center}.day-head b{font-size:17px}.tasks{padding:8px 14px}.task{display:grid;grid-template-columns:auto 1fr auto;gap:11px;align-items:start;padding:12px 0;border-bottom:1px solid #ffffff0c}.task:last-child{border-bottom:0}.task input{width:20px;height:20px;margin-top:2px}.task .title{font-weight:800}.task .why{font-size:12px;color:var(--muted);margin-top:4px}.sev{font-size:10px;font-weight:1000;border-radius:999px;padding:5px 7px;border:1px solid #ffffff20}.sev.critical{color:#ff7a85}.sev.high{color:#ffd166}.sev.medium{color:#9bc9ff}.done .title{text-decoration:line-through;opacity:.6}
+.ai-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.ai-box{border:1px solid var(--line);border-radius:18px;padding:16px;background:#08131d}.result{white-space:pre-wrap;line-height:1.5;font-size:13px}.finding{padding:10px 0;border-bottom:1px solid #ffffff0d}.finding:last-child{border:0}.screen-preview{width:100%;max-height:280px;background:#000;border-radius:13px;margin-top:10px}.evidence-list{display:grid;gap:9px}.evidence{border:1px solid var(--line);border-radius:14px;padding:12px;background:#ffffff05}.hidden{display:none!important}
+.progress{height:12px;background:#ffffff0b;border-radius:99px;overflow:hidden}.progress>i{display:block;height:100%;background:linear-gradient(90deg,var(--red),var(--amber),var(--green));width:0}
+@media(max-width:900px){.standard-grid{grid-template-columns:1fr 1fr}.war{grid-template-columns:1fr 1fr}.ai-grid,.setup{grid-template-columns:1fr}h1{font-size:36px}}@media(max-width:560px){.standard-grid,.war{grid-template-columns:1fr}.task{grid-template-columns:auto 1fr}.sev{grid-column:2}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><div class="brand">QUALITY · EMERGENCY SUPPORT</div><a class="back" href="/quality/">← Quality Hub</a></div>
+  <section class="hero">
+    <div class="eyebrow">AUDYT ZA 7 DNI</div>
+    <h1>Emergency Support</h1>
+    <p class="muted">Wybierz standard, ustaw datę audytu i prowadź zakład dzień po dniu od GAP-u do gotowego Evidence Pack. Moduł nie gwarantuje wyniku certyfikacji — ma maksymalizować gotowość i ujawnić ryzyka przed auditorami.</p>
+    <div class="notice"><b>Zasada Emergency:</b> najpierw ryzyka CRITICAL/HIGH i dowody wdrożenia, dopiero potem kosmetyka dokumentacji. „Mamy procedurę” nie znaczy „mamy skutecznie działający system”.</div>
+  </section>
+
+  <section class="panel" id="selectPanel">
+    <h2>1. Jaki audyt masz przed sobą?</h2>
+    <div class="standard-grid" id="standards"></div>
+    <div class="setup" style="margin-top:14px">
+      <div class="field"><label>Data audytu</label><input id="auditDate" type="date"></div>
+      <div class="field"><label>Kontekst zakładu / zakres certyfikacji</label><input id="scopeNote" placeholder="np. zakład mięsny, 2 zmiany, ubój + rozbiór, eksport"></div>
+    </div>
+    <div class="row" style="margin-top:14px"><button class="btn red" id="startCase" disabled>URUCHOM 7-DNIOWY PLAN</button></div>
+  </section>
+
+  <main id="caseArea" class="hidden">
+    <section class="panel">
+      <div class="eyebrow" id="caseStandard">—</div>
+      <h2 id="caseTitle">Audit War Room</h2>
+      <div class="war">
+        <div class="metric"><small>Gotowość</small><b id="readiness">0%</b></div>
+        <div class="metric"><small>Do audytu</small><b id="daysLeft">—</b></div>
+        <div class="metric"><small>CRITICAL/HIGH otwarte</small><b class="red" id="highOpen">0</b></div>
+        <div class="metric"><small>Zadania</small><b id="taskProgress">0/0</b></div>
+        <div class="metric"><small>Dowody AI</small><b id="evidenceCount">0</b></div>
+      </div>
+      <div class="progress" style="margin-top:14px"><i id="progressBar"></i></div>
+      <div class="row" style="margin-top:14px">
+        <button class="btn dark" id="calendarBtn">Dodaj przypomnienia do kalendarza</button>
+        <a class="btn dark" id="copilotBtn" href="/quality/assistant/?specialist=audit">Quality Copilot</a>
+        <a class="btn dark" href="/quality/game/">Mock audit</a>
+        <button class="btn green" id="exportBtn">Eksport Audit Pack</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>2. Harmonogram D‑7 → D‑1</h2>
+      <p class="muted" id="standardNote"></p>
+      <div class="days" id="days"></div>
+    </section>
+
+    <section class="panel">
+      <h2>3. AI Evidence Review</h2>
+      <p class="muted">Pokaż AI stan faktyczny: dokument, arkusz, zdjęcie albo aktualny ekran. Analiza ma wskazać luki, ryzyka, pytania auditora i działania do zamknięcia przed audytem.</p>
+      <div class="ai-grid">
+        <div class="ai-box">
+          <h3>Dokument / zapis / zdjęcie</h3>
+          <input id="fileInput" type="file" accept=".pdf,.docx,.xlsx,.csv,.txt,.jpg,.jpeg,.png,.webp">
+          <label style="display:flex;gap:8px;align-items:center;margin-top:10px;color:var(--muted);font-size:12px"><input id="deleteAfter" type="checkbox" checked style="width:auto"> Usuń plik z prywatnego magazynu po analizie</label>
+          <textarea id="docContext" rows="4" style="margin-top:10px" placeholder="Co mam sprawdzić? np. czy procedura traceability i ostatni test recall tworzą spójny dowód pod IFS"></textarea>
+          <button class="btn" id="analyzeFile" style="margin-top:10px">Analizuj dokument</button>
+        </div>
+        <div class="ai-box">
+          <h3>Udostępnij ekran</h3>
+          <p class="muted">Udostępnianie uruchamiasz sam. AI nie nagrywa ekranu w tle — analizowana jest tylko klatka wysłana przyciskiem.</p>
+          <div class="row"><button class="btn dark" id="shareScreen">Udostępnij ekran</button><button class="btn" id="analyzeScreen" disabled>Analizuj aktualny ekran</button><button class="btn dark" id="stopScreen" disabled>Stop</button></div>
+          <video id="screenVideo" class="screen-preview hidden" autoplay muted playsinline></video>
+          <textarea id="screenContext" rows="3" style="margin-top:10px" placeholder="np. oceń ten rejestr CCP / layout dokumentacji / dashboard reklamacji"></textarea>
+        </div>
+      </div>
+      <div class="ai-box" style="margin-top:14px">
+        <div class="row"><button class="btn dark" id="auditorQuestions">Wygeneruj trudne pytania auditora</button><button class="btn dark" id="redTeam">Red Team: znajdź co przeoczyłem</button></div>
+        <div id="analysisStatus" class="muted" style="margin-top:10px"></div>
+        <div id="analysisResult" class="result"></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>4. Evidence Log</h2>
+      <div class="evidence-list" id="evidenceLog"></div>
+    </section>
+  </main>
+</div>
+<script>
+const STANDARDS={
+  ifs8:{name:"IFS Food",version:"Version 8 + Doctrine v5",specialist:"ifs",note:"Priorytet: KO/major-risk areas, HACCP, traceability, food safety culture, food fraud/defence, governance procesów i dowody wdrożenia."},
+  brc9:{name:"BRCGS Food Safety",version:"Issue 9 + F926 Position Statements",specialist:"brc",note:"Priorytet: fundamental requirements, senior management commitment, HACCP, site standards, product/process control, personnel i aktualne Position Statements."},
+  fssc6:{name:"FSSC 22000",version:"Version 6 audit basis + Version 7 transition readiness",specialist:"audit",note:"W 2026 audyt certyfikacyjny może nadal być V6. Moduł prowadzi audyt V6 i dodatkowo pokazuje luki do V7/ISO 22002-x:2025."},
+  iso22000:{name:"ISO 22000",version:"ISO 22000:2018 + Amd 1:2024",specialist:"haccp",note:"Priorytet: kontekst, leadership, ryzyka i szanse, PRP, hazard control plan, komunikacja, performance evaluation i improvement."},
+  ifslog3:{name:"IFS Logistics",version:"Version 3 + Doctrine v3",specialist:"audit",note:"Priorytet: transport i magazynowanie, temperatura, higiena, zabezpieczenie produktu, identyfikowalność, outsourcing, zarządzanie ryzykiem i kultura bezpieczeństwa."},
+  brcsd4:{name:"BRCGS Storage & Distribution",version:"Issue 4 + SD404 Position Statements",specialist:"audit",note:"Priorytet: site standards, vehicle/storage controls, product safety plan, traceability, contractors, integrity i obowiązujące Position Statements."},
+  haccp:{name:"HACCP / Codex",version:"Codex HACCP + GHP/PRP",specialist:"haccp",note:"Priorytet: zespół HACCP, opis produktu, intended use, flow diagram, hazard analysis, CCP, critical limits, monitoring, corrections, verification i records."},
+  customer:{name:"Audyt klienta / retailer",version:"Customer / second-party audit",specialist:"audit",note:"Priorytet: wymagania klienta, specyfikacja kontraktowa, ostatnie reklamacje/OOS, product integrity, KPI, traceability i skuteczność zamknięcia poprzednich findings."}
+};
+const STANDARD_FOCUS={
+  ifs8:["KO i wymagania mogące dać Major","Food Safety Culture i odpowiedzialność kierownictwa","HACCP/CCP oraz walidacja i weryfikacja","Traceability + mass balance + withdrawal","Food Fraud / Food Defence / alergeny"],
+  brc9:["Fundamental Requirements","Senior management commitment i site plan","HACCP i food safety plan","GMP/site standards + foreign body","Product/process control, allergens i personnel"],
+  fssc6:["ISO 22000 FSMS","PRP wg właściwego ISO/TS 22002-x dla V6","FSSC Additional Requirements","Internal audit + management review + objectives","V7 gap: ISO 22002-100:2025 + właściwy sektor"],
+  iso22000:["Context/leadership","Risk & opportunities / objectives","PRP + operational planning","Hazard analysis / OPRP / CCP","Performance evaluation + improvement"],
+  ifslog3:["Scope / outsourced processes","Temperature/cold chain","Hygiene, storage, vehicles","Traceability + product defence","Supplier/service-provider controls"],
+  brcsd4:["Product safety management system","Site/storage/vehicle standards","Traceability and incident management","Contracted services","Product integrity/security"],
+  haccp:["HACCP team and scope","Flow diagram verification","Hazard analysis","CCP/critical limits/monitoring","Verification/validation/records"],
+  customer:["Customer-specific requirements","Open complaints and OOS","Specification/label conformity","Traceability and recall","Previous audit findings / KPI commitments"]
+};
+const DAY_TEMPLATE=[
+ {d:7,title:"D‑7 · Scope & Baseline GAP",tasks:["Potwierdź zakres audytu, produkty, procesy, zmiany od ostatniego audytu i skład zespołu.","Zbierz poprzedni raport audytu, wszystkie otwarte CAPA, reklamacje, incydenty, wycofania i pisma urzędowe.","Wykonaj szybki GAP względem właściwej wersji standardu i utwórz listę RED / AMBER / GREEN.","Zamroź listę 10 największych ryzyk — każde musi mieć właściciela i deadline." ]},
+ {d:6,title:"D‑6 · System & Food Safety Plan",tasks:["Przejrzyj HACCP / hazard analysis: aktualność flow, zagrożenia, CCP/OPRP, limity, monitoring, korekcje, walidację i weryfikację.","Sprawdź dokument control: aktualne wersje, zatwierdzenia, wycofane kopie, zapisy i retencję.","Zweryfikuj specyfikacje, alergeny, etykiety i zgodność receptura → etykieta → zapis produkcyjny.","Przejrzyj szkolenia i kompetencje osób, które auditor może przepytać." ]},
+ {d:5,title:"D‑5 · Gemba / PRP / Traceability",tasks:["Zrób pełny walk-through zakładu: higiena, stan budynku, utrzymanie ruchu, szkło/twardy plastik, szkodniki, odpady, chemia, ciała obce.","Sprawdź kalibracje i urządzenia krytyczne oraz działania po przekroczeniu terminów/odchyleniach.","Wykonaj test traceability w obie strony + mass balance + czas reakcji; zapisz dowody.","Sprawdź magazyny, temperatury, segregację, alergeny, FEFO/FIFO i status produktu." ]},
+ {d:4,title:"D‑4 · Supply Chain & Integrity",tasks:["Przejrzyj zatwierdzanie dostawców, ryzyko surowców, COA/specyfikacje i odstępstwa.","Zweryfikuj Food Fraud/VACCP i Food Defence/TACCP oraz test skuteczności zabezpieczeń.","Sprawdź reklamację/OOS z ostatnich miesięcy: trend, RCA, CAPA, skuteczność.","Zamknij standard-specific deep dive wskazany poniżej." ]},
+ {d:3,title:"D‑3 · Mock Audit & Interviews",tasks:["Przeprowadź mock audit jak zewnętrzny auditor: dokument → zapis → gemba → rozmowa z pracownikiem.","Przepytaj operatorów z CCP/OPRP, alergenów, traceability, higieny i incydentów.","Sprawdź audyty wewnętrzne: zakres, kompetencję auditora, niezgodności, CAPA i effectiveness check.","Sprawdź management review: wymagane inputs, decyzje, zasoby, KPI, cele i follow-up." ]},
+ {d:2,title:"D‑2 · CAPA Sprint",tasks:["Zamknij wszystkie CRITICAL/HIGH możliwe do realnego zamknięcia; nie maskuj problemów dokumentem bez wdrożenia.","Dla każdego otwartego problemu przygotuj: containment, RCA, CAPA, owner, termin i dowód postępu.","Uzupełnij brakujące zapisy i szkolenia tylko wtedy, gdy faktycznie zostały wykonane.","Zrób drugi red-team walk i sprawdź, czy działania nie wygenerowały nowych niespójności." ]},
+ {d:1,title:"D‑1 · Audit Ready",tasks:["Zbuduj Evidence Pack: scope, certyfikat, organigram, HACCP, CCP/OPRP records, traceability, recalls, complaints, internal audits, management review, CAPA.","Przygotuj audit room / dostęp do systemu: indeks dokumentów i osoby odpowiedzialne za obszary.","Sprawdź ostatni raz GMP i punkty wysokiego ryzyka na produkcji; usuń tylko realne niezgodności, nie ukrywaj stanu faktycznego.","Przeprowadź 30-minutowy final mock opening meeting i listę trudnych pytań auditora." ]}
+];
+let selected=null,current=null,screenStream=null,accountInfo=null;
+const $=id=>document.getElementById(id);
+function esc(v=""){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]))}
+function defaultDate(){const d=new Date();d.setDate(d.getDate()+7);return d.toISOString().slice(0,10)}
+function makeTasks(key){
+ const focus=STANDARD_FOCUS[key]||[];
+ const out=[];
+ DAY_TEMPLATE.forEach(day=>day.tasks.forEach((title,i)=>out.push({id:`${day.d}-${i}`,day:day.d,dayTitle:day.title,title,why:i===3&&day.d===4?"Standard focus: "+focus.join(" · "):"Dowód wymagany: dokument/zapis/obserwacja + osoba odpowiedzialna.",severity:(day.d>=5&&i<2)?"HIGH":(day.d===7&&i===2)?"CRITICAL":"MEDIUM",weight:(day.d>=5&&i<2)?3:(day.d===7&&i===2)?4:1})));
+ return out;
+}
+function taskState(){return current?.task_state||{}}
+function readiness(){
+ const tasks=makeTasks(current.standard_key);let all=0,done=0;
+ tasks.forEach(t=>{all+=t.weight;if(taskState()[t.id]?.done)done+=t.weight});
+ const evidenceBoost=Math.min(8,(current.evidence_log||[]).length*2);
+ return Math.min(100,Math.round((done/Math.max(1,all))*92+evidenceBoost));
+}
+async function headers(extra={}){return await QualityAuth.headers(extra)}
+async function emergency(action,payload={}){
+ const r=await fetch("/api/quality-emergency",{method:"POST",headers:await headers({"content-type":"application/json"}),body:JSON.stringify({action,...payload})});
+ const d=await r.json().catch(()=>({}));if(!r.ok||!d.ok)throw new Error(d.error||"Emergency API error");return d;
+}
+async function save(){
+ if(!current)return;
+ current.readiness_score=readiness();
+ const d=await emergency("save",{payload:current});current=d.data;paint();
+}
+function renderStandards(){
+ $("standards").innerHTML=Object.entries(STANDARDS).map(([k,s])=>`<button class="standard ${selected===k?"active":""}" data-key="${k}"><b>${esc(s.name)}</b><small>${esc(s.version)}</small><small>${esc(s.note)}</small></button>`).join("");
+ document.querySelectorAll(".standard").forEach(b=>b.onclick=()=>{selected=b.dataset.key;renderStandards();$("startCase").disabled=false});
+}
+function daysLeft(){
+ const a=new Date(current.audit_date+"T12:00:00"),n=new Date();return Math.ceil((a-n)/(86400000));
+}
+function paint(){
+ if(!current)return;$("caseArea").classList.remove("hidden");$("selectPanel").classList.add("hidden");
+ const std=STANDARDS[current.standard_key]||{name:current.standard_key,version:current.standard_version,note:""};
+ $("caseStandard").textContent=std.name+" · "+std.version;$("standardNote").textContent=std.note;
+ $("copilotBtn").href="/quality/assistant/?specialist="+encodeURIComponent(std.specialist||"audit");
+ const tasks=makeTasks(current.standard_key),state=taskState(),r=readiness(),done=tasks.filter(t=>state[t.id]?.done).length;
+ $("readiness").textContent=r+"%";$("progressBar").style.width=r+"%";$("taskProgress").textContent=done+"/"+tasks.length;$("evidenceCount").textContent=(current.evidence_log||[]).length;
+ const dl=daysLeft();$("daysLeft").textContent=dl<=0?"AUDYT":("D-"+dl);
+ $("highOpen").textContent=tasks.filter(t=>["CRITICAL","HIGH"].includes(t.severity)&&!state[t.id]?.done).length;
+ const groups={};tasks.forEach(t=>(groups[t.day]??=[]).push(t));
+ $("days").innerHTML=Object.entries(groups).sort((a,b)=>Number(b[0])-Number(a[0])).map(([day,list])=>`<div class="day"><div class="day-head"><b>${esc(list[0].dayTitle)}</b><span>${list.filter(t=>state[t.id]?.done).length}/${list.length}</span></div><div class="tasks">${list.map(t=>`<label class="task ${state[t.id]?.done?"done":""}"><input type="checkbox" data-task="${t.id}" ${state[t.id]?.done?"checked":""}><div><div class="title">${esc(t.title)}</div><div class="why">${esc(t.why)}</div></div><span class="sev ${t.severity.toLowerCase()}">${t.severity}</span></label>`).join("")}</div></div>`).join("");
+ document.querySelectorAll("[data-task]").forEach(x=>x.onchange=async()=>{current.task_state={...taskState(),[x.dataset.task]:{done:x.checked,updated_at:new Date().toISOString()}};await save()});
+ renderEvidence();
+}
+function renderEvidence(){
+ const rows=current?.evidence_log||[];$("evidenceLog").innerHTML=rows.length?rows.slice().reverse().map(e=>`<div class="evidence"><b>${esc(e.label||"AI Evidence Review")}</b><div class="muted">${esc(new Date(e.at).toLocaleString("pl-PL"))} · ${esc(e.risk||"—")}</div><div style="margin-top:6px">${esc(e.summary||"")}</div></div>`).join(""):'<div class="muted">Brak analiz. Dodaj pierwszy dowód.</div>';
+}
+function showAnalysis(a){
+ $("analysisStatus").textContent="Analiza zakończona · "+(a.risk_level||"");
+ const findings=Array.isArray(a.findings)?a.findings:[];
+ $("analysisResult").innerHTML=`<h3 class="${a.risk_level==="RED"?"red":a.risk_level==="GREEN"?"green":"amber"}">${esc(a.risk_level||"AMBER")} · ${esc(a.summary||"")}</h3>`+findings.map(f=>`<div class="finding"><b>${esc(f.severity)} · ${esc(f.area)}</b><br>${esc(f.issue)}<div class="muted">Dowód: ${esc(f.evidence||"—")}</div><div><b>Działanie:</b> ${esc(f.action||"—")}</div></div>`).join("")+(a.missing_evidence?.length?`<h4>Brakujące dowody</h4><ul>${a.missing_evidence.map(x=>"<li>"+esc(x)+"</li>").join("")}</ul>`:"")+(a.auditor_questions?.length?`<h4>Pytania auditora</h4><ul>${a.auditor_questions.map(x=>"<li>"+esc(x)+"</li>").join("")}</ul>`:"");
+}
+async function logAnalysis(label,a){
+ current.evidence_log=[...(current.evidence_log||[]),{at:new Date().toISOString(),label,risk:a.risk_level||"AMBER",summary:a.summary||"",findings:(a.findings||[]).slice(0,12)}].slice(-80);
+ await save();
+}
+async function publicConfig(){
+ if(accountInfo)return accountInfo;
+ const r=await fetch("/api/quality-account",{headers:await headers()});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||"Account error");accountInfo=d;return d;
+}
+async function upload(file){
+ if(!current?.id)await save();
+ const session=await QualityAuth.session();const authId=session?.user?.id;if(!authId)throw new Error("Brak aktywnej sesji uploadu");
+ const a=await publicConfig(),cfg=a.auth?.publicConfig;if(!cfg?.url||!cfg?.publishableKey)throw new Error("Storage config unavailable");
+ const safe=file.name.replace(/[^a-zA-Z0-9._-]/g,"_").slice(-100);
+ const path=`${authId}/${current.id}/${Date.now()}-${safe}`;
+ const url=cfg.url+"/storage/v1/object/quality-emergency-evidence/"+path.split("/").map(encodeURIComponent).join("/");
+ const h=await headers({apikey:cfg.publishableKey,"content-type":file.type||"application/octet-stream","x-upsert":"false"});
+ const r=await fetch(url,{method:"POST",headers:h,body:file});if(!r.ok)throw new Error("Upload failed HTTP "+r.status);
+ return {path,cfg,fileName:file.name};
+}
+async function removeUploaded(obj){
+ try{const url=obj.cfg.url+"/storage/v1/object/quality-emergency-evidence/"+obj.path.split("/").map(encodeURIComponent).join("/");await fetch(url,{method:"DELETE",headers:await headers({apikey:obj.cfg.publishableKey})})}catch{}
+}
+async function analyze(payload,label){
+ $("analysisStatus").textContent="AI analizuje dowód i szuka luk…";$("analysisResult").innerHTML="";
+ try{const d=await emergency("analyze",{standard:STANDARDS[current.standard_key].name,version:STANDARDS[current.standard_key].version,audit_date:current.audit_date,...payload});showAnalysis(d.analysis);await logAnalysis(label,d.analysis);return d.analysis}catch(e){$("analysisStatus").textContent="Błąd: "+e.message;throw e}
+}
+function makeIcs(){
+ const tasks=DAY_TEMPLATE;let body="BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Quality Emergency Support//PL\r\n";
+ const audit=new Date(current.audit_date+"T09:00:00");
+ tasks.forEach(day=>{const d=new Date(audit);d.setDate(d.getDate()-day.d);const stamp=d.toISOString().replace(/[-:]/g,"").split(".")[0];body+=`BEGIN:VEVENT\r\nDTSTART:${stamp}\r\nDURATION:PT60M\r\nSUMMARY:Quality Emergency ${day.title}\r\nDESCRIPTION:${day.tasks.join(" | ").replace(/[,;]/g," ")}\r\nBEGIN:VALARM\r\nTRIGGER:-PT30M\r\nACTION:DISPLAY\r\nDESCRIPTION:Emergency Audit Support\r\nEND:VALARM\r\nEND:VEVENT\r\n`});body+="END:VCALENDAR\r\n";const b=new Blob([body],{type:"text/calendar"}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download="Quality-Emergency-Audit.ics";a.click();URL.revokeObjectURL(u);current.reminders_enabled=true;save();
+}
+function exportPack(){
+ const std=STANDARDS[current.standard_key],tasks=makeTasks(current.standard_key),s=taskState();const html=`<!doctype html><meta charset="utf-8"><title>Audit Pack</title><style>body{font-family:Arial;max-width:900px;margin:30px auto;line-height:1.4}h1{color:#b21f2d}.open{color:#b21f2d}.done{color:#18794e}</style><h1>Audit Emergency Pack</h1><p><b>${esc(std.name)}</b> · ${esc(std.version)} · audyt ${esc(current.audit_date)}</p><h2>Gotowość: ${readiness()}%</h2><h2>Checklist</h2><ul>${tasks.map(t=>`<li class="${s[t.id]?.done?"done":"open"}">[${s[t.id]?.done?"DONE":"OPEN"}] ${esc(t.severity)} · ${esc(t.title)}</li>`).join("")}</ul><h2>Evidence Log</h2>${(current.evidence_log||[]).map(e=>`<p><b>${esc(e.risk)} · ${esc(e.label)}</b><br>${esc(e.summary)}</p>`).join("")}`;const b=new Blob([html],{type:"text/html"}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download="Quality-Audit-Pack.html";a.click();URL.revokeObjectURL(u);
+}
+async function init(){
+ if(!(await QualityAuth.isAuthenticated())){location.href="/login?next="+encodeURIComponent(location.pathname+location.search);return}
+ $("auditDate").value=defaultDate();renderStandards();
+ try{const r=await fetch("/api/quality-emergency",{headers:await headers()});const d=await r.json();if(r.ok&&d.ok&&d.data){current=d.data;selected=current.standard_key;paint()}}catch{}
+}
+$("startCase").onclick=async()=>{const std=STANDARDS[selected];current={standard_key:selected,standard_version:std.version,audit_date:$("auditDate").value||defaultDate(),status:"active",readiness_score:0,task_state:{},evidence_log:[],notes:{scope:$("scopeNote").value||""},reminders_enabled:false};await save()};
+$("calendarBtn").onclick=makeIcs;$("exportBtn").onclick=exportPack;
+$("analyzeFile").onclick=async()=>{const f=$("fileInput").files?.[0];if(!f)return alert("Wybierz plik.");if(f.size>15*1024*1024)return alert("Maksymalny rozmiar pliku: 15 MB.");$("analyzeFile").disabled=true;let obj=null;try{obj=await upload(f);await analyze({mode:"document",path:obj.path,file_name:f.name,context:$("docContext").value||current.notes?.scope||""},"Dokument: "+f.name)}finally{if(obj&&$("deleteAfter").checked)await removeUploaded(obj);$("analyzeFile").disabled=false}};
+$("shareScreen").onclick=async()=>{try{screenStream=await navigator.mediaDevices.getDisplayMedia({video:true,audio:false});$("screenVideo").srcObject=screenStream;$("screenVideo").classList.remove("hidden");$("analyzeScreen").disabled=false;$("stopScreen").disabled=false;screenStream.getVideoTracks()[0].onended=()=>$("stopScreen").click()}catch(e){$("analysisStatus").textContent="Udostępnianie anulowane."}};
+$("stopScreen").onclick=()=>{screenStream?.getTracks().forEach(t=>t.stop());screenStream=null;$("screenVideo").srcObject=null;$("screenVideo").classList.add("hidden");$("analyzeScreen").disabled=true;$("stopScreen").disabled=true};
+$("analyzeScreen").onclick=async()=>{const v=$("screenVideo");if(!screenStream||!v.videoWidth)return;const c=document.createElement("canvas");const max=1600,scale=Math.min(1,max/v.videoWidth);c.width=Math.round(v.videoWidth*scale);c.height=Math.round(v.videoHeight*scale);c.getContext("2d").drawImage(v,0,0,c.width,c.height);await analyze({mode:"screen",image_data:c.toDataURL("image/jpeg",.82),context:$("screenContext").value||current.notes?.scope||""},"Screen review")};
+$("auditorQuestions").onclick=()=>analyze({mode:"text",context:"Act as a hostile but fair certification auditor. Generate the hardest evidence-based questions for the current 7-day plan, especially unfinished CRITICAL/HIGH areas. "+(current.notes?.scope||"")},"Auditor questions");
+$("redTeam").onclick=()=>analyze({mode:"text",context:"RED TEAM. Search for likely blind spots and contradictions in the preparation plan and evidence log. Prioritize things that could still fail next week's audit. Current evidence summaries: "+JSON.stringify((current.evidence_log||[]).slice(-12))},"Red Team");
+init();
+</script>
+</body>
+</html>
