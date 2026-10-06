@@ -134,7 +134,12 @@ export default async function handler(req,res) {
   catch{return res.status(400).json({ok:false,error:"Invalid JSON"})}
 
   try{
-    if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
+    if (event.type === "checkout.session.completed") {
+      const session=event.data?.object || {};
+      if (String(session.payment_status||"").toLowerCase() === "paid") {
+        await handleCheckoutSession(session);
+      }
+    } else if (event.type === "checkout.session.async_payment_succeeded") {
       await handleCheckoutSession(event.data?.object || {});
     } else if (event.type === "invoice.paid") {
       const invoice=event.data?.object || {};
