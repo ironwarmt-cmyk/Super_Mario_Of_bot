@@ -676,6 +676,19 @@ Deno.serve(async (req) => {
       if(!Number.isSafeInteger(telegramUserId)||telegramUserId===0){
         return json({ok:false,error:"Invalid Quality user"},400);
       }
+      const {data:access,error:accessError}=await supabase
+        .from("quality_emergency_entitlements")
+        .select("id,expires_at")
+        .eq("telegram_user_id",telegramUserId)
+        .eq("status","active")
+        .lte("starts_at",new Date().toISOString())
+        .gt("expires_at",new Date().toISOString())
+        .order("expires_at",{ascending:false})
+        .limit(1)
+        .maybeSingle();
+      if(accessError)throw accessError;
+      if(!access)return json({ok:false,error:"Emergency package required"},402);
+
       const {data,error}=await supabase
         .from("quality_emergency_audits")
         .select("*")
@@ -694,6 +707,19 @@ Deno.serve(async (req) => {
       if(!Number.isSafeInteger(telegramUserId)||telegramUserId===0){
         return json({ok:false,error:"Invalid Quality user"},400);
       }
+      const {data:access,error:accessError}=await supabase
+        .from("quality_emergency_entitlements")
+        .select("id,expires_at")
+        .eq("telegram_user_id",telegramUserId)
+        .eq("status","active")
+        .lte("starts_at",new Date().toISOString())
+        .gt("expires_at",new Date().toISOString())
+        .order("expires_at",{ascending:false})
+        .limit(1)
+        .maybeSingle();
+      if(accessError)throw accessError;
+      if(!access)return json({ok:false,error:"Emergency package required"},402);
+
       const standardKey=String(payload.standard_key||"").toLowerCase();
       const standardVersion=String(payload.standard_version||"").slice(0,160);
       const auditDate=String(payload.audit_date||"");
@@ -769,6 +795,19 @@ Deno.serve(async (req) => {
       if(!Number.isSafeInteger(telegramUserId)||telegramUserId===0||!path){
         return json({ok:false,error:"Invalid evidence request"},400);
       }
+      const {data:access,error:accessError}=await supabase
+        .from("quality_emergency_entitlements")
+        .select("id,expires_at")
+        .eq("telegram_user_id",telegramUserId)
+        .eq("status","active")
+        .lte("starts_at",new Date().toISOString())
+        .gt("expires_at",new Date().toISOString())
+        .order("expires_at",{ascending:false})
+        .limit(1)
+        .maybeSingle();
+      if(accessError)throw accessError;
+      if(!access)return json({ok:false,error:"Emergency package required"},402);
+
       const {data:identity,error:identityError}=await supabase
         .from("quality_web_identities")
         .select("auth_user_id")
@@ -871,7 +910,7 @@ Deno.serve(async (req) => {
         !Number.isSafeInteger(telegramUserId) ||
         telegramUserId === 0 ||
         !/^[a-f0-9]{48}$/.test(token) ||
-        !["plan","product"].includes(purchaseKind) ||
+        !["plan","product","emergency"].includes(purchaseKind) ||
         !/^[a-z0-9-]+$/.test(purchaseReference)
       ) {
         return json({ ok:false, error:"Invalid Stripe checkout intent" }, 400);
@@ -895,10 +934,14 @@ Deno.serve(async (req) => {
         if (!plan?.active || !plan?.checkout_enabled) {
           return json({ ok:false, error:"Plan unavailable" }, 404);
         }
-      } else {
+      } else if (purchaseKind === "product") {
         const product = await getQualityProductBySlug(supabase, purchaseReference);
         if (!product?.active || !product?.standalone_purchase_enabled) {
           return json({ ok:false, error:"Product unavailable" }, 404);
+        }
+      } else if (purchaseKind === "emergency") {
+        if (purchaseReference !== "emergency_audit_7d") {
+          return json({ ok:false, error:"Emergency package unavailable" }, 404);
         }
       }
 
@@ -994,6 +1037,178 @@ Deno.serve(async (req) => {
           duplicate:false
         }
       });
+    }
+
+    if (action === "get_quality_emergency_access") {
+      const telegramUserId=Number(body?.telegram_user_id);
+      if(!Number.isSafeInteger(telegramUserId)||telegramUserId===0){
+        return json({ok:false,error:"Invalid Quality user"},400);
+      }
+
+      await supabase
+        .from("quality_emergency_entitlements")
+        .update({status:"expired",updated_at:new Date().toISOString()})
+        .eq("telegram_user_id",telegramUserId)
+        .eq("status","active")
+        .lte("expires_at",new Date().toISOString());
+
+      const {data:ent,error}=await supabase
+        .from("quality_emergency_entitlements")
+        .select("*")
+        .eq("telegram_user_id",telegramUserId)
+        .eq("status","active")
+        .lte("starts_at",new Date().toISOString())
+        .gt("expires_at",new Date().toISOString())
+        .order("expires_at",{ascending:false})
+        .limit(1)
+        .maybeSingle();
+      if(error)throw error;
+
+      if(!ent){
+        return json({ok:true,data:{
+          active:false,
+          price_pln:199,
+          duration_days:7,
+          ai_budget_pln:20,
+          checkout_required:true
+        }});
+      }
+
+      const remaining=Math.max(
+        0,
+        Number(ent.ai_budget_grosz||0)-
+        Number(ent.ai_reserved_grosz||0)-
+        Number(ent.ai_spent_grosz||0)
+      );
+
+      return json({ok:true,data:{
+        active:true,
+        entitlement_id:ent.id,
+        starts_at:ent.starts_at,
+        expires_at:ent.expires_at,
+        amount_paid_grosz:Number(ent.amount_paid_grosz||0),
+        ai_budget_grosz:Number(ent.ai_budget_grosz||0),
+        ai_spent_grosz:Number(ent.ai_spent_grosz||0),
+        ai_reserved_grosz:Number(ent.ai_reserved_grosz||0),
+        ai_remaining_grosz:remaining,
+        checkout_required:false
+      }});
+    }
+
+    if (action === "record_quality_emergency_purchase") {
+      const telegramUserId=Number(body?.telegram_user_id);
+      const payment=body?.payment||{};
+      const checkoutSessionId=String(payment.checkout_session_id||"");
+      const paymentIntentId=String(payment.payment_intent_id||"");
+      const customerId=String(payment.customer_id||"");
+      const amountTotal=Number(payment.amount_total);
+      const currency=String(payment.currency||"").toLowerCase();
+
+      if(
+        !Number.isSafeInteger(telegramUserId)||
+        telegramUserId===0||
+        !/^cs_/.test(checkoutSessionId)||
+        amountTotal!==19900||
+        currency!=="pln"
+      ){
+        return json({ok:false,error:"Invalid Emergency package payment"},400);
+      }
+
+      const {data:existing,error:existingError}=await supabase
+        .from("quality_emergency_entitlements")
+        .select("*")
+        .eq("stripe_checkout_session_id",checkoutSessionId)
+        .maybeSingle();
+      if(existingError)throw existingError;
+      if(existing)return json({ok:true,data:{duplicate:true,entitlement:existing}});
+
+      const {data:sharedUser,error:userError}=await supabase
+        .from("telegram_users")
+        .select("telegram_user_id")
+        .eq("telegram_user_id",telegramUserId)
+        .maybeSingle();
+      if(userError)throw userError;
+      if(!sharedUser)return json({ok:false,error:"Shared user not found"},404);
+
+      const now=new Date();
+      const {data:lastEnt,error:lastError}=await supabase
+        .from("quality_emergency_entitlements")
+        .select("expires_at")
+        .eq("telegram_user_id",telegramUserId)
+        .in("status",["active"])
+        .gt("expires_at",now.toISOString())
+        .order("expires_at",{ascending:false})
+        .limit(1)
+        .maybeSingle();
+      if(lastError)throw lastError;
+
+      const startsAt=lastEnt?.expires_at && new Date(lastEnt.expires_at)>now
+        ? new Date(lastEnt.expires_at)
+        : now;
+      const expiresAt=new Date(startsAt.getTime()+7*86400000);
+
+      const {data:entitlement,error:insertError}=await supabase
+        .from("quality_emergency_entitlements")
+        .insert({
+          telegram_user_id:telegramUserId,
+          stripe_checkout_session_id:checkoutSessionId,
+          stripe_payment_intent_id:paymentIntentId||null,
+          stripe_customer_id:customerId||null,
+          amount_paid_grosz:amountTotal,
+          currency,
+          status:"active",
+          starts_at:startsAt.toISOString(),
+          expires_at:expiresAt.toISOString(),
+          ai_budget_grosz:2000,
+          ai_reserved_grosz:0,
+          ai_spent_grosz:0
+        })
+        .select("*")
+        .single();
+      if(insertError)throw insertError;
+
+      return json({ok:true,data:{duplicate:false,entitlement}});
+    }
+
+    if (action === "reserve_quality_emergency_ai") {
+      const telegramUserId=Number(body?.telegram_user_id);
+      const requestKind=String(body?.request_kind||"");
+      if(!Number.isSafeInteger(telegramUserId)||telegramUserId===0){
+        return json({ok:false,error:"Invalid Quality user"},400);
+      }
+      const {data,error}=await supabase.rpc("reserve_quality_emergency_ai",{
+        p_telegram_user_id:telegramUserId,
+        p_request_kind:requestKind
+      });
+      if(error){
+        const message=String(error.message||"");
+        if(message.includes("Emergency package required"))return json({ok:false,error:"Emergency package required"},402);
+        if(message.includes("budget exhausted"))return json({ok:false,error:"Emergency AI budget exhausted"},402);
+        throw error;
+      }
+      return json({ok:true,data});
+    }
+
+    if (action === "settle_quality_emergency_ai") {
+      const usageId=String(body?.usage_id||"");
+      const model=String(body?.model||"");
+      const inputTokens=Math.max(0,Number(body?.input_tokens||0));
+      const outputTokens=Math.max(0,Number(body?.output_tokens||0));
+      const estimatedCost=Math.max(0,Number(body?.estimated_provider_cost_grosz||0));
+      const success=Boolean(body?.success);
+      if(!/^[0-9a-f-]{36}$/i.test(usageId)){
+        return json({ok:false,error:"Invalid AI usage reservation"},400);
+      }
+      const {data,error}=await supabase.rpc("settle_quality_emergency_ai",{
+        p_usage_id:usageId,
+        p_model:model,
+        p_input_tokens:Math.round(inputTokens),
+        p_output_tokens:Math.round(outputTokens),
+        p_estimated_provider_cost_grosz:Math.round(estimatedCost),
+        p_success:success
+      });
+      if(error)throw error;
+      return json({ok:true,data});
     }
 
     if (action === "record_quality_stripe_plan_payment") {

@@ -19,6 +19,8 @@ const PRODUCT_LINKS = Object.freeze({
   training: "https://buy.stripe.com/9B6bJ05Oh0Bk9YG9OCdby0h"
 });
 
+const EMERGENCY_LINK = "https://buy.stripe.com/4gM14m4Kd83M8UC5ymdby0i";
+
 function newCheckoutToken() {
   return crypto.randomBytes(24).toString("hex");
 }
@@ -102,6 +104,42 @@ export default async function handler(req, res) {
         ok:true,
         purchase_kind:purchaseKind,
         payment_provider:"stripe",
+        checkout_url:url,
+        invoice_link:url
+      });
+    }
+
+    if (kind === "emergency") {
+      if (reference !== "emergency_audit_7d") {
+        return res.status(404).json({ ok:false, error:"Emergency package unavailable" });
+      }
+
+      const consent = await validateQualityCheckoutConsent(
+        userId,
+        consentToken,
+        "service",
+        reference
+      );
+      if (!consent) {
+        return res.status(403).json({ ok:false, error:"Required legal consents are missing" });
+      }
+
+      const token = newCheckoutToken();
+      await createQualityStripeCheckoutIntent(
+        userId,
+        token,
+        "emergency",
+        reference
+      );
+      await consumeQualityCheckoutConsent(userId, consentToken);
+
+      const url = checkoutUrl(EMERGENCY_LINK, token);
+      return res.status(200).json({
+        ok:true,
+        purchase_kind:"emergency",
+        payment_provider:"stripe",
+        duration_days:7,
+        price_pln:199,
         checkout_url:url,
         invoice_link:url
       });

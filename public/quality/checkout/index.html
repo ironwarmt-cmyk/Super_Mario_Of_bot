@@ -14,18 +14,37 @@ select{width:100%;padding:13px;border-radius:12px;background:#10263a;color:#fff;
 const q=new URLSearchParams(location.search);const kind=q.get("kind")||"plan";const reference=q.get("ref")||q.get("buy")||"";const lang=q.get("lang")==="en"?"en":"pl";document.documentElement.lang=lang;
 const statusEl=document.getElementById("status"),docsEl=document.getElementById("docs"),buy=document.getElementById("buy");
 if(lang==="en"){title.textContent="Secure checkout";lead.textContent="Read the required notices. Payment unlocks only after the required statements are confirmed.";capacityLabel.textContent="Buyer status";buy.textContent="Continue to Stripe";walletNote.textContent="Stripe Checkout shows Apple Pay or Google Pay automatically when available on this device.";}
-const digital=["plan","product"].includes(kind);if(!digital){immediateRow.style.display="none";withdrawRow.style.display="none";}
-const requiredKeys=digital?["terms","privacy","educational_disclaimer","content_license","digital_content_withdrawal"]:["terms","privacy","educational_disclaimer","content_license"];
+const digital=["plan","product"].includes(kind);
+const service=kind==="emergency";
+const immediateRequired=digital||service;
+if(!immediateRequired){immediateRow.style.display="none";withdrawRow.style.display="none";}
+if(service){
+  title.textContent=lang==="en"?"Emergency Support — 7 days":"Emergency Support — 7 dni";
+  lead.textContent=lang==="en"
+    ?"Secure one-time purchase: 7 days of audit preparation, AI Evidence Review and Emergency War Room."
+    :"Jednorazowy zakup: 7 dni przygotowania do audytu, AI Evidence Review i Emergency War Room.";
+  immediateRow.querySelector("span").textContent=lang==="en"
+    ?"I request that the Emergency Support service begins immediately, before the withdrawal period expires."
+    :"Żądam rozpoczęcia usługi Emergency Support przed upływem terminu do odstąpienia od umowy.";
+  withdrawRow.querySelector("span").textContent=lang==="en"
+    ?"I understand the statutory consequences of requesting early performance, including payment for performance already supplied where applicable."
+    :"Przyjmuję do wiadomości ustawowe skutki rozpoczęcia świadczenia usługi na moje żądanie, w tym obowiązek zapłaty za świadczenie spełnione do chwili odstąpienia, jeżeli ma zastosowanie.";
+}
+const requiredKeys=digital
+  ?["terms","privacy","educational_disclaimer","content_license","digital_content_withdrawal"]
+  :service
+    ?["terms","privacy","educational_disclaimer","content_license","service_early_performance"]
+    :["terms","privacy","educational_disclaimer","content_license"];
 function esc(s){const d=document.createElement("div");d.textContent=String(s||"");return d.innerHTML}
 async function api(method,body){const headers=await window.QualityAuth.headers({"content-type":"application/json"});const r=await fetch("/api/quality-account",{method,headers,...(body?{body:JSON.stringify(body)}:{})});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||"Request failed");return d}
-function refresh(){buy.disabled=!(terms.checked&&privacy.checked&&license.checked&&(!digital||(immediate.checked&&withdraw.checked)))}
+function refresh(){buy.disabled=!(terms.checked&&privacy.checked&&license.checked&&(!immediateRequired||(immediate.checked&&withdraw.checked)))}
 document.querySelectorAll("input[type=checkbox]").forEach(x=>x.addEventListener("change",refresh));
 (async()=>{try{if(!(await window.QualityAuth.isAuthenticated())){location.href="/quality/login/?next="+encodeURIComponent(location.pathname+location.search);return;}const d=await api("GET");const docs=d.legal?.documents||[];const missing=requiredKeys.filter(k=>!docs.some(x=>x.document_key===k));if(missing.length)throw new Error("Legal checkout unavailable: "+missing.join(", "));
 docsEl.innerHTML=requiredKeys.map(k=>{const x=docs.find(d=>d.document_key===k);return '<details class="doc"><summary>'+esc(x.title)+' · '+esc(x.version)+'</summary><div class="body">'+esc(x.body_md)+'</div></details>'}).join("");statusEl.textContent=lang==="en"?"Open each document and review it before confirming.":"Otwórz każdy dokument i zapoznaj się z nim przed potwierdzeniem.";}catch(e){statusEl.innerHTML='<span class="err">'+esc(e.message)+'</span>';buy.disabled=true}})();
 buy.addEventListener("click",async()=>{buy.disabled=true;statusEl.textContent=lang==="en"?"Preparing secure Stripe checkout…":"Przygotowuję bezpieczną płatność Stripe…";try{
-let purchaseKind=kind==="plan"?"plan":kind==="product"?"digital_product":"token";
+let purchaseKind=kind==="plan"?"plan":kind==="product"?"digital_product":kind==="emergency"?"service":"token";
 if(kind==="product"){const isTraining=q.get("type")==="training";if(isTraining)purchaseKind="training";}
-const d=await api("POST",{action:"legal_consent",locale:lang,purchase_kind:purchaseKind,purchase_reference:reference,consent:{accepted_terms:true,acknowledged_privacy:true,accepted_license:true,requested_immediate_delivery:digital,acknowledged_loss_of_withdrawal:digital,marketing_consent:false,customer_capacity:capacity.value}});
+const d=await api("POST",{action:"legal_consent",locale:lang,purchase_kind:purchaseKind,purchase_reference:reference,consent:{accepted_terms:true,acknowledged_privacy:true,accepted_license:true,requested_immediate_delivery:immediateRequired,acknowledged_loss_of_withdrawal:immediateRequired,marketing_consent:false,customer_capacity:capacity.value}});
 const headers=await window.QualityAuth.headers({"content-type":"application/json"});const r=await fetch("/api/quality-purchase-invoice",{method:"POST",headers,body:JSON.stringify({kind,reference,consent_token:d.consent.consent_token})});const inv=await r.json();if(!r.ok||!inv.ok||!(inv.checkout_url||inv.invoice_link))throw new Error(inv.error||"Checkout failed");
 location.href=inv.checkout_url||inv.invoice_link;
 }catch(e){statusEl.innerHTML='<span class="err">'+esc(e.message)+'</span>';buy.disabled=false}});

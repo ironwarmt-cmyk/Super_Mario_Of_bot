@@ -3,6 +3,7 @@ import {
   markQualityPhysicalOrderPaid,
   recordQualityStripePlanPayment,
   recordQualityStripeProductPayment,
+  recordQualityEmergencyPurchase,
   resolveQualityStripeCheckoutIntent,
   syncQualityStripeSubscription
 } from "../lib/db.js";
@@ -76,7 +77,11 @@ async function handleCheckoutSession(session) {
 
   if (
     meta.quality_app === "quality_assurance_support" &&
-    (meta.quality_kind === "plan" || meta.quality_kind === "product_type")
+    (
+      meta.quality_kind === "plan" ||
+      meta.quality_kind === "product_type" ||
+      meta.quality_kind === "emergency_audit_7d"
+    )
   ) {
     if (!token || !session?.id) throw new Error("Missing Quality checkout intent reference");
     const intent=await resolveQualityStripeCheckoutIntent(token,String(session.id));
@@ -89,6 +94,24 @@ async function handleCheckoutSession(session) {
         plan_slug:intent.purchase_reference,
         checkout_session_id:String(session.id),
         subscription_id:objectId(session.subscription),
+        customer_id:objectId(session.customer),
+        amount_total:Number(session.amount_total||0),
+        currency:String(session.currency||"").toLowerCase()
+      });
+      return;
+    }
+
+    if (meta.quality_kind === "emergency_audit_7d") {
+      if (
+        intent.purchase_kind !== "emergency" ||
+        intent.purchase_reference !== "emergency_audit_7d"
+      ) {
+        throw new Error("Quality Emergency checkout intent mismatch");
+      }
+
+      await recordQualityEmergencyPurchase(Number(intent.telegram_user_id),{
+        checkout_session_id:String(session.id),
+        payment_intent_id:objectId(session.payment_intent),
         customer_id:objectId(session.customer),
         amount_total:Number(session.amount_total||0),
         currency:String(session.currency||"").toLowerCase()

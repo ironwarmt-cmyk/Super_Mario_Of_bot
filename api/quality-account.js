@@ -15,7 +15,8 @@ import {
   reconcileQualityAccountingReceipt,
   completeQualityChannelLink,
   getQualityEmergencyAudit,
-  saveQualityEmergencyAudit
+  saveQualityEmergencyAudit,
+  getQualityEmergencyAccess
 } from "../lib/db.js";
 
 async function webAuthProxy(req, res) {
@@ -134,14 +135,20 @@ export default async function handler(req, res) {
 
     if (mode === "emergency") {
       if (req.method === "GET") {
-        return res.status(200).json({ ok:true, data:await getQualityEmergencyAudit(user.id) });
+        const access=await getQualityEmergencyAccess(user.id);
+        const data=access?.active ? await getQualityEmergencyAudit(user.id) : null;
+        return res.status(200).json({ ok:true, access, data });
       }
       if (req.method !== "POST") {
         return res.status(405).json({ ok:false, error:"Method not allowed" });
       }
       const action=String(req.body?.action || "");
       if (action === "save") {
-        return res.status(200).json({ ok:true, data:await saveQualityEmergencyAudit(user.id, req.body?.payload || {}) });
+        const access=await getQualityEmergencyAccess(user.id);
+        if(!access?.active){
+          return res.status(402).json({ ok:false, error:"Emergency package required", access });
+        }
+        return res.status(200).json({ ok:true, access, data:await saveQualityEmergencyAudit(user.id, req.body?.payload || {}) });
       }
       return res.status(400).json({ ok:false, error:"Unknown Emergency Support action" });
     }
