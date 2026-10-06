@@ -671,6 +671,121 @@ Deno.serve(async (req) => {
 
     if (action === "get_quality_membership") return json({ ok: true, data: await readQualityMembership(supabase, body?.telegram_user_id) });
 
+    if (action === "get_quality_emergency_audit") {
+      const telegramUserId=Number(body?.telegram_user_id);
+      if(!Number.isSafeInteger(telegramUserId)||telegramUserId===0){
+        return json({ok:false,error:"Invalid Quality user"},400);
+      }
+      const {data,error}=await supabase
+        .from("quality_emergency_audits")
+        .select("*")
+        .eq("telegram_user_id",telegramUserId)
+        .eq("status","active")
+        .order("updated_at",{ascending:false})
+        .limit(1)
+        .maybeSingle();
+      if(error)throw error;
+      return json({ok:true,data:data||null});
+    }
+
+    if (action === "save_quality_emergency_audit") {
+      const telegramUserId=Number(body?.telegram_user_id);
+      const payload=body?.payload||{};
+      if(!Number.isSafeInteger(telegramUserId)||telegramUserId===0){
+        return json({ok:false,error:"Invalid Quality user"},400);
+      }
+      const standardKey=String(payload.standard_key||"").toLowerCase();
+      const standardVersion=String(payload.standard_version||"").slice(0,160);
+      const auditDate=String(payload.audit_date||"");
+      const status=String(payload.status||"active");
+      const readiness=Math.max(0,Math.min(100,Number(payload.readiness_score||0)));
+      if(!/^[a-z0-9_:-]+$/.test(standardKey)||!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(auditDate)){
+        return json({ok:false,error:"Invalid emergency audit payload"},400);
+      }
+      if(!["active","completed","archived"].includes(status)){
+        return json({ok:false,error:"Invalid emergency audit status"},400);
+      }
+
+      let existing=null;
+      if(payload.id){
+        const {data,error}=await supabase
+          .from("quality_emergency_audits")
+          .select("id")
+          .eq("id",String(payload.id))
+          .eq("telegram_user_id",telegramUserId)
+          .maybeSingle();
+        if(error)throw error;
+        existing=data||null;
+      } else {
+        const {data,error}=await supabase
+          .from("quality_emergency_audits")
+          .select("id")
+          .eq("telegram_user_id",telegramUserId)
+          .eq("status","active")
+          .order("updated_at",{ascending:false})
+          .limit(1)
+          .maybeSingle();
+        if(error)throw error;
+        existing=data||null;
+      }
+
+      const row={
+        telegram_user_id:telegramUserId,
+        standard_key:standardKey,
+        standard_version:standardVersion,
+        audit_date:auditDate,
+        status,
+        readiness_score:Math.round(readiness),
+        task_state:payload.task_state&&typeof payload.task_state==="object"?payload.task_state:{},
+        evidence_log:Array.isArray(payload.evidence_log)?payload.evidence_log.slice(-80):[],
+        notes:payload.notes&&typeof payload.notes==="object"?payload.notes:{},
+        reminders_enabled:Boolean(payload.reminders_enabled),
+        updated_at:new Date().toISOString()
+      };
+
+      let result;
+      if(existing?.id){
+        result=await supabase
+          .from("quality_emergency_audits")
+          .update(row)
+          .eq("id",existing.id)
+          .eq("telegram_user_id",telegramUserId)
+          .select("*")
+          .single();
+      } else {
+        result=await supabase
+          .from("quality_emergency_audits")
+          .insert(row)
+          .select("*")
+          .single();
+      }
+      if(result.error)throw result.error;
+      return json({ok:true,data:result.data});
+    }
+
+    if (action === "create_quality_emergency_evidence_url") {
+      const telegramUserId=Number(body?.telegram_user_id);
+      const path=String(body?.path||"");
+      if(!Number.isSafeInteger(telegramUserId)||telegramUserId===0||!path){
+        return json({ok:false,error:"Invalid evidence request"},400);
+      }
+      const {data:identity,error:identityError}=await supabase
+        .from("quality_web_identities")
+        .select("auth_user_id")
+        .eq("telegram_user_id",telegramUserId)
+        .maybeSingle();
+      if(identityError)throw identityError;
+      const authId=String(identity?.auth_user_id||"");
+      if(!authId||!path.startsWith(authId+"/")){
+        return json({ok:false,error:"Evidence path is not owned by this account"},403);
+      }
+      const signed=await supabase.storage
+        .from("quality-emergency-evidence")
+        .createSignedUrl(path,600);
+      if(signed.error)throw signed.error;
+      return json({ok:true,data:{signed_url:signed.data?.signedUrl||null,expires_in:600}});
+    }
+
     if (action === "get_quality_channel_link_status") {
       const telegramUserId=Number(body?.telegram_user_id);
       if(!Number.isSafeInteger(telegramUserId)||telegramUserId<=0){
