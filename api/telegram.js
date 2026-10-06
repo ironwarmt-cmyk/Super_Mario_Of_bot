@@ -36,6 +36,8 @@ import {
   getQualityWallet,
   listQualityServices,
   getQualityMembership,
+  getQualityChannelLinkStatus,
+  createQualityChannelLinkIntent,
   recordQualityTokenPayment,
   recordQualityPlanPayment,
   recordQualityProductPayment,
@@ -69,11 +71,49 @@ function escapeHtml(value = "") {
   return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 }
 
+function qualityAccountLinkUrl(linkToken) {
+  return "https://supermarioofbot.vercel.app/quality/link/?token=" + encodeURIComponent(linkToken);
+}
+
+async function sendQualityAccountLink(token, chatId, user, locale = "pl") {
+  const pl=locale!=="en";
+  const status=await getQualityChannelLinkStatus(user.id);
+  if(status?.linked){
+    return sendMessage(
+      token,
+      chatId,
+      pl
+        ? "✅ Konto online jest już połączone. Pakiet i dostęp są wspólne."
+        : "✅ Your online account is already linked. Plan and access are shared."
+    );
+  }
+  const linkToken=crypto.randomBytes(24).toString("hex");
+  await createQualityChannelLinkIntent(user.id,linkToken);
+  return sendMessage(
+    token,
+    chatId,
+    pl
+      ? "🔗 Jeśli masz już konto Quality online, otwórz bezpieczny link i zaloguj się. Połączenie jest jednorazowe i wygasa po 15 minutach."
+      : "🔗 If you already have a Quality online account, open the secure link and sign in. The one-time link expires after 15 minutes.",
+    {inline_keyboard:[[{text:pl?"🔗 Połącz konto online":"🔗 Link online account",url:qualityAccountLinkUrl(linkToken)}]]}
+  );
+}
+
 async function sendHome(token, chatId, user, edit = null) {
   await upsertTelegramUser(user);
-  const [profile, plans] = await Promise.all([getUserProfile(user.id), listQualityPlans()]);
+  const [profile, plans, linkStatus] = await Promise.all([
+    getUserProfile(user.id),
+    listQualityPlans(),
+    getQualityChannelLinkStatus(user.id).catch(()=>({linked:false}))
+  ]);
   const locale = profile?.locale || "pl";
   const view = profile?.locale ? qualityHome(locale, Boolean(profile?.is_admin), plans) : languageMenu();
+  if(profile?.locale && !linkStatus?.linked && view?.reply_markup?.inline_keyboard){
+    view.reply_markup.inline_keyboard.push([{
+      text:locale==="en"?"🔗 Link online account":"🔗 Połącz konto online",
+      callback_data:"qa:link"
+    }]);
+  }
   if (edit) return editMessage(token, chatId, edit, view.text, view.reply_markup);
   return sendMessage(token, chatId, view.text, view.reply_markup);
 }
@@ -474,6 +514,11 @@ export default async function handler(req, res) {
         return res.status(200).json({ ok: true });
       }
 
+      if (action === "qa:link") {
+        await sendQualityAccountLink(token, chatId, cb.from, locale);
+        return res.status(200).json({ ok:true });
+      }
+
       if (action === "qa:plans") {
         const view = renderQualityPlans(await listQualityPlans(), locale);
         await editMessage(token, chatId, messageId, view.text, view.reply_markup);
@@ -686,6 +731,12 @@ export default async function handler(req, res) {
         );
         return res.status(200).json({ ok: true });
       }
+      if (text === "/link" || text === "/polacz") {
+        const profile=await getUserProfile(message.from.id);
+        await sendQualityAccountLink(token,chatId,message.from,profile?.locale || "pl");
+        return res.status(200).json({ ok:true });
+      }
+
       if (text === "/start" || text === "/menu" || text === "") {
         await sendHome(token, chatId, message.from);
         return res.status(200).json({ ok: true });
