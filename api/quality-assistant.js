@@ -298,33 +298,6 @@ async function callQualityAI({ specialist, locale, history, message }) {
 }
 
 export default async function handler(req, res) {
-  if (
-    req.method === "GET" &&
-    String(req.query?.probe || "") === "ai" &&
-    process.env.VERCEL_ENV === "preview" &&
-    process.env.QUALITY_AI_PROBE_TOKEN &&
-    String(req.headers["x-quality-ai-probe"] || "") === process.env.QUALITY_AI_PROBE_TOKEN
-  ) {
-    try {
-      const ai=await postAIResponse({
-        input:"Reply with exactly: QUALITY_AI_OK",
-        max_output_tokens:24,
-        store:false
-      },{allowWebSearch:false});
-      return json(res,200,{
-        ok:true,
-        provider:ai.provider,
-        model:ai.model,
-        text:extractResponseText(ai.payload)
-      });
-    } catch (error) {
-      return json(res,500,{
-        ok:false,
-        error:error instanceof Error ? error.message : "AI probe failed"
-      });
-    }
-  }
-
   if (req.method === "GET") {
     return json(res, 200, {
       ok: true,
@@ -492,8 +465,10 @@ export default async function handler(req, res) {
           : 500;
 
     const publicMessage=/QUALITY_AI_UNAVAILABLE/i.test(message)
-      ? "Usługa AI jest chwilowo niedostępna. Spróbuj ponownie za moment."
-      : message;
+      ? "Analiza AI nie jest jeszcze aktywna po stronie serwera."
+      : /valid credit card|billing|free credits/i.test(message)
+        ? "Analiza AI oczekuje na aktywację rozliczeń usługi AI po stronie administratora."
+        : message;
     return json(res, status, { ok: false, error: publicMessage });
   }
 }
