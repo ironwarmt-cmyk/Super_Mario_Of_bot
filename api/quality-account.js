@@ -12,7 +12,8 @@ import {
   getQualityOwnerUsers,
   claimQualityAccountantOwner,
   recordQualityAccountingCost,
-  reconcileQualityAccountingReceipt
+  reconcileQualityAccountingReceipt,
+  completeQualityChannelLink
 } from "../lib/db.js";
 
 async function webAuthProxy(req, res) {
@@ -135,7 +136,19 @@ export default async function handler(req, res) {
     }
 
     if (mode === "accountant") {
-      if (req.method === "GET") {
+      if (req.method === "POST" && req.body?.action === "complete_channel_link") {
+      if (identity.source !== "web" || !identity.authUserId) {
+        return res.status(403).json({ ok:false, error:"Authenticated web account required." });
+      }
+      const linkToken=String(req.body?.token || "").trim();
+      if (!/^[a-f0-9]{48}$/.test(linkToken)) {
+        return res.status(400).json({ ok:false, error:"Invalid or expired account link." });
+      }
+      const linked=await completeQualityChannelLink(user.id, identity.authUserId, linkToken);
+      return res.status(200).json({ ok:true, linked });
+    }
+
+    if (req.method === "GET") {
         const year = Number(req.query?.year || new Date().getFullYear());
         const quarter = Number(req.query?.quarter || Math.floor(new Date().getMonth()/3)+1);
         return res.status(200).json({ ok:true, data:await getQualityAccountingSummary(user.id, year, quarter, identity.authUserId) });

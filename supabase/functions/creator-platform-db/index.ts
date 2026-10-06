@@ -671,6 +671,81 @@ Deno.serve(async (req) => {
 
     if (action === "get_quality_membership") return json({ ok: true, data: await readQualityMembership(supabase, body?.telegram_user_id) });
 
+    if (action === "get_quality_channel_link_status") {
+      const telegramUserId=Number(body?.telegram_user_id);
+      if(!Number.isSafeInteger(telegramUserId)||telegramUserId<=0){
+        return json({ok:false,error:"Invalid channel user"},400);
+      }
+      const {data:identity,error}=await supabase
+        .from("quality_web_identities")
+        .select("auth_user_id,email,linked_at,last_seen_at")
+        .eq("telegram_user_id",telegramUserId)
+        .maybeSingle();
+      if(error)throw error;
+      return json({ok:true,data:{
+        linked:Boolean(identity?.auth_user_id),
+        email:identity?.email||null,
+        linked_at:identity?.linked_at||null,
+        last_seen_at:identity?.last_seen_at||null
+      }});
+    }
+
+    if (action === "create_quality_channel_link_intent") {
+      const telegramUserId=Number(body?.telegram_user_id);
+      const token=String(body?.token||"").trim();
+      if(!Number.isSafeInteger(telegramUserId)||telegramUserId<=0||!/^[a-f0-9]{48}$/.test(token)){
+        return json({ok:false,error:"Invalid channel link request"},400);
+      }
+
+      const {data:userRow,error:userError}=await supabase
+        .from("telegram_users")
+        .select("telegram_user_id")
+        .eq("telegram_user_id",telegramUserId)
+        .maybeSingle();
+      if(userError)throw userError;
+      if(!userRow)return json({ok:false,error:"Channel user not found"},404);
+
+      await supabase
+        .from("quality_channel_link_intents")
+        .delete()
+        .eq("telegram_user_id",telegramUserId)
+        .is("consumed_at",null);
+
+      const {data:intent,error:intentError}=await supabase
+        .from("quality_channel_link_intents")
+        .insert({
+          token,
+          telegram_user_id:telegramUserId,
+          expires_at:new Date(Date.now()+15*60*1000).toISOString()
+        })
+        .select("token,expires_at")
+        .single();
+      if(intentError)throw intentError;
+      return json({ok:true,data:intent});
+    }
+
+    if (action === "complete_quality_channel_link_intent") {
+      const webUserId=Number(body?.web_user_id);
+      const authUserId=String(body?.auth_user_id||"").trim();
+      const token=String(body?.token||"").trim();
+      if(
+        !Number.isSafeInteger(webUserId)||
+        webUserId===0||
+        !/^[0-9a-f-]{36}$/i.test(authUserId)||
+        !/^[a-f0-9]{48}$/.test(token)
+      ){
+        return json({ok:false,error:"Invalid account link completion"},400);
+      }
+
+      const {data,error}=await supabase.rpc("complete_quality_channel_link",{
+        p_token:token,
+        p_web_user_id:webUserId,
+        p_auth_user_id:authUserId
+      });
+      if(error)throw error;
+      return json({ok:true,data:data||{linked:false}});
+    }
+
     if (action === "create_quality_stripe_checkout_intent") {
       const telegramUserId = Number(body?.telegram_user_id);
       const token = String(body?.token || "").trim();
