@@ -283,6 +283,33 @@ async function callQualityAI({ specialist, locale, history, message }) {
 }
 
 export default async function handler(req, res) {
+  if (
+    req.method === "GET" &&
+    String(req.query?.probe || "") === "ai" &&
+    process.env.VERCEL_ENV === "preview" &&
+    process.env.QUALITY_AI_PROBE_TOKEN &&
+    String(req.headers["x-quality-ai-probe"] || "") === process.env.QUALITY_AI_PROBE_TOKEN
+  ) {
+    try {
+      const ai=await postAIResponse({
+        input:"Reply with exactly: QUALITY_AI_OK",
+        max_output_tokens:24,
+        store:false
+      },{allowWebSearch:false});
+      return json(res,200,{
+        ok:true,
+        provider:ai.provider,
+        model:ai.model,
+        text:extractResponseText(ai.payload)
+      });
+    } catch (error) {
+      return json(res,500,{
+        ok:false,
+        error:error instanceof Error ? error.message : "AI probe failed"
+      });
+    }
+  }
+
   if (req.method === "GET") {
     return json(res, 200, {
       ok: true,
