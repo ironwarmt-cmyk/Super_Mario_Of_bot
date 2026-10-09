@@ -1,0 +1,11 @@
+{
+  "brand": "Jem Bezpiecznie",
+  "weekly_reels": 7,
+  "weekly_carousels": 7,
+  "timezone": "Europe/Warsaw",
+  "carousel_time": "12:30",
+  "reel_time": "18:30",
+  "max_paid_api_spend_usd": 0,
+  "publishing_enabled": false,
+  "app_url": "https://supermarioofbot.vercel.app/login"
+}
