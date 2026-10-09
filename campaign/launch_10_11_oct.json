@@ -1,0 +1,69 @@
+{
+  "project": "Jem Bezpiecznie / Quality Assurance Support",
+  "stage": "PRELAUNCH_DRAFT_PENDING_API_ACCESS",
+  "timezone": "Europe/Warsaw",
+  "publish_access": {
+    "instagram": "WINDSOR_INTERACTIVE_ONLY_NO_SERVER_SIDE_TOKEN",
+    "tiktok": "NOT_CONFIRMED",
+    "direct_messages": "NOT_AUTHORIZED"
+  },
+  "marketing": {
+    "audience": "Konsumenci: edukacja o bezpieczeństwie żywności; profesjonaliści: narzędzia jakości i audytu",
+    "rule": "Nie sugeruj, że każda funkcja profesjonalna jest bezpłatna lub przeznaczona dla każdego",
+    "app_url": "https://supermarioofbot.vercel.app/login"
+  },
+  "items": [
+    {
+      "id": "L00-IG",
+      "date": "2026-10-10",
+      "time": "12:30",
+      "platforms": [
+        "instagram"
+      ],
+      "type": "single_image",
+      "state": "READY_FOR_CREATIVE_AND_QA",
+      "title": "Witaj w Jem Bezpiecznie",
+      "cover_text": "BEZPIECZEŃSTWO ŻYWNOŚCI. DLA KAŻDEGO.",
+      "caption": "Czy na pewno wiesz, co jesz?\n\nJem Bezpiecznie to miejsce, w którym oddzielamy fakty od mitów i pokazujemy, jak podejmować bardziej świadome decyzje dotyczące żywności.\n\nBędziemy mówić o etykietach, alergenach, higienie, jakości i rozwiązaniach stosowanych w branży spożywczej.\n\nJeśli zawodowo odpowiadasz za jakość lub bezpieczeństwo żywności, poznaj także naszą aplikację Quality Assurance Support.\n\nPoznaj aplikację — link w bio.\n\n#JemBezpiecznie #BezpieczeństwoŻywności #JakośćŻywności #FoodSafety #HACCP",
+      "design_asset": "user_conversation_generated_jem_bezpiecznie_poster_2026_10_09; not externally hosted",
+      "verified_product_claims": false,
+      "source": "original_marketing_message",
+      "qa_required": [
+        "sprawdzenie dostępności aplikacji",
+        "aktywny link w bio",
+        "zgodność zakresu funkcji",
+        "format JPEG 4:5",
+        "publiczny host medialny"
+      ],
+      "published": false
+    },
+    {
+      "id": "L01-IG",
+      "date": "2026-10-11",
+      "time": "12:30",
+      "platforms": [
+        "instagram"
+      ],
+      "type": "carousel",
+      "state": "NEEDS_ASSETS_AND_QA",
+      "title": "Dla kogo jest Jem Bezpiecznie?",
+      "cards": [
+        "Dla tych, którzy chcą wiedzieć, co jedzą.",
+        "Dla osób czytających etykiety i sprawdzających alergeny.",
+        "Dla zespołów jakości i osób przygotowujących się do audytu.",
+        "Wiedza dla każdego. Narzędzia branżowe dla profesjonalistów."
+      ],
+      "caption": "Bezpieczeństwo żywności dotyczy nas wszystkich.\n\nNa tym profilu znajdziesz prosto wyjaśnione zagadnienia dla konsumentów oraz wiedzę ekspercką dla branży spożywczej.\n\nPracujesz z HACCP, BRCGS, IFS lub w jakości? Poznaj Quality Assurance Support — link w bio.\n\n#JemBezpiecznie #FoodSafety #HACCP #IFS #BRCGS",
+      "published": false
+    }
+  ],
+  "original_package": {
+    "start": "2026-10-12",
+    "end": "2026-11-10",
+    "post_time": "12:30",
+    "reel_time": "19:00",
+    "count_posts": 30,
+    "count_reels": 30,
+    "preservation": "unchanged"
+  }
+}
