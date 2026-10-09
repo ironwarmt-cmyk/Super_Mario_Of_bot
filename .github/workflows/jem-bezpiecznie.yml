@@ -1,0 +1,50 @@
+name: Jem Bezpiecznie - 7 rolek i 7 karuzel
+on:
+  workflow_dispatch:
+    inputs:
+      kind:
+        type: choice
+        required: true
+        options: [carousel, reel]
+  schedule:
+    - cron: '30 12 * * *'
+      timezone: 'Europe/Warsaw'
+    - cron: '30 18 * * *'
+      timezone: 'Europe/Warsaw'
+permissions:
+  contents: read
+jobs:
+  drafts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install only free local tools
+        run: |
+          pip install -r social_studio/requirements.txt
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg fonts-dejavu-core
+      - name: Generate draft, not publish
+        env:
+          EVENT_CRON: ${{ github.event.schedule }}
+          MANUAL_KIND: ${{ inputs.kind }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then
+            case "$EVENT_CRON" in
+              '30 12 * * *') KIND=carousel ;;
+              '30 18 * * *') KIND=reel ;;
+              *) exit 1 ;;
+            esac
+          else
+            KIND="$MANUAL_KIND"
+          fi
+          python social_studio/studio.py --kind "$KIND"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jem-${{ github.run_id }}
+          path: social_studio/output/
+          if-no-files-found: error
+          retention-days: 1
