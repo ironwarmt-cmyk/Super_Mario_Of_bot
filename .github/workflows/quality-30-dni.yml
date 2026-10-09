@@ -1,0 +1,78 @@
+name: Quality 30 dni - szkice bez publikacji
+on:
+  workflow_dispatch:
+    inputs:
+      kind:
+        description: 'post lub reel'
+        type: choice
+        required: true
+        options: [post, reel]
+      date:
+        description: 'YYYY-MM-DD (puste = dzisiaj)'
+        required: false
+        type: string
+  schedule:
+    - cron: '30 12 * * *'
+      timezone: 'Europe/Warsaw'
+    - cron: '0 19 * * *'
+      timezone: 'Europe/Warsaw'
+permissions:
+  contents: read
+concurrency:
+  group: quality30-${{ github.ref }}-${{ github.event.schedule || inputs.kind || 'manual' }}
+  cancel-in-progress: false
+jobs:
+  create-draft:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Select day and media type
+        id: slot
+        env:
+          SCHEDULE: ${{ github.event.schedule }}
+          MANUAL_KIND: ${{ inputs.kind }}
+          MANUAL_DATE: ${{ inputs.date }}
+        shell: bash
+        run: |
+          DATE="${MANUAL_DATE:-$(TZ=Europe/Warsaw date +%F)}"
+          if [[ "$DATE" < "2026-10-12" || "$DATE" > "2026-11-10" ]]; then
+            echo "active=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ "$GITHUB_EVENT_NAME" == "schedule" ]]; then
+            case "$SCHEDULE" in
+              '30 12 * * *') KIND=post ;;
+              '0 19 * * *') KIND=reel ;;
+              *) echo "Unrecognized schedule" >&2; exit 1 ;;
+            esac
+          else
+            KIND="$MANUAL_KIND"
+          fi
+          echo "active=true" >> "$GITHUB_OUTPUT"
+          echo "date=$DATE" >> "$GITHUB_OUTPUT"
+          echo "kind=$KIND" >> "$GITHUB_OUTPUT"
+      - name: Get the supplied original campaign package
+        if: steps.slot.outputs.active == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # NOTE: no release has been created or made public here.
+          # This step requires a user-approved location of the archive.
+          gh release download quality-30d-assets --pattern quality-30-dni.zip --dir . --repo "$GITHUB_REPOSITORY"
+          test -s quality-30-dni.zip
+      - name: Import original creative without publishing
+        if: steps.slot.outputs.active == 'true'
+        run: |
+          python -m pip install --disable-pip-version-check Pillow==11.3.0
+          python campaign/quality30.py --zip quality-30-dni.zip --date "${{ steps.slot.outputs.date }}" --kind "${{ steps.slot.outputs.kind }}" --output quality-output
+      - uses: actions/upload-artifact@v4
+        if: steps.slot.outputs.active == 'true'
+        with:
+          name: quality-${{ steps.slot.outputs.date }}-${{ steps.slot.outputs.kind }}
+          path: quality-output/
+          if-no-files-found: error
+          retention-days: 3
