@@ -1,0 +1,114 @@
+[
+  {
+    "slug": "rece",
+    "title": "Czyste ręce. Bezpieczniejsza kuchnia.",
+    "hook": "Gotowanie zaczyna się od rąk.",
+    "fact": "Myj ręce przed przygotowaniem jedzenia i po kontakcie z produktami surowymi.",
+    "tip": "Zacznij od umycia rąk.",
+    "source": "https://www.who.int/publications/i/item/9789241594639"
+  },
+  {
+    "slug": "surowe",
+    "title": "Surowe i gotowe? Oddziel je.",
+    "hook": "Jedna deska. Dwa produkty. Niepotrzebne ryzyko.",
+    "fact": "Oddzielaj surowe produkty zwierzęce od żywności gotowej do spożycia.",
+    "tip": "Stosuj oddzielne przybory.",
+    "source": "https://www.who.int/publications/i/item/9789241594639"
+  },
+  {
+    "slug": "cieplo",
+    "title": "Temperatura ma znaczenie.",
+    "hook": "Wygląd potrawy nie mówi wszystkiego.",
+    "fact": "Dokładna obróbka cieplna oraz odpowiednie przechowywanie to podstawy bezpieczeństwa żywności.",
+    "tip": "Kontroluj warunki gotowania i chłodzenia.",
+    "source": "https://www.who.int/publications/i/item/9789241594639"
+  },
+  {
+    "slug": "woda",
+    "title": "Bezpieczna woda to podstawa.",
+    "hook": "Składnik, o którym łatwo zapomnieć? Woda.",
+    "fact": "Do przygotowania posiłków używaj bezpiecznej wody i surowców z wiarygodnych źródeł.",
+    "tip": "Sprawdzaj wodę i pochodzenie produktów.",
+    "source": "https://www.who.int/publications/i/item/9789241594639"
+  },
+  {
+    "slug": "etykieta",
+    "title": "Etykieta to więcej niż nazwa.",
+    "hook": "Najpierw czytaj. Potem wybieraj.",
+    "fact": "Etykieta pozwala znaleźć informacje o składzie, alergenach i zasadach przechowywania.",
+    "tip": "Sprawdzaj etykietę przed zakupem.",
+    "source": "https://food.ec.europa.eu/safety/labelling-and-nutrition/food-information-consumers-legislation_en"
+  },
+  {
+    "slug": "alergeny",
+    "title": "Alergeny? Sprawdź skład.",
+    "hook": "Drobny zapis może mieć duże znaczenie.",
+    "fact": "W Unii Europejskiej określone alergeny są wyróżniane w wykazie składników produktu.",
+    "tip": "Przed spożyciem przeczytaj skład.",
+    "source": "https://food.ec.europa.eu/safety/labelling-and-nutrition/food-information-consumers-legislation_en"
+  },
+  {
+    "slug": "daty",
+    "title": "Dwie daty. Dwa znaczenia.",
+    "hook": "„Należy spożyć do” i „najlepiej spożyć przed” to nie to samo.",
+    "fact": "Data przydatności do spożycia dotyczy bezpieczeństwa. Data minimalnej trwałości odnosi się przede wszystkim do jakości.",
+    "tip": "Zwróć uwagę na rodzaj daty i warunki przechowywania.",
+    "source": "https://www.efsa.europa.eu/en/topics/topic/food-date-marking"
+  },
+  {
+    "slug": "chlodzenie",
+    "title": "Zakupy? Nie zapomnij o chłodzeniu.",
+    "hook": "Po zakupach czas też ma znaczenie.",
+    "fact": "Produkty wymagające chłodzenia przechowuj zgodnie z instrukcją na opakowaniu.",
+    "tip": "Od razu odłóż wymagające chłodzenia produkty.",
+    "source": "https://www.who.int/publications/i/item/9789241594639"
+  },
+  {
+    "slug": "deska",
+    "title": "Deska do krojenia też ma znaczenie.",
+    "hook": "Czysty wygląd to nie wszystko.",
+    "fact": "Myj powierzchnie i przybory po kontakcie z surowymi produktami.",
+    "tip": "Umyj nóż i deskę przed ponownym użyciem.",
+    "source": "https://www.who.int/publications/i/item/9789241594639"
+  },
+  {
+    "slug": "owoce",
+    "title": "Warzywa i owoce: higiena ma sens.",
+    "hook": "Świeży wygląd nie zastępuje higieny.",
+    "fact": "Przed przygotowaniem warzyw i owoców zadbaj o czystość rąk, przyborów i wody.",
+    "tip": "Pracuj na czystej powierzchni.",
+    "source": "https://www.who.int/publications/i/item/9789241594639"
+  },
+  {
+    "slug": "opakowania",
+    "title": "Sprawdź opakowanie i etykietę.",
+    "hook": "Nie kupuj wyłącznie oczami.",
+    "fact": "Stan opakowania i zalecane warunki przechowywania są ważnymi informacjami przy wyborze żywności.",
+    "tip": "Zauważ uszkodzenia i przeczytaj zalecenia.",
+    "source": "https://www.who.int/publications/i/item/9789241594639"
+  },
+  {
+    "slug": "pozniej",
+    "title": "Po gotowaniu nie zapominaj o przechowywaniu.",
+    "hook": "Gotowanie się skończyło. Higiena nie.",
+    "fact": "Gotowe posiłki przechowuj w odpowiednich warunkach, by ograniczać rozwój drobnoustrojów.",
+    "tip": "Nie trzymaj potraw bez potrzeby poza właściwymi warunkami.",
+    "source": "https://www.who.int/publications/i/item/9789241594639"
+  },
+  {
+    "slug": "krzyzowe",
+    "title": "Zanieczyszczenie krzyżowe — co to jest?",
+    "hook": "Drobnoustroje mogą się przenosić przez ręce i przybory.",
+    "fact": "Surowa żywność może zanieczyścić produkty gotowe do spożycia poprzez kontakt pośredni.",
+    "tip": "Oddzielaj pracę z produktami surowymi i gotowymi.",
+    "source": "https://www.who.int/publications/i/item/9789241594639"
+  },
+  {
+    "slug": "zrodla",
+    "title": "Fakty zamiast mitów.",
+    "hook": "Internetowa porada to jeszcze nie dowód.",
+    "fact": "Informacje o bezpieczeństwie żywności warto weryfikować w źródłach naukowych i urzędowych.",
+    "tip": "Sprawdź źródło przed udostępnieniem.",
+    "source": "https://www.efsa.europa.eu/en"
+  }
+]
