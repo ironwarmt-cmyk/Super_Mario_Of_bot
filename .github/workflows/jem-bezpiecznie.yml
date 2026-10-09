@@ -27,6 +27,11 @@ jobs:
           pip install -r social_studio/requirements.txt
           sudo apt-get update -qq
           sudo apt-get install -y -qq ffmpeg fonts-dejavu-core
+      - name: Verify editor and investigate official EFSA feed
+        run: |
+          python -m py_compile social_studio/studio.py social_studio/discovery.py
+          python social_studio/test_studio.py
+          python social_studio/discovery.py
       - name: Generate draft, not publish
         env:
           EVENT_CRON: ${{ github.event.schedule }}
