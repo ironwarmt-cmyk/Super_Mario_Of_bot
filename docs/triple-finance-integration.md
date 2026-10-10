@@ -23,6 +23,6 @@ Only a successful, well-formed empty asset list represents zero USDC. An invalid
 
 ## Test
 
-Run `node --test test/balance-response.test.js`. The test suite requires no external dependencies, network connectivity or API credentials.
+Run `node --test test/balance-response.test.cjs`. The test suite requires no external dependencies, network connectivity or API credentials.
 
 Sources: https://www.bitget.com/docs/classic/uta-api-upgrade-guide ; https://www.bitget.com/legacy-docs/uta/account/Get-Account
