@@ -3,7 +3,6 @@
 // Read-only, owner-authenticated Bitget API diagnostics.
 // This module must NOT be used to initiate transfers, withdrawals, or trading.
 const { createHmac } = require('node:crypto');
-const { authenticate } = require('../lib/finance/auth');
 
 const TARGETS = Object.freeze([
   ['funding', '/api/v3/account/funding-assets'],
@@ -79,6 +78,9 @@ async function handler(req, res) {
   res.setHeader('Vary', 'Cookie, Authorization');
   res.setHeader('X-Content-Type-Options', 'nosniff');
   if (req.method !== 'GET') return res.status(405).json({ ok: false, code: 'METHOD_NOT_ALLOWED' });
+  // Load the production owner-auth module only when handling requests.
+  // The pure inspect() function remains testable offline in this Git repo.
+  const { authenticate } = require('../lib/finance/auth');
   if (!authenticate(req, process.env)) return res.status(401).json({ ok: false, code: 'UNAUTHORIZED' });
   const env = process.env;
   const configs = [
