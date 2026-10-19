@@ -748,6 +748,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true });
   } catch (error) {
     console.error("telegram_webhook_error", error);
-    return res.status(500).json({ ok: false, error: error instanceof Error ? error.message : "Webhook failed" });
+    // Answer 200 so Telegram does not re-deliver the same update (retries cause duplicate replies and a "frozen" bot).
+    return res.status(200).json({ ok: false, handled: false });
   }
 }
