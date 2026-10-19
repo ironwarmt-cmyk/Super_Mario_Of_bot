@@ -8,6 +8,6 @@
   },
   "dependencies": {
     "docx": "^9.8.1",
-    "@vercel/oidc": "latest"
+    "@vercel/oidc": "4.0.1"
   }
 }
