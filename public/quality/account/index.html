@@ -62,6 +62,7 @@
       <button class="btn" id="saveBtn" type="submit">Zapisz konto</button>
       <div class="status" id="status"></div>
     </form>
+    <button class="btn secondary" id="logoutBtn" type="button" style="margin-top:12px">Wyloguj</button>
   </div>
 </div>
 
@@ -79,9 +80,11 @@ function apply(){
  firstNameLabel.textContent=t.first; lastNameLabel.textContent=t.last; emailLabel.textContent=t.email; phoneLabel.textContent=t.phone; jobLabel.textContent=t.job;
  companyLabel.textContent=t.companyName; taxLabel.textContent=t.tax; companyCityLabel.textContent=t.city; countryLabel.textContent=t.country;
  privacyText.textContent=t.privacy; termsText.textContent=t.terms; saveBtn.textContent=t.save;
+ logoutBtn.textContent=locale==="en"?"Log out":"Wyloguj";
 }
 function toggleCompany(){companyFields.style.display=accountType.value==="company"?"block":"none";}
 accountType.addEventListener("change",toggleCompany);
+logoutBtn.addEventListener("click",()=>{window.QualityAuth.signOut();});
 
 async function api(method,body){
  const headers=await window.QualityAuth.headers({"content-type":"application/json"});
