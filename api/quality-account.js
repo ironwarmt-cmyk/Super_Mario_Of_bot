@@ -28,6 +28,8 @@ async function webAuthProxy(req, res) {
 
   let path = "";
   let body = {};
+  let method = "POST";
+  let extraHeaders = {};
   if (action === "sign_in") {
     path = "/auth/v1/token?grant_type=password";
     body = { email:String(req.body?.email || ""), password:String(req.body?.password || "") };
@@ -59,14 +61,44 @@ async function webAuthProxy(req, res) {
   } else if (action === "refresh") {
     path = "/auth/v1/token?grant_type=refresh_token";
     body = { refresh_token:String(req.body?.refresh_token || "") };
+  } else if (action === "recover") {
+    const redirect = String(req.body?.redirect_to || "");
+    const email = String(req.body?.email || "").trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ ok:false, error:"Podaj prawidłowy adres e-mail." });
+    }
+    path = "/auth/v1/recover" + (redirect ? "?redirect_to=" + encodeURIComponent(redirect) : "");
+    body = { email };
+  } else if (action === "update_password") {
+    const accessToken = String(req.body?.access_token || "");
+    const password = String(req.body?.password || "");
+    if (!accessToken) {
+      return res.status(401).json({ ok:false, error:"Link do ustawienia hasła wygasł. Poproś o nowy." });
+    }
+    if (
+      password.length < 12 ||
+      !/[a-z]/.test(password) ||
+      !/[A-Z]/.test(password) ||
+      !/[0-9]/.test(password) ||
+      !/[^A-Za-z0-9]/.test(password)
+    ) {
+      return res.status(400).json({
+        ok:false,
+        error:"Hasło musi mieć co najmniej 12 znaków oraz zawierać małą literę, wielką literę, cyfrę i znak specjalny."
+      });
+    }
+    method = "PUT";
+    path = "/auth/v1/user";
+    body = { password };
+    extraHeaders = { authorization: "Bearer " + accessToken };
   } else {
     return res.status(400).json({ ok:false, error:"Unknown web auth action" });
   }
 
   try {
     const upstream = await fetch(base + path, {
-      method:"POST",
-      headers:{ apikey:key, "content-type":"application/json" },
+      method,
+      headers:{ apikey:key, "content-type":"application/json", ...extraHeaders },
       body:JSON.stringify(body),
       signal:AbortSignal.timeout(10000)
     });

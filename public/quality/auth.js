@@ -37,6 +37,8 @@
     async signInWithPassword({email,password}){const x=await proxy("sign_in",{email,password});if(x.error)return x;return {data:{session:save(x.data),user:x.data?.user||null},error:null}},
     async signUp({email,password,options={}}){const x=await proxy("sign_up",{email,password,redirect_to:options.emailRedirectTo||""});if(x.error)return x;return {data:{...x.data,session:save(x.data)},error:null}},
     async resend({email,options={}}){return proxy("resend",{email,redirect_to:options.emailRedirectTo||""})},
+    async resetPasswordForEmail(email,options={}){return proxy("recover",{email,redirect_to:options.redirectTo||""})},
+    async updatePassword(password){const s=await session();if(!s?.access_token)return {data:null,error:{message:"Link do ustawienia hasła wygasł. Poproś o nowy na stronie logowania.",code:"no_session"}};return proxy("update_password",{password,access_token:s.access_token})},
     async signOut(){write(null);return {error:null}},
     async getSession(){return {data:{session:await session()},error:null}}
   };

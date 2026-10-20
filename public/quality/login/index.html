@@ -23,6 +23,7 @@
 <label for="password">Hasło</label><input id="password" type="password" autocomplete="current-password" minlength="8" placeholder="minimum 8 znaków">
 <button class="btn primary" id="loginBtn">Zaloguj</button>
 <button class="btn secondary" id="signupBtn">Utwórz konto</button>
+<button class="btn secondary" id="forgotBtn">Nie pamiętam hasła</button>
 <div class="status" id="status"></div><button class="btn secondary" id="resendBtn" style="display:none">Wyślij ponownie e-mail potwierdzający</button>
 <div class="small">Jedno konto Quality Assurance Support przechowuje Twój plan, limity, historię i ustawienia aplikacji.</div>
 </div>
@@ -91,6 +92,19 @@ signupBtnEl.onclick=async()=>{
  resendBtnEl.style.display="block";
 };
 resendBtnEl.onclick=resendConfirmation;
+const forgotBtnEl=document.getElementById("forgotBtn");
+forgotBtnEl.onclick=async()=>{
+ const e=emailEl.value.trim().toLowerCase();if(!e){show("Najpierw wpisz e-mail, na który zakładasz konto.");return}
+ forgotBtnEl.disabled=true;statusEl.classList.add("active");statusEl.textContent="Wysyłam link…";
+ const {error}=await c.auth.resetPasswordForEmail(e,{redirectTo:location.origin+"/quality/reset/"});
+ forgotBtnEl.disabled=false;
+ if(error){
+   const raw=String(error.message||"");
+   if(/security purposes|rate limit|seconds/i.test(raw)){show("Link można wysłać ponownie po krótkiej przerwie. Odczekaj około minuty.");return}
+   show(raw);return;
+ }
+ show("Jeśli konto z tym adresem istnieje, wysłaliśmy link do ustawienia nowego hasła. Sprawdź także folder SPAM.",true);
+};
 existing();
 </script>
 </body></html>
