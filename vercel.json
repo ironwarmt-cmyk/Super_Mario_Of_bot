@@ -30,6 +30,10 @@
     {
       "path": "/api/telegram?channel=community&mode=sweep",
       "schedule": "15 3 * * *"
+    },
+    {
+      "path": "/api/telegram?channel=community&mode=daily",
+      "schedule": "40 6 * * *"
     }
   ],
   "redirects": [
