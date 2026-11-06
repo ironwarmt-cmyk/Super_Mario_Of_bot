@@ -151,6 +151,52 @@ Deno.serve(async (req) => {
       return json({ ok: true, data: Boolean(data) });
     }
 
+    // ---------- zgłoszenia z rynku i wycofania (agent -> strona) ----------
+    if (action === "report_create") {
+      const text = String(body.source_text || "").trim().slice(0, 6000);
+      if (text.length < 8) return json({ ok: false, error: "Too short" }, 400);
+      const row = {
+        kind: body.kind === "report" ? "report" : "recall", source_text: text,
+        source_url: /^https?:\/\//i.test(String(body.source_url || "")) ? String(body.source_url).slice(0, 500) : null,
+        photo_file_id: body.photo_file_id ? String(body.photo_file_id).slice(0, 200) : null,
+        submitted_by: safeId(body.submitted_by), submitted_name: String(body.submitted_name || "").slice(0, 60),
+        submitted_admin: body.submitted_admin === true, chat_id: safeId(body.chat_id), message_id: safeId(body.message_id), status: "processing"
+      };
+      const { data, error } = await db.from("quality_market_reports").insert(row).select("*").single();
+      if (error) { if (String(error.code) === "23505") return json({ ok: false, error: "Duplicate" }, 409); throw error; }
+      return json({ ok: true, data });
+    }
+    if (action === "report_get") {
+      const { data } = await db.from("quality_market_reports").select("*").eq("id", String(body.id || "")).maybeSingle();
+      return json({ ok: true, data: data || null });
+    }
+    if (action === "report_set") {
+      const allowed = ["processing", "pending_review", "published", "rejected", "error"];
+      const patch: any = { updated_at: now() };
+      if (allowed.includes(body.status)) patch.status = body.status;
+      if (body.data && typeof body.data === "object") patch.data = body.data;
+      if (body.error !== undefined) patch.error = body.error ? String(body.error).slice(0, 500) : null;
+      if (body.reviewed_by) patch.reviewed_by = safeId(body.reviewed_by);
+      if (patch.status === "published") patch.published_at = now();
+      let q = db.from("quality_market_reports").update(patch).eq("id", String(body.id || ""));
+      if (Array.isArray(body.only_if_status)) q = q.in("status", body.only_if_status);
+      const { data, error } = await q.select("*").maybeSingle();
+      if (error) throw error;
+      return json({ ok: true, data: data || null });
+    }
+    if (action === "reports_published") {
+      const limit = Math.min(30, Math.max(1, Number(body.limit) || 12));
+      const { data, error } = await db.from("quality_market_reports").select("id,kind,data,published_at")
+        .eq("status", "published").order("published_at", { ascending: false }).limit(limit);
+      if (error) throw error;
+      return json({ ok: true, data: data || [] });
+    }
+    if (action === "list_admins") {
+      const { data, error } = await db.from("platform_admins").select("telegram_user_id");
+      if (error) throw error;
+      return json({ ok: true, data: (data || []).map((r: any) => Number(r.telegram_user_id)).filter(Boolean) });
+    }
+
     return json({ ok: false, error: "Unknown action" }, 400);
   } catch (e) {
     return json({ ok: false, error: (e as Error).message || "Server error" }, 500);
