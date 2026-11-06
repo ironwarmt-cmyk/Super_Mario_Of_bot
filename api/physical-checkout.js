@@ -1,11 +1,10 @@
+import { PUBLIC_URL, BOT_LINK } from "../lib/brand.js";
 import {
   createQualityPhysicalOrder,
   getQualityPhysicalProduct
 } from "../lib/db.js";
 
-const BASE_URL =
-  process.env.PUBLIC_BASE_URL ||
-  "https://supermarioofbot-iron-war.vercel.app";
+const BASE_URL = PUBLIC_URL;
 
 function html(res, status, title, message) {
   res.status(status).setHeader("Content-Type", "text/html; charset=utf-8");
@@ -22,7 +21,7 @@ main{max-width:620px;margin:10vh auto;padding:28px}
 h1{margin-top:0}.muted{color:#a8b6c6;line-height:1.6}a{color:#54a7ff}
 </style>
 </head>
-<body><main><div class="card"><h1>${title}</h1><p class="muted">${message}</p><p><a href="https://t.me/Super_Mario_Official_bot">Wróć do bota</a></p></div></main></body>
+<body><main><div class="card"><h1>${title}</h1><p class="muted">${message}</p><p><a href="${BOT_LINK}">Wróć do bota</a></p></div></main></body>
 </html>`);
 }
 

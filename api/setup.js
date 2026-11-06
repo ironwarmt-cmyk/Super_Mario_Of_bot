@@ -1,3 +1,4 @@
+import { PUBLIC_URL, BOT_LINK } from "../lib/brand.js";
 import crypto from "node:crypto";
 import { bootstrapDatabase } from "../lib/db.js";
 
@@ -113,7 +114,7 @@ async function configureBotProfile(token) {
       type: "web_app",
       text: "Quality Hub",
       web_app: {
-        url: "https://supermarioofbot-iron-war.vercel.app/quality/?v=20261003-0543"
+        url: `${PUBLIC_URL}/quality/?v=20261003-0543`
       }
     }
   });

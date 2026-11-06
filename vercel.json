@@ -20,6 +20,28 @@
     {
       "source": "/app",
       "destination": "/quality/"
+    },
+    {
+      "source": "/api/community",
+      "destination": "/api/telegram?channel=community"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/telegram?channel=community&mode=sweep",
+      "schedule": "15 3 * * *"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/telegram",
+      "destination": "https://t.me/Super_Mario_Official_bot",
+      "permanent": false
+    },
+    {
+      "source": "/grupa",
+      "destination": "https://t.me/MT_Social_Control_bot",
+      "permanent": false
     }
   ]
 }

@@ -1,3 +1,5 @@
+import { communityHandler } from "../lib/community.js";
+import { PUBLIC_URL, BOT_LINK } from "../lib/brand.js";
 import crypto from "node:crypto";
 import {
   answerCallbackQuery,
@@ -64,7 +66,7 @@ function qualityDownloadUrl(token, telegramUserId, slug, locale = "pl") {
   const payload = `${telegramUserId}:${slug}:${locale}:${expires}`;
   const sig = crypto.createHmac("sha256", webhookSecret(token)).update(payload).digest("hex");
   const params = new URLSearchParams({ u: String(telegramUserId), slug, lang: locale === "en" ? "en" : "pl", exp: String(expires), sig });
-  return `https://supermarioofbot-iron-war.vercel.app/api/quality-download?${params.toString()}`;
+  return `${PUBLIC_URL}/api/quality-download?${params.toString()}`;
 }
 
 function escapeHtml(value = "") {
@@ -72,7 +74,7 @@ function escapeHtml(value = "") {
 }
 
 function qualityAccountLinkUrl(linkToken) {
-  return "https://supermarioofbot.vercel.app/quality/link/?token=" + encodeURIComponent(linkToken);
+  return `${PUBLIC_URL}/quality/link/?token=` + encodeURIComponent(linkToken);
 }
 
 async function sendQualityAccountLink(token, chatId, user, locale = "pl") {
@@ -280,6 +282,9 @@ async function handleMarketAuditBot(req, res) {
 export default async function handler(req, res) {
   const channel = String(req.query?.channel || "");
 
+  // Społeczność QASUPPORT (@MT_Social_Control_bot): portal, webhook, cron, setup.
+  if (channel === "community") return communityHandler(req, res);
+
   if (channel === "market-audit" && req.method === "GET" && String(req.query?.setup || "") === "1") {
     const marketToken = process.env.MARKET_AUDIT_BOT_TOKEN || "";
     if (!marketToken) {
@@ -423,7 +428,7 @@ export default async function handler(req, res) {
                 ? "📦 Chcę wersję drukowaną — przesyłka w cenie"
                 : "📦 I want the printed edition — shipping included",
               web_app: {
-                url: "https://supermarioofbot-iron-war.vercel.app/quality/shipping/"
+                url: `${PUBLIC_URL}/quality/shipping/`
               }
             }]);
           } else if (result.plan.physical_shipping_checkout_url) {
@@ -531,7 +536,7 @@ export default async function handler(req, res) {
         if (!plan || !plan.checkout_enabled || !plan.price_stars) {
           await sendMessage(token, chatId, pl ? "Ten pakiet jest chwilowo niedostępny." : "This plan is temporarily unavailable.");
         } else {
-          const url = "https://supermarioofbot-iron-war.vercel.app/quality/?buy=" + encodeURIComponent(slug) + "&lang=" + encodeURIComponent(locale);
+          const url = `${PUBLIC_URL}/quality/?buy=` + encodeURIComponent(slug) + "&lang=" + encodeURIComponent(locale);
           await sendMessage(token, chatId,
             pl ? "Przed płatnością wymagane jest zapoznanie się z dokumentami i zapis wymaganych zgód." : "Before payment, you must review the legal documents and record the required consents.",
             { inline_keyboard: [[{ text: pl ? "📑 Przejdź do zakupu i zgód" : "📑 Continue to checkout & consents", web_app: { url } }]] }
@@ -568,7 +573,7 @@ export default async function handler(req, res) {
         if (!product || !product.standalone_purchase_enabled) {
           await sendMessage(token, chatId, pl ? "Ten produkt nie jest dostępny pojedynczo." : "This product is not available standalone.");
         } else {
-          const url = "https://supermarioofbot-iron-war.vercel.app/quality/checkout/?kind=product&ref=" + encodeURIComponent(product.slug) + "&type=" + encodeURIComponent(product.product_type || "document") + "&lang=" + encodeURIComponent(locale);
+          const url = `${PUBLIC_URL}/quality/checkout/?kind=product&ref=` + encodeURIComponent(product.slug) + "&type=" + encodeURIComponent(product.product_type || "document") + "&lang=" + encodeURIComponent(locale);
           await sendMessage(token, chatId, pl ? "Przed płatnością wymagane jest przejście przez informacje i zgody." : "Complete the required notices and consents before payment.", { inline_keyboard: [[{ text: pl ? "📑 Kontynuuj zakup" : "📑 Continue checkout", web_app: { url } }]] });
         }
         return res.status(200).json({ ok: true });
@@ -584,7 +589,7 @@ export default async function handler(req, res) {
       if (action.startsWith("qa:token:")) {
         const pack = await getQualityTokenPack(Number(action.split(":")[2]));
         if (pack) {
-          const url = "https://supermarioofbot-iron-war.vercel.app/quality/checkout/?kind=token&ref=" + encodeURIComponent(pack.tokens) + "&lang=" + encodeURIComponent(locale);
+          const url = `${PUBLIC_URL}/quality/checkout/?kind=token&ref=` + encodeURIComponent(pack.tokens) + "&lang=" + encodeURIComponent(locale);
           await sendMessage(token, chatId, pl ? "Przed płatnością wymagane jest przejście przez informacje i zgody." : "Complete the required notices and consents before payment.", { inline_keyboard: [[{ text: pl ? "📑 Kontynuuj zakup" : "📑 Continue checkout", web_app: { url } }]] });
         }
         return res.status(200).json({ ok: true });
@@ -630,7 +635,7 @@ export default async function handler(req, res) {
         const pl = locale !== "en";
         const plan = await getQualityPlan(planLink[1]);
         if (plan) {
-          const url = "https://supermarioofbot-iron-war.vercel.app/quality/?buy=" + encodeURIComponent(plan.slug) + "&lang=" + encodeURIComponent(locale);
+          const url = `${PUBLIC_URL}/quality/?buy=` + encodeURIComponent(plan.slug) + "&lang=" + encodeURIComponent(locale);
           await sendMessage(token, chatId,
             pl ? "Przed płatnością przejdź przez wymagane informacje i zgody." : "Complete the required legal notices and consents before payment.",
             { inline_keyboard: [[{ text: pl ? "📑 Kontynuuj zakup" : "📑 Continue checkout", web_app: { url } }]] }
@@ -644,7 +649,7 @@ export default async function handler(req, res) {
         const pl = locale !== "en";
         const product = await getQualityProduct(productLink[1]);
         if (product) {
-          const url = "https://supermarioofbot-iron-war.vercel.app/quality/checkout/?kind=product&ref=" + encodeURIComponent(product.slug) + "&type=" + encodeURIComponent(product.product_type || "document") + "&lang=" + encodeURIComponent(locale);
+          const url = `${PUBLIC_URL}/quality/checkout/?kind=product&ref=` + encodeURIComponent(product.slug) + "&type=" + encodeURIComponent(product.product_type || "document") + "&lang=" + encodeURIComponent(locale);
           await sendMessage(token, chatId, pl ? "Przed płatnością przejdź przez wymagane informacje i zgody." : "Complete the required legal notices and consents before payment.", { inline_keyboard: [[{ text: pl ? "📑 Kontynuuj zakup" : "📑 Continue checkout", web_app: { url } }]] });
         }
         return res.status(200).json({ ok: true });
@@ -691,7 +696,7 @@ export default async function handler(req, res) {
           isTerms
             ? (pl ? "<b>Regulamin</b>\n\nAktualny Regulamin jest dostępny w Moim koncie w Quality Hub. Przed zakupem system wymaga zapisania aktualnej wersji wymaganych oświadczeń." : "<b>Terms</b>\n\nThe current Terms are available in My Account in Quality Hub. Before purchase, the system records the current required acknowledgements.")
             : (pl ? "<b>Polityka prywatności / RODO</b>\n\nAdministratorem danych jest podmiot wskazany w aktualnej Polityce prywatności. Kontakt: <b>qasupportmt@gmail.com</b>. Pełna informacja jest dostępna w Moim koncie." : "<b>Privacy / GDPR</b>\n\nThe controller is identified in the current Privacy Notice. Contact: <b>qasupportmt@gmail.com</b>. The full notice is available in My Account."),
-          { inline_keyboard: [[{ text: pl ? "👤 Moje konto i dokumenty" : "👤 My account & documents", web_app: { url: "https://supermarioofbot-iron-war.vercel.app/quality/account/" } }]] }
+          { inline_keyboard: [[{ text: pl ? "👤 Moje konto i dokumenty" : "👤 My account & documents", web_app: { url: `${PUBLIC_URL}/quality/account/` } }]] }
         );
         return res.status(200).json({ ok: true });
       }
@@ -720,8 +725,8 @@ export default async function handler(req, res) {
               text: pl ? "📝 Otwórz formularz supportu" : "📝 Open support form",
               web_app: {
                 url: paymentOnly
-                  ? "https://supermarioofbot-iron-war.vercel.app/quality/support/?category=payment"
-                  : "https://supermarioofbot-iron-war.vercel.app/quality/support/"
+                  ? `${PUBLIC_URL}/quality/support/?category=payment`
+                  : `${PUBLIC_URL}/quality/support/`
               }
             }], [{
               text: pl ? "🏠 Quality menu" : "🏠 Quality menu",

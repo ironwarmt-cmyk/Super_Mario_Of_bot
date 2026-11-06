@@ -1,3 +1,4 @@
+import { PUBLIC_URL } from "../lib/brand.js";
 import { resolveQualityIdentity, publicSupabaseConfig } from "../lib/quality-auth.js";
 import {
   getQualityCustomerProfile,
@@ -116,7 +117,21 @@ async function webAuthProxy(req, res) {
   }
 }
 
+// Portal członka na jembezpiecznie.com korzysta z tego samego logowania co aplikacja.
+const PORTAL_ORIGINS = ["https://jembezpiecznie.com", "https://www.jembezpiecznie.com", PUBLIC_URL];
+function portalCors(req, res) {
+  const origin = req.headers?.origin || "";
+  if (!PORTAL_ORIGINS.includes(origin)) return;
+  res.setHeader("Access-Control-Allow-Origin", origin);
+  res.setHeader("Vary", "Origin");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "content-type, authorization");
+  res.setHeader("Access-Control-Max-Age", "600");
+}
+
 export default async function handler(req, res) {
+  portalCors(req, res);
+  if (req.method === "OPTIONS") return res.status(204).end();
   if (!["GET","POST"].includes(req.method)) {
     return res.status(405).json({ ok:false, error:"Method not allowed" });
   }
