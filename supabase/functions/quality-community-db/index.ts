@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
     if (action === "set_nickname") {
       const tg = safeId(body.telegram_user_id); const nick = String(body.nickname || "").trim();
       if (!tg || !/^[\p{L}\p{N} ._-]{2,10}$/u.test(nick)) return json({ ok: false, error: "Invalid nickname" }, 400);
-      const { data: taken } = await db.from("quality_community_members").select("telegram_user_id").ilike("nickname", nick).neq("telegram_user_id", tg).maybeSingle();
+      const { data: taken } = await db.from("quality_community_members").select("telegram_user_id").ilike("nickname", nick.replace(/[\\%_]/g, (m) => "\\" + m)).neq("telegram_user_id", tg).maybeSingle();
       if (taken) return json({ ok: false, error: "Nickname taken" }, 409);
       const { data, error } = await db.from("quality_community_members").update({ nickname: nick, state: "ready", updated_at: now() }).eq("telegram_user_id", tg).select("*").single();
       if (error) throw error;
