@@ -197,6 +197,29 @@ Deno.serve(async (req) => {
       return json({ ok: true, data: (data || []).map((r: any) => Number(r.telegram_user_id)).filter(Boolean) });
     }
 
+    // ---------- newsletter Jem Bezpiecznie ----------
+    if (action === "newsletter_subscribe") {
+      const email = String(body.email || "").trim().toLowerCase();
+      if (!/^[^\s@]{1,64}@[^\s@]{1,190}\.[a-z]{2,24}$/i.test(email)) return json({ ok: false, error: "Invalid email" }, 400);
+      const consent = String(body.consent_text || "").slice(0, 600);
+      if (!consent) return json({ ok: false, error: "Consent required" }, 400);
+      const { data: existing } = await db.from("jem_newsletter_subscribers").select("id,status").ilike("email", email.replace(/[\\%_]/g, (m) => "\\" + m)).maybeSingle();
+      if (existing) {
+        await db.from("jem_newsletter_subscribers").update({ status: "subscribed", consent_text: consent, consent_at: now(), updated_at: now(), unsubscribed_at: null }).eq("id", existing.id);
+        return json({ ok: true, data: { created: false, resubscribed: existing.status !== "subscribed" } });
+      }
+      const { error } = await db.from("jem_newsletter_subscribers").insert({ email, consent_text: consent, source: String(body.source || "jembezpiecznie.com").slice(0, 80) });
+      if (error) { if (String(error.code) === "23505") return json({ ok: true, data: { created: false } }); throw error; }
+      const { count } = await db.from("jem_newsletter_subscribers").select("id", { count: "exact", head: true }).eq("status", "subscribed");
+      return json({ ok: true, data: { created: true, total: count || 0 } });
+    }
+    if (action === "newsletter_unsubscribe") {
+      const t = String(body.token || "");
+      if (!/^[a-f0-9]{32}$/.test(t)) return json({ ok: false, error: "Invalid token" }, 400);
+      const { data } = await db.from("jem_newsletter_subscribers").update({ status: "unsubscribed", unsubscribed_at: now(), updated_at: now() }).eq("unsubscribe_token", t).select("id").maybeSingle();
+      return json({ ok: true, data: { done: Boolean(data) } });
+    }
+
     return json({ ok: false, error: "Unknown action" }, 400);
   } catch (e) {
     return json({ ok: false, error: (e as Error).message || "Server error" }, 500);
