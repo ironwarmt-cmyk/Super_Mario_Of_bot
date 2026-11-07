@@ -220,6 +220,19 @@ Deno.serve(async (req) => {
       return json({ ok: true, data: { done: Boolean(data) } });
     }
 
+    if (action === "newsletter_active") {
+      const { data, error } = await db.from("jem_newsletter_subscribers").select("email,unsubscribe_token").eq("status", "subscribed").order("created_at").limit(2000);
+      if (error) throw error;
+      return json({ ok: true, data: (data || []).map((r: any) => ({ email: r.email, token: r.unsubscribe_token })) });
+    }
+    if (action === "newsletter_log") {
+      const { data: cur } = await db.from("platform_config").select("value").eq("key", "newsletter_issues").maybeSingle();
+      const list = Array.isArray(cur?.value?.issues) ? cur.value.issues : [];
+      list.unshift({ at: now(), subject: String(body.subject || "").slice(0, 120), sent: Number(body.sent) || 0, failed: Number(body.failed) || 0, mode: String(body.mode || "") });
+      await db.from("platform_config").upsert({ key: "newsletter_issues", value: { issues: list.slice(0, 50) }, updated_at: now() });
+      return json({ ok: true, data: true });
+    }
+
     return json({ ok: false, error: "Unknown action" }, 400);
   } catch (e) {
     return json({ ok: false, error: (e as Error).message || "Server error" }, 500);
