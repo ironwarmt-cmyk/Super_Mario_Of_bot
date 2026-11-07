@@ -233,6 +233,46 @@ Deno.serve(async (req) => {
       return json({ ok: true, data: true });
     }
 
+    // ---------- limity analiz etykiet (strona + Telegram) ----------
+    // subject: "ip:<sha256 64>" albo "user:<web_user_id>"; period: "all" albo "RRRR-MM".
+    const quotaKey = () => {
+      const subject = String(body.subject || ""), period = String(body.period || "");
+      if (!/^(ip:[a-f0-9]{64}|user:-?\d{1,20})$/.test(subject) || !/^(all|\d{4}-\d{2})$/.test(period)) return null;
+      return { subject, period };
+    };
+    if (action === "label_usage") {
+      const k = quotaKey(); if (!k) return json({ ok: false, error: "Invalid quota key" }, 400);
+      const { data } = await db.from("jem_label_quota").select("used").eq("subject", k.subject).eq("period", k.period).maybeSingle();
+      return json({ ok: true, data: { used: Number(data?.used || 0) } });
+    }
+    if (action === "label_consume") {
+      const k = quotaKey(); const limit = Number(body.limit);
+      if (!k || !Number.isSafeInteger(limit) || limit < 0) return json({ ok: false, error: "Invalid quota" }, 400);
+      // Optymistyczna blokada: zwiększamy tylko, gdy licznik się nie zmienił (do 3 prób).
+      for (let i = 0; i < 3; i++) {
+        const { data: row } = await db.from("jem_label_quota").select("used").eq("subject", k.subject).eq("period", k.period).maybeSingle();
+        const used = Number(row?.used || 0);
+        if (used >= limit) return json({ ok: true, data: { allowed: false, used, limit } });
+        if (!row) {
+          const { error } = await db.from("jem_label_quota").insert({ ...k, used: 1 });
+          if (!error) return json({ ok: true, data: { allowed: true, used: 1, limit } });
+          if (String(error.code) !== "23505") throw error;
+          continue;
+        }
+        const { data: upd, error } = await db.from("jem_label_quota").update({ used: used + 1, updated_at: now() })
+          .eq("subject", k.subject).eq("period", k.period).eq("used", used).select("used").maybeSingle();
+        if (error) throw error;
+        if (upd) return json({ ok: true, data: { allowed: true, used: upd.used, limit } });
+      }
+      return json({ ok: false, error: "Busy" }, 409);
+    }
+    if (action === "label_release") {
+      const k = quotaKey(); if (!k) return json({ ok: false, error: "Invalid quota key" }, 400);
+      const { data: row } = await db.from("jem_label_quota").select("used").eq("subject", k.subject).eq("period", k.period).maybeSingle();
+      if (row && row.used > 0) await db.from("jem_label_quota").update({ used: row.used - 1, updated_at: now() }).eq("subject", k.subject).eq("period", k.period).eq("used", row.used);
+      return json({ ok: true, data: true });
+    }
+
     return json({ ok: false, error: "Unknown action" }, 400);
   } catch (e) {
     return json({ ok: false, error: (e as Error).message || "Server error" }, 500);
