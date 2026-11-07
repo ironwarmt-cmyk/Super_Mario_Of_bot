@@ -62,7 +62,7 @@ function recallReel(w) {
 
 // ---------- render ----------
 async function renderReel(page, reel, file, k) {
-  const total = await page.evaluate((d) => setup(d), { ...reel, seed: n * 5 + k });
+  const total = await page.evaluate((d) => setup(d), { ...reel, seed: mod(n * 5 + k, 100000) + 1 });
   const fps = 30, frames = Math.round(total * fps), tmp = file + '.v.mp4';
   const ff = spawn('ffmpeg', ['-v', 'error', '-y', '-f', 'image2pipe', '-framerate', String(fps), '-c:v', 'mjpeg', '-i', '-', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '21', '-pix_fmt', 'yuv420p', '-r', String(fps), tmp], { stdio: ['pipe', 'inherit', 'inherit'] });
   for (let f = 0; f < frames; f++) {
