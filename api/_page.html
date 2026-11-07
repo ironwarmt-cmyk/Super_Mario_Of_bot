@@ -1321,7 +1321,7 @@ function renderConn(){
   const ap = document.getElementById('bApprove'); ap.hidden = !pending.length;
   document.getElementById('bRefresh').hidden = !liveOn;
   const okN = CONNS.filter(s=>CONN[s].state==='ok').length;
-  if(mode === 'city') document.getElementById('stTxt').textContent = liveOn ? (okN ? `Dane na żywo · ${okN}/3 połączeń` : 'Łączę z usługami…') : 'Dane z audytu 6.11';
+  if(mode === 'city') document.getElementById('stTxt').textContent = liveOn ? (okN ? `Dane na żywo · ${okN}/3 połączeń` : CONNS.every(x=>CONN[x].state==='off') ? 'Dane z audytu 6.11' : 'Łączę z usługami…') : 'Dane z audytu 6.11';
 }
 document.getElementById('bRefresh').addEventListener('click', async e=>{
   const b = e.currentTarget; if(!mcpNS && !serverMode) return; b.disabled = true; b.textContent = 'Odświeżam…';
