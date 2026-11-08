@@ -2,10 +2,11 @@
 // Zasady: tylko prawdziwe funkcje strony/aplikacji/grup; bez słów „bot”, „agent”, „AI”.
 const S = 'jembezpiecznie.com', Q = 'qasupport.jembezpiecznie.com';
 export const TAGS = {
-  site: '#bezpieczeństwożywności #jembezpiecznie #etykiety #wycofania #GIS #świadomyklient #zdrowejedzenie #żywność',
-  app: '#QASUPPORT #jakośćżywności #HACCP #BRCGS #IFSFood #audyt #CAPA #foodsafety #działjakości',
-  tg: '#QASUPPORT #społeczność #telegram #jakośćżywności #HACCP #audyt #foodsafety #jembezpiecznie',
-  fact: '#bezpieczeństwożywności #wiedza #jembezpiecznie #etykiety #kuchnia #zdrowie #żywność #ciekawostki',
+  site: '#bezpieczeństwożywności #jembezpiecznie #etykiety #wycofania #GIS',
+  app: '#QASUPPORT #jakośćżywności #HACCP #BRCGS #działjakości',
+  tg: '#QASUPPORT #jakośćżywności #HACCP #audyt #jembezpiecznie',
+  fact: '#bezpieczeństwożywności #kuchnia #wiedza #jembezpiecznie #żywność',
+  myth: '#mitczyfakt #bezpieczeństwożywności #kuchnia #jembezpiecznie #żywność',
 };
 const end = (title, cta, url = S, sub) => ({ kind: 'end', d: 3, title, cta, url, sub });
 const QA = { brand: 'QASUPPORT', brandSub: 'quality assurance support', url: Q };
@@ -231,4 +232,40 @@ export const ALERT_FALLBACK = [
    { kind: 'recall', sev: 'WZÓR', rh: 'Co jest w komunikacie', items: [{ k: 'Produkt', v: 'Nazwa, gramatura' }, { k: 'Partia', v: 'Porównaj z opakowaniem' }, { k: 'Zagrożenie', v: 'Np. Listeria, szkło, alergen' }] },
    end('Alerty *codziennie*', 'Zobacz alerty')],
    caption: 'Jak czytać komunikat o wycofaniu? 🔎 Liczy się produkt, numer partii i data. Porównaj je z opakowaniem w domu.\n\n👉 Aktualne alerty: jembezpiecznie.com' },
+];
+
+// ---------- Mit czy fakt? (format z najlepszym wynikiem: znane produkty z kuchni + pytanie) ----------
+// q: pytanie-hak (widoczne od 1. klatki), a/b: odpowiedzi, c: indeks poprawnej (0=A, 1=B),
+// why: krótkie wyjaśnienie, src: źródło, ask: pytanie do widzów (podpis i pierwszy komentarz).
+const M = (q, a, b, c, why, src, ask, caption, accent = '#e9d6a8') => ({ accent, ask, scenes: [
+  { kind: 'poll', eyebrow: 'Mit czy fakt?', title: q, small: q.length > 34 ? 1 : 0, items: [a, b] },
+  { kind: 'reveal', d: 4.2, ok: true, verdict: `Odpowiedź: ${'AB'[c]}`, items: [a, b], correct: c, why, src },
+  { kind: 'end', d: 2.6, title: 'Zgadłeś? *Napisz A lub B*', cta: 'Zapisz na później', url: 'jembezpiecznie.com' }],
+  caption: caption + '\n\n💬 ' + ask + '\n🔖 Zapisz, żeby mieć pod ręką, i wyślij osobie, która gotuje w Twoim domu.' });
+
+export const MYTH = [
+ M('Myjesz surowego *kurczaka?*', 'Tak, pod kranem', 'Nie, od razu na patelnię', 1, 'Woda *rozpryskuje bakterie* (np. Campylobacter) po zlewie i blacie. Bakterie zabija dopiero obróbka cieplna.', 'Źródło: zalecenia EFSA i instytucji bezpieczeństwa żywności', 'Myłeś kiedyś kurczaka pod kranem? Przyznaj się w komentarzu: A albo B 👇', 'Mycie surowego kurczaka nie usuwa bakterii – roznosi je po kuchni. 🍗 Bakterie zabija odpowiednia obróbka cieplna, a deskę i ręce myjemy po kontakcie z surowym mięsem.'),
+ M('Pleśń na chlebie: *odkroić* i zjeść?', 'Odkroić zielone miejsce', 'Wyrzucić cały bochenek', 1, 'Strzępki pleśni wnikają *głęboko w miękkie pieczywo*, nawet tam, gdzie ich nie widać.', 'Źródło: USDA FSIS, „Molds on Food”', 'A Ty co robisz ze spleśniałym chlebem? Napisz A albo B 👇', 'Spleśniały chleb wyrzucamy w całości. 🍞 W miękkim pieczywie pleśń rozrasta się w głąb, a niektóre pleśnie wytwarzają mykotoksyny.'),
+ M('Pleśń na twardym *serze?*', 'Wyrzucić cały ser', 'Odkroić z zapasem', 1, 'Twardy ser (np. parmezan, cheddar) można uratować: odkrój *co najmniej 2,5 cm* wokół pleśni. Miękki ser wyrzuć.', 'Źródło: USDA FSIS, „Molds on Food”', 'Zaskoczony? Napisz w komentarzu, czy wiedziałeś 👇', 'Twardy ser z pleśnią to wyjątek: wystarczy odkroić co najmniej 2,5 cm wokół zmiany, uważając, żeby nożem nie dotknąć pleśni. 🧀 Ser miękki, twarożek czy ser tarty wyrzucamy.'),
+ M('Reguła *5 sekund* działa?', 'Tak, szybko podniesione jest OK', 'Nie, bakterie są szybsze', 1, 'W badaniu Rutgers bakterie przenosiły się na jedzenie *w mniej niż sekundę*. Najszybciej na mokre produkty, np. arbuz.', 'Źródło: Miranda i Schaffner, Rutgers University, 2016', 'Stosujesz regułę 5 sekund? Bądź szczery: A albo B 👇', 'Reguła 5 sekund to mit. ⏱ Bakterie mogą przejść z podłogi na jedzenie w mniej niż sekundę, a wilgotne produkty zbierają ich najwięcej.'),
+ M('Mrożenie *zabija bakterie?*', 'Tak, zamrażarka sterylizuje', 'Nie, tylko je usypia', 1, 'Mróz *zatrzymuje namnażanie*, ale po rozmrożeniu bakterie znów rosną. Zabija je dopiero odpowiednia temperatura gotowania.', 'Źródło: USDA FSIS, „Freezing and Food Safety”', 'Myślałeś, że zamrażarka zabija bakterie? A czy B? 👇', 'Zamrażarka nie zabija bakterii – tylko wstrzymuje ich wzrost. ❄ Po rozmrożeniu traktuj produkt jak świeży i zużyj go szybko.'),
+ M('„Najlepiej spożyć przed” minęło. *Wyrzucić?*', 'Tak, od razu do kosza', 'Nie zawsze – sprawdź produkt', 1, 'To *data minimalnej trwałości*. Po niej produkt często nadal jest dobry, jeśli był dobrze przechowywany. Inaczej niż „należy spożyć do”.', 'Źródło: rozporządzenie (UE) nr 1169/2011', 'Wyrzucasz produkty po dacie „najlepiej spożyć przed”? A albo B 👇', '„Najlepiej spożyć przed” to nie to samo co „należy spożyć do”. 📅 Pierwsza data mówi o jakości, druga o bezpieczeństwie. Po „należy spożyć do” produktu nie jemy.'),
+ M('Wybrzuszona *puszka* pachnie dobrze. Jeść?', 'Tak, skoro zapach OK', 'Nie, wyrzucić bez próbowania', 1, 'Wybrzuszenie może oznaczać *Clostridium botulinum*. Toksyny botulinowej nie poczujesz ani nie zobaczysz.', 'Źródło: GIS · WHO, botulizm', 'Wyrzuciłbyś taką puszkę? Napisz A albo B 👇', 'Wybrzuszonej, wgniecionej na zgrzewie albo cieknącej puszki nie otwieramy i nie próbujemy. 🥫 Toksyna botulinowa nie zmienia zapachu ani smaku, a jest bardzo groźna.', '#ff8a8a'),
+ M('Miód dla dziecka *przed 1. rokiem?*', 'Tak, to naturalne', 'Nie, dopiero po roczku', 1, 'Miód może zawierać *przetrwalniki Clostridium botulinum*. Układ pokarmowy niemowlęcia jeszcze sobie z nimi nie radzi.', 'Źródło: WHO · zalecenia pediatryczne', 'Wiedziałeś o tym? Wyślij to rodzicom maluchów 👇', 'Dzieciom przed ukończeniem 12. miesiąca nie podajemy miodu – nawet do smoczka czy herbatki. 🍯 Chodzi o ryzyko botulizmu niemowlęcego.', '#ff8a8a'),
+ M('Gotowanie *zabija wszystko?*', 'Tak, wysoka temperatura to załatwia', 'Nie, niektóre toksyny zostają', 1, 'Bakterie giną, ale np. *toksyny gronkowca* czy Bacillus cereus wytrzymują gotowanie. Dlatego jedzenie nie może długo stać w cieple.', 'Źródło: EFSA · instytucje bezpieczeństwa żywności', 'Myślałeś, że odgrzanie wszystko naprawi? A albo B 👇', 'Odgrzanie nie naprawi jedzenia, które za długo stało w temperaturze pokojowej. ♨ Niektóre toksyny bakteryjne są odporne na wysoką temperaturę.'),
+ M('Ugotowany *ryż* – całą noc na blacie?', 'Nic się nie stanie', 'Do lodówki jak najszybciej', 1, 'Ryż może zawierać *Bacillus cereus*. W cieple bakteria wytwarza toksynę, której odgrzanie nie usuwa.', 'Źródło: NHS · EFSA', 'Zostawiasz ryż na noc w garnku? A czy B? 👇', 'Ugotowany ryż schładzamy i wkładamy do lodówki jak najszybciej. 🍚 Przetrwalniki Bacillus cereus przeżywają gotowanie, a w cieple bakteria wytwarza toksynę.'),
+ M('Ciepła zupa: *wystudzić* na blacie?', 'Tak, gorącego nie wkładam', 'Szybko schłodzić i do lodówki', 1, 'Najdłużej trwa strefa *5–60 °C*, w której bakterie rosną najszybciej. Podziel na mniejsze porcje i schłodź w ciągu 2 godzin.', 'Źródło: zalecenia instytucji bezpieczeństwa żywności', 'Jak robisz w domu? Napisz A albo B 👇', 'Nie trzeba czekać, aż zupa wystygnie na blacie. 🍲 Podziel ją na mniejsze pojemniki, schłodź szybko i wstaw do lodówki – najlepiej w ciągu 2 godzin.'),
+ M('Surowe mięso w lodówce: *która półka?*', 'Górna, żeby było widać', 'Dolna, w pojemniku', 1, 'Na dolnej półce soki z surowego mięsa *nie kapią* na gotowe jedzenie.', 'Źródło: zasady higieny żywności', 'Gdzie trzymasz mięso? Zrób zdjęcie lodówki 😉 albo napisz A/B 👇', 'Surowe mięso i ryby trzymamy na najniższej półce, w zamkniętym pojemniku. 🥩 Dzięki temu soki nie kapią na produkty gotowe do jedzenia.'),
+ M('Burger *średnio wysmażony* jak stek?', 'Tak, to ta sama wołowina', 'Nie, mielone dopiekamy', 1, 'W steku bakterie są głównie *na powierzchni*. Przy mieleniu trafiają do środka, np. E. coli STEC.', 'Źródło: EFSA · instytucje bezpieczeństwa żywności', 'Jaki burger zamawiasz? A albo B 👇', 'Mięso mielone dopiekamy do środka. 🍔 Podczas mielenia bakterie z powierzchni trafiają do wnętrza, dlatego „różowy” burger to większe ryzyko niż krwisty stek.'),
+ M('Marynata po surowym mięsie *jako sos?*', 'Tak, szkoda wylewać', 'Tylko po zagotowaniu', 1, 'Marynata miała kontakt z *surowym mięsem* i jego bakteriami. Zagotuj ją albo odlej porcję, zanim włożysz mięso.', 'Źródło: USDA FSIS', 'Robisz tak? Napisz A albo B 👇', 'Marynaty, w której leżało surowe mięso, nie podajemy jako sosu bez zagotowania. 🍖 Najprościej odlać porcję do polewania, zanim włożymy mięso.'),
+ M('Rozmrożone mięso *zamrozić ponownie?*', 'Nigdy, to zakazane', 'Można, jeśli było w lodówce', 1, 'Mięso rozmrażane *w lodówce* można zamrozić ponownie – straci trochę jakości. Rozmrożonego na blacie nie zamrażamy.', 'Źródło: USDA FSIS, „Freezing and Food Safety”', 'Zaskoczony? Napisz w komentarzu, czy znałeś tę zasadę 👇', 'Mięso rozmrożone w lodówce można ponownie zamrozić, choć może stracić na jakości. 🧊 Jeśli leżało na blacie albo w ciepłej wodzie – najpierw je ugotuj.'),
+ M('Jajka *myć* przed włożeniem do lodówki?', 'Tak, są brudne', 'Nie, umyj tuż przed użyciem', 1, 'Mycie usuwa *naturalną warstwę ochronną* skorupki. Bakterie łatwiej wnikają do środka.', 'Źródło: zasady obrotu jajami w UE', 'Myjesz jajka od razu po zakupie? A albo B 👇', 'Jajek nie myjemy przed włożeniem do lodówki. 🥚 Mycie usuwa naturalną warstwę ochronną skorupki. Jeśli jajko jest brudne, umyj je tuż przed użyciem.'),
+];
+
+// Pytania do widzów dla rolek faktów (rotacja).
+export const ASK = [
+ 'Wiedziałeś o tym? Napisz TAK albo NIE 👇',
+ 'Jak to wygląda u Ciebie w domu? Napisz w komentarzu 👇',
+ 'Znasz kogoś, kto powinien to zobaczyć? Wyślij mu tę rolkę 📩',
+ 'Jaki temat mamy sprawdzić następny? Napisz w komentarzu 👇',
 ];

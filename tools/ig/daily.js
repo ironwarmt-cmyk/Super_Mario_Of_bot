@@ -6,7 +6,7 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { SITE, TGB, APP, FACT, ALERT_FALLBACK, TAGS } from './content.js';
+import { SITE, TGB, APP, FACT, MYTH, ASK, ALERT_FALLBACK, TAGS } from './content.js';
 import { recentWarnings } from './gis.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -14,7 +14,7 @@ export const STORE = 'https://ixivedtgqgryawxsxnqd.supabase.co/storage/v1/object
 const warsawDate = () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Warsaw' }).format(new Date());
 const DATE = process.argv[2] || warsawDate();
 const OUT = path.resolve(process.argv[3] || `ig-out/${DATE}`);
-const BAD = /\b(bot\w*|agent\w*|AI)\b|automat|sztuczn/i;
+const BAD = /\b(bot|boty|bota|botem|botów|chatbot\w*|agent\w*|AI)\b|automat|sztuczn/i;
 fs.mkdirSync(OUT, { recursive: true });
 
 const n = Math.round((Date.parse(DATE) - Date.parse('2026-11-08')) / 864e5);
@@ -53,7 +53,7 @@ function recallReel(w) {
   if (p.batch) rows.push({ k: 'Partia', v: short(p.batch, 34) });
   if (p.date) rows.push({ k: 'Data', v: p.date.replace(/\s*r\.$/, '') });
   return { accent: '#ff8a8a', scenes: [
-    { kind: 'hook', eyebrow: `Ostrzeżenie GIS · ${plDate(w.date)}`, title: 'Sprawdź *swoją* lodówkę', small: 1, sub: short(hazardOf(w), 110) },
+    { kind: 'hook', eyebrow: `Ostrzeżenie GIS · ${plDate(w.date)}`, title: p.name ? `Masz w domu *${short(p.name, 38)}?*` : 'Sprawdź *swoją* lodówkę', small: 1, sub: short(hazardOf(w), 110) },
     { kind: 'recall', d: 4.4, sev: 'WYCOFANIE', rh: short(hazardOf(w), 55), items: rows.filter((r) => r.v) },
     { kind: 'hook', d: 3.6, eyebrow: 'Co zrobić', title: 'Porównaj *partię*', small: 1, sub: short(w.advice || 'Sprawdź numer partii i datę na opakowaniu. Postępuj zgodnie z komunikatem GIS.', 150), src: 'Źródło: gov.pl/web/gis/ostrzezenia' },
     { kind: 'end', d: 3, title: 'Alerty *na bieżąco*', cta: 'Zobacz alerty', url: 'jembezpiecznie.com' }],
@@ -85,12 +85,21 @@ async function renderReel(page, reel, file, k) {
   const fresh = [];
   for (const w of warnings) { if (!(await exists(`${STORE}/recall/${w.slug}.jpg`))) fresh.push(w); if (fresh.length >= 3) break; }
 
+  // Miks wg statystyk: rolki z pytaniem o znane produkty z kuchni mają najwięcej wyświetleń,
+  // rolki reklamowe najmniej – więc 1 promo dziennie (rotacja strona / Telegram / aplikacja).
+  const myth = (i) => { const m = MYTH[mod(i, MYTH.length)]; if (mod(i, 2) === 0) return m; // co drugi: poprawna odpowiedź A
+    const sw = (sc) => sc.kind === 'poll' ? { ...sc, items: [sc.items[1], sc.items[0]] } : sc.kind === 'reveal' ? { ...sc, items: [sc.items[1], sc.items[0]], correct: 1 - sc.correct, verdict: `Odpowiedź: ${'AB'[1 - sc.correct]}` } : sc;
+    return { ...m, scenes: m.scenes.map(sw) }; };
+  const fact = (i) => { const f = FACT[mod(i, FACT.length)]; const ask = ASK[mod(i, ASK.length)];
+    return { ...f, ask, caption: f.caption.replace(/\n\n👉 Więcej wyjaśnień: jembezpiecznie\.com$/, '') + '\n\n💬 ' + ask + '\n\n👉 Więcej wyjaśnień: jembezpiecznie.com' }; };
+  const promoSets = [['site', SITE], ['tg', TGB], ['app', APP]]; const [pc, pset] = promoSets[mod(n, 3)];
+  const promo = pset[mod(Math.floor(n / 3), pset.length)];
   const reels = [
-    { cat: 'site', ...SITE[mod(n, SITE.length)] },
-    { cat: 'tg', ...TGB[mod(n, TGB.length)] },
-    { cat: 'app', ...APP[mod(n, APP.length)] },
-    { cat: 'fact', ...FACT[mod(n, FACT.length)] },
-    fresh[0] ? { cat: 'recall', ...recallReel(fresh[0]) } : (mod(n, 3) === 0 ? { cat: 'site', ...ALERT_FALLBACK[0] } : { cat: 'fact', ...FACT[mod(n + 14, FACT.length)] }),
+    { cat: 'myth', ...myth(n) },
+    { cat: 'fact', ...fact(n) },
+    fresh[0] ? { cat: 'recall', ...recallReel(fresh[0]), ask: 'Masz ten produkt w domu? Sprawdź partię i oznacz osobę, która robi zakupy 👇' } : { cat: 'myth', ...myth(n + 8) },
+    { cat: 'myth', ...myth(n + 5) },
+    { cat: pc, ...promo, ask: ASK[mod(n + 1, ASK.length)] },
   ];
   const b = await chromium.launch();
   const page = await b.newPage({ viewport: { width: 720, height: 1280 }, deviceScaleFactor: 1 });
@@ -101,10 +110,11 @@ async function renderReel(page, reel, file, k) {
   for (const [k, r] of reels.entries()) {
     const file = `r${k + 1}.mp4`;
     const caption = r.cat === 'recall' ? r.caption : `${r.caption}\n\n${TAGS[r.cat]}`;
+    if (BAD.test(r.ask || '')) throw new Error('niedozwolone słowo w komentarzu ' + (k + 1));
     if (BAD.test(caption) || BAD.test(JSON.stringify(r.scenes))) throw new Error('niedozwolone słowo w rolce ' + (k + 1));
     const dur = await renderReel(page, r, path.join(OUT, file), k);
     await page.evaluate(() => render(2.2)); await page.screenshot({ path: path.join(OUT, `r${k + 1}.jpg`), type: 'jpeg', quality: 88 });
-    manifest.reels.push({ file, cover: `r${k + 1}.jpg`, cat: r.cat, seconds: Math.round(dur), caption });
+    manifest.reels.push({ file, cover: `r${k + 1}.jpg`, cat: r.cat, seconds: Math.round(dur), caption, comment: r.ask || null });
     console.log('reel', k + 1, r.cat, Math.round(dur) + 's');
   }
   const pp = await b.newPage({ viewport: { width: 1080, height: 1350 }, deviceScaleFactor: 1 });
