@@ -243,7 +243,7 @@ const M = (q, a, b, c, why, src, ask, caption, accent = '#e9d6a8') => ({ accent,
   { kind: 'end', d: 2.6, title: 'Zgadłeś? *Napisz A lub B*', cta: 'Zapisz na później', url: 'jembezpiecznie.com' }],
   caption: caption + '\n\n💬 ' + ask + '\n🔖 Zapisz, żeby mieć pod ręką, i wyślij osobie, która gotuje w Twoim domu.' });
 
-export const MYTH = [
+const MYTH_BASE = [
  M('Myjesz surowego *kurczaka?*', 'Tak, pod kranem', 'Nie, od razu na patelnię', 1, 'Woda *rozpryskuje bakterie* (np. Campylobacter) po zlewie i blacie. Bakterie zabija dopiero obróbka cieplna.', 'Źródło: zalecenia EFSA i instytucji bezpieczeństwa żywności', 'Myłeś kiedyś kurczaka pod kranem? Przyznaj się w komentarzu: A albo B 👇', 'Mycie surowego kurczaka nie usuwa bakterii – roznosi je po kuchni. 🍗 Bakterie zabija odpowiednia obróbka cieplna, a deskę i ręce myjemy po kontakcie z surowym mięsem.'),
  M('Pleśń na chlebie: *odkroić* i zjeść?', 'Odkroić zielone miejsce', 'Wyrzucić cały bochenek', 1, 'Strzępki pleśni wnikają *głęboko w miękkie pieczywo*, nawet tam, gdzie ich nie widać.', 'Źródło: USDA FSIS, „Molds on Food”', 'A Ty co robisz ze spleśniałym chlebem? Napisz A albo B 👇', 'Spleśniały chleb wyrzucamy w całości. 🍞 W miękkim pieczywie pleśń rozrasta się w głąb, a niektóre pleśnie wytwarzają mykotoksyny.'),
  M('Pleśń na twardym *serze?*', 'Wyrzucić cały ser', 'Odkroić z zapasem', 1, 'Twardy ser (np. parmezan, cheddar) można uratować: odkrój *co najmniej 2,5 cm* wokół pleśni. Miękki ser wyrzuć.', 'Źródło: USDA FSIS, „Molds on Food”', 'Zaskoczony? Napisz w komentarzu, czy wiedziałeś 👇', 'Twardy ser z pleśnią to wyjątek: wystarczy odkroić co najmniej 2,5 cm wokół zmiany, uważając, żeby nożem nie dotknąć pleśni. 🧀 Ser miękki, twarożek czy ser tarty wyrzucamy.'),
@@ -262,6 +262,32 @@ export const MYTH = [
  M('Jajka *myć* przed włożeniem do lodówki?', 'Tak, są brudne', 'Nie, umyj tuż przed użyciem', 1, 'Mycie usuwa *naturalną warstwę ochronną* skorupki. Bakterie łatwiej wnikają do środka.', 'Źródło: zasady obrotu jajami w UE', 'Myjesz jajka od razu po zakupie? A albo B 👇', 'Jajek nie myjemy przed włożeniem do lodówki. 🥚 Mycie usuwa naturalną warstwę ochronną skorupki. Jeśli jajko jest brudne, umyj je tuż przed użyciem.'),
  M('Myjesz surowe *mięso* przed gotowaniem?', 'Tak, tak jest czyściej', 'Nie, od razu do obróbki', 1, 'Woda *nie usuwa bakterii* (np. Salmonella, Campylobacter) – rozpryskuje je po zlewie, blacie i naczyniach. Zabija je dopiero obróbka cieplna.', 'Źródło: zalecenia EFSA · USDA FSIS', 'Myjesz mięso przed gotowaniem? Przyznaj się: A albo B 👇', 'Surowego mięsa nie myjemy przed gotowaniem – ani drobiu, ani wieprzowiny, ani wołowiny. 🥩 Woda nie usuwa bakterii, tylko roznosi je po kuchni. Bakterie zabija odpowiednia obróbka cieplna, a po kontakcie z surowym mięsem myjemy ręce, deskę i nóż.'),
 ];
+// Dlaczego + przykład dla każdego quizu (ta sama kolejność co MYTH_BASE).
+// t: tytuł planszy „Dlaczego?”, why: mechanizm, ex: przykład z życia.
+const WHY = [
+ ['Woda *roznosi* bakterie', 'Bakterie siedzą na powierzchni mięsa. Strumień wody odbija się od niego i niesie krople po kuchni.', 'Krople spod kranu lądują na myjce, kubkach i warzywach do sałatki – a sałatki już nikt nie gotuje.'],
+ ['Pleśń ma *korzenie*', 'To, co widać, to tylko „owoc” pleśni. Jej strzępki rosną w głąb miękkiego, wilgotnego pieczywa.', 'Zielona kropka wielkości paznokcia może mieć strzępki w całej kromce obok.'],
+ ['Twardy ser *nie wpuszcza* pleśni', 'W twardym, suchym serze strzępki nie przenikają daleko. W miękkim serze rozchodzą się szybko.', 'Parmezan z kropką pleśni: odkrój 2,5 cm. Serek wiejski z pleśnią: cały do kosza.'],
+ ['Bakterie *nie czekają*', 'Przeniesienie zaczyna się w chwili kontaktu. Liczy się wilgotność jedzenia i podłoża, a nie zegarek.', 'Plaster arbuza zbiera bakterie z podłogi szybciej niż suche ciastko.'],
+ ['Mróz to *pauza*, nie stop', 'W zamrażarce bakterie przestają się namnażać, ale większość z nich przeżywa.', 'Kurczak rozmrożony po 3 miesiącach ma te same bakterie co w dniu zamrożenia.'],
+ ['Dwie daty, *dwa znaczenia*', '„Najlepiej spożyć przed” dotyczy smaku i konsystencji. „Należy spożyć do” – bezpieczeństwa.', 'Makaron czy ryż dzień po dacie minimalnej trwałości zwykle są w porządku. Jogurt po „należy spożyć do” – nie.'],
+ ['Toksyny *nie widać*', 'Bakteria jadu kiełbasianego rośnie bez dostępu powietrza i wytwarza gaz – stąd wybrzuszenie.', 'Domowy słoik z odkształconym wieczkiem: nie otwieramy i nie próbujemy nawet łyżeczki.'],
+ ['Dziecięce jelita *są inne*', 'Dorosły układ pokarmowy radzi sobie z przetrwalnikami z miodu. U niemowlęcia mogą wytworzyć toksynę.', 'Smoczek maczany w miodzie „na uspokojenie” to realne ryzyko dla malucha.'],
+ ['Bakteria ginie, *toksyna zostaje*', 'Niektóre bakterie zdążą wytworzyć toksyny odporne na wysoką temperaturę.', 'Sałatka z jajkiem po kilku godzinach w upale może zaszkodzić, nawet jeśli ją podgrzejesz.'],
+ ['Przetrwalniki *przeżywają* gotowanie', 'Gotowanie nie zabija przetrwalników. W ciepłym ryżu „budzą się” i wytwarzają toksynę.', 'Ryż z kolacji zostawiony w garnku do rana to częsta przyczyna zatruć.'],
+ ['Strefa *5–60 °C*', 'W tej temperaturze bakterie mnożą się najszybciej. Duży garnek stygnie w niej godzinami.', 'Pełny garnek rosołu na blacie może być „letni” jeszcze rano.'],
+ ['Grawitacja *nie odpuszcza*', 'Soki z surowego mięsa kapią w dół – na wszystko, co jest pod nimi.', 'Kropla z rozmrażanego kurczaka na górnej półce może spaść na ser albo ciasto.'],
+ ['Mielenie *wciera bakterie* do środka', 'W kawałku mięsa bakterie są na powierzchni i giną na patelni. Mielone ma je w całej objętości.', 'Stek może być krwisty w środku. Burger różowy w środku to większe ryzyko.'],
+ ['Marynata = *surowy sok*', 'W marynacie zostają bakterie z surowego mięsa, które w niej leżało.', 'Polewanie gotowego grilla marynatą z miski przenosi bakterie z powrotem na mięso.'],
+ ['Liczy się, *gdzie* rozmrażałeś', 'W lodówce mięso nie wchodzi w strefę ciepła, więc bakterie nie mają czasu się namnożyć.', 'Mielone rozmrożone w lodówce i niezużyte – możesz zamrozić. To z blatu – najpierw usmaż.'],
+ ['Skorupka ma *ochronę*', 'Na skorupce jest naturalna powłoka, która zamyka pory. Mycie ją zmywa.', 'Jajko umyte i odłożone do lodówki łatwiej wpuszcza Salmonellę ze skorupki do środka.'],
+ ['Woda *nie zabija* bakterii', 'Bakterie trzymają się mięsa. Woda ich nie usuwa, tylko rozpryskuje po zlewie, blacie i naczyniach.', 'Opłukana pierś z kurczaka ma tyle samo bakterii, a zlew i ścierka – dużo więcej.'],
+];
+if (WHY.length !== MYTH_BASE.length) throw new Error('WHY/MYTH długość');
+export const MYTH = MYTH_BASE.map((m, i) => { const [t, why, ex] = WHY[i]; return { ...m,
+  scenes: [m.scenes[0], m.scenes[1], { kind: 'hook', d: 4.4, eyebrow: 'Dlaczego?', title: t, small: 1, sub: why + ' Przykład: ' + ex }, m.scenes[2]],
+  caption: m.caption.replace('\n\n💬 ', `\n\n🔍 Dlaczego? ${why}\n📌 Przykład: ${ex}\n\n💬 `) }; });
+
 
 // Pytania do widzów dla rolek faktów (rotacja).
 export const ASK = [
