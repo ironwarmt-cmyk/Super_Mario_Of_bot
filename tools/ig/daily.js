@@ -94,13 +94,15 @@ async function renderReel(page, reel, file, k) {
     return { ...f, ask, caption: f.caption.replace(/\n\n👉 Więcej wyjaśnień: jembezpiecznie\.com$/, '') + '\n\n💬 ' + ask + '\n\n👉 Więcej wyjaśnień: jembezpiecznie.com' }; };
   const promoSets = [['site', SITE], ['tg', TGB], ['app', APP]]; const [pc, pset] = promoSets[mod(n, 3)];
   const promo = pset[mod(Math.floor(n / 3), pset.length)];
-  const reels = [
+  let reels = [
     { cat: 'myth', ...myth(n) },
     { cat: 'fact', ...fact(n) },
     fresh[0] ? { cat: 'recall', ...recallReel(fresh[0]), ask: 'Masz ten produkt w domu? Sprawdź partię i oznacz osobę, która robi zakupy 👇' } : { cat: 'myth', ...myth(n + 8) },
     { cat: 'myth', ...myth(n + 5) },
     { cat: pc, ...promo, ask: ASK[mod(n + 1, ASK.length)] },
   ];
+  // Pojedyncza rolka na życzenie: IG_ONLY_MYTH=<indeks w MYTH> (bez wycofań)
+  if (process.env.IG_ONLY_MYTH) { reels = [{ cat: 'myth', ...MYTH[+process.env.IG_ONLY_MYTH] }]; fresh.length = 0; }
   const b = await chromium.launch();
   const page = await b.newPage({ viewport: { width: 720, height: 1280 }, deviceScaleFactor: 1 });
   page.on('pageerror', (e) => console.error('PAGEERR', e.message));
