@@ -24,6 +24,14 @@
     {
       "source": "/api/community",
       "destination": "/api/telegram?channel=community"
+    },
+    {
+      "source": "/instagram/latest.json",
+      "destination": "https://ixivedtgqgryawxsxnqd.supabase.co/storage/v1/object/public/ig/latest.json"
+    },
+    {
+      "source": "/instagram/:date/manifest.json",
+      "destination": "https://ixivedtgqgryawxsxnqd.supabase.co/storage/v1/object/public/ig/daily/:date/manifest.json"
     }
   ],
   "crons": [

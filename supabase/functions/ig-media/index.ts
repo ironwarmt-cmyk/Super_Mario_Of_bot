@@ -4,7 +4,7 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
 const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { "content-type": "application/json" } });
-const SAFE = /^(daily\/\d{4}-\d{2}-\d{2}\/[a-z0-9._-]{1,120}|recall\/[a-z0-9._-]{1,120})$/;
+const SAFE = /^(daily\/\d{4}-\d{2}-\d{2}\/[a-z0-9._-]{1,120}|recall\/[a-z0-9._-]{1,120}|latest\.json)$/;
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ ok: false, error: "method" }, 405);

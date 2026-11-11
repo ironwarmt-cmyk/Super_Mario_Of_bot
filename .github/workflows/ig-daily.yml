@@ -1,0 +1,28 @@
+name: IG daily materials
+# Codziennie generuje rolki i posty o wycofaniach GIS, wgrywa je do Supabase
+# i wystawia manifest pod jembezpiecznie.com/instagram/latest.json (czyta go my-social).
+on:
+  schedule:
+    - cron: '17 4 * * *'   # ok. 05:17–06:17 czasu polskiego
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - name: Install Playwright + ffmpeg
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+          npm i --no-save playwright@1.48.2
+          npx playwright install --with-deps chromium
+      - name: Generate
+        run: |
+          D=$(TZ=Europe/Warsaw date +%F)
+          echo "D=$D" >> $GITHUB_ENV
+          node tools/ig/daily.js $D ig-out/$D
+      - name: Upload
+        env: { IG_SECRET: '${{ secrets.IG_SECRET }}' }
+        run: node tools/ig/upload.js ig-out/$D
