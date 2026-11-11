@@ -14,7 +14,7 @@ const call = async (b) => { const r = await fetch(FN, { method: 'POST', headers:
 
 const jobs = [];
 for (const r of m.reels) { jobs.push([r.file, `daily/${m.date}/${r.file}`, r, 'video_url']); jobs.push([r.cover, `daily/${m.date}/${r.cover}`, r, 'cover_url']); }
-for (const r of m.recalls) jobs.push([r.file, `recall/${r.slug}.jpg`, r, 'image_url']);
+for (const r of m.recalls) { jobs.push([r.file, `recall/${r.slug}.jpg`, r, 'image_url']); if (r.story) jobs.push([r.story, `recall/${r.slug}-story.jpg`, r, 'story_url']); }
 const { uploads } = await call({ action: 'sign', paths: jobs.map((j) => j[1]).concat([`daily/${m.date}/manifest.json`]) });
 const put = async (local, key, buf) => {
   const u = uploads[key]; if (!u?.url) throw new Error('brak adresu dla ' + key + ' ' + JSON.stringify(u));

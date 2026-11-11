@@ -8,6 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SITE, TGB, APP, FACT, MYTH, ASK, ALERT_FALLBACK, TAGS } from './content.js';
 import { recentWarnings } from './gis.js';
+import { toStory } from './story.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const STORE = 'https://ixivedtgqgryawxsxnqd.supabase.co/storage/v1/object/public/ig';
@@ -123,7 +124,8 @@ async function renderReel(page, reel, file, k) {
     await pp.goto('file://' + path.join(HERE, 'post.html') + '?i=' + i + '#' + encodeURIComponent(JSON.stringify(data)));
     await pp.waitForSelector('body[data-ready="1"]', { state: 'attached', timeout: 60000 }); await pp.waitForTimeout(300);
     await pp.screenshot({ path: path.join(OUT, file), type: 'jpeg', quality: 90 });
-    manifest.recalls.push({ file, slug: w.slug, source: w.url, caption: recallCaption(w) });
+    const story = `recall-${w.slug}-story.jpg`; await toStory(b, path.join(OUT, file), path.join(OUT, story)); // relacja 9:16
+    manifest.recalls.push({ file, story, slug: w.slug, source: w.url, caption: recallCaption(w) });
     console.log('recall', w.slug);
   }
   await b.close();
