@@ -47,14 +47,28 @@ export function parseDetail(html) {
   return { hazard, advice, products };
 }
 
+// gov.pl bywa chwilowo niedostępne (503/502/504/429) – kilka prób z przerwą
+async function getWithRetry(url, tries = 4) {
+  let last;
+  for (let i = 0; i < tries; i++) {
+    try {
+      const r = await fetch(url, { headers: UA, signal: AbortSignal.timeout(20000) });
+      if (r.ok || ![429, 500, 502, 503, 504].includes(r.status)) return r;
+      last = new Error("GIS " + r.status);
+    } catch (e) { last = e; }
+    if (i < tries - 1) await new Promise((res) => setTimeout(res, 15000 * (i + 1)));
+  }
+  throw last;
+}
+
 export async function recentWarnings(days = 2, { withDetails = true } = {}) {
-  const r = await fetch("https://www.gov.pl/web/gis/ostrzezenia", { headers: UA, signal: AbortSignal.timeout(20000) });
+  const r = await getWithRetry("https://www.gov.pl/web/gis/ostrzezenia");
   if (!r.ok) throw new Error("GIS " + r.status);
   const list = parseList(await r.text(), Date.now() - days * 864e5).filter((x) => /ostrzezenie/.test(x.url));
   if (!withDetails) return list;
   for (const w of list) {
     try {
-      const d = await fetch(w.url, { headers: UA, signal: AbortSignal.timeout(20000) });
+      const d = await getWithRetry(w.url, 2);
       Object.assign(w, d.ok ? parseDetail(await d.text()) : {});
     } catch { /* bez szczegółów */ }
   }
