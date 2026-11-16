@@ -25,7 +25,7 @@ Obejmuje wszystkie dokumenty systemu (polityki, procedury, instrukcje, specyfika
 - Rozporządzenie (WE) nr 852/2004, art. 5 ust. 2 lit. g i ust. 4 (dokumenty i rejestry odpowiednie do charakteru i wielkości przedsiębiorstwa).
 - Rozporządzenie (WE) nr 178/2002, art. 18 (identyfikowalność).
 - BRCGS Food Safety wydanie 9, punkty 3.2 (nadzór nad dokumentacją) i 3.3 (wypełnianie i utrzymanie zapisów).
-- IFS Food wersja 8, rozdział 2.1.2 (dokumentacja i zapisy).
+- IFS Food wersja 8, punkty 2.1.1 (zarządzanie dokumentami) i 2.1.2 (zapisy).
 - ISO 22000:2018, punkt 7.5 (udokumentowane informacje).
 - QM-001, PR-004.
 

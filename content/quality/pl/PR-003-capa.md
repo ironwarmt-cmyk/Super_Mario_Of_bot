@@ -28,7 +28,7 @@ Obejmuje niezgodności wykryte w:
 
 ## 5. Odniesienia
 - Rozporządzenie (WE) nr 852/2004, art. 5 ust. 2 lit. e (działania naprawcze w systemie HACCP).
-- BRCGS Food Safety wydanie 9, punkty 1.1.10–1.1.11 (niezgodności z audytu), 3.7 (działania korygujące i zapobiegawcze).
+- BRCGS Food Safety wydanie 9, punkt 3.7 (działania korygujące i zapobiegawcze).
 - IFS Food wersja 8, rozdział 5.11 (działania korygujące).
 - ISO 22000:2018, punkty 8.9 i 10.1.
 - HA-001, PR-006, PR-010, PR-011, PR-013.
