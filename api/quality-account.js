@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { PUBLIC_URL } from "../lib/brand.js";
 import { resolveQualityIdentity, publicSupabaseConfig } from "../lib/quality-auth.js";
 import {
@@ -17,7 +18,9 @@ import {
   completeQualityChannelLink,
   getQualityEmergencyAudit,
   saveQualityEmergencyAudit,
-  getQualityEmergencyAccess
+  getQualityEmergencyAccess,
+  listQualityProducts,
+  getQualityProductAccess
 } from "../lib/db.js";
 
 async function webAuthProxy(req, res) {
@@ -129,6 +132,42 @@ function portalCors(req, res) {
   res.setHeader("Access-Control-Max-Age", "600");
 }
 
+const LIBRARY_TYPES = new Set(["document","instruction","framework","ebook","training"]);
+
+function signedDownloadUrl(userId, slug, lang) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token) return null;
+  const exp = Math.floor(Date.now() / 1000) + 3600;
+  const secret = crypto.createHash("sha256").update(token).digest("hex");
+  const sig = crypto.createHmac("sha256", secret).update(`${userId}:${slug}:${lang}:${exp}`).digest("hex");
+  const q = new URLSearchParams({ u:String(userId), slug, lang, exp:String(exp), sig });
+  return "/api/quality-download?" + q.toString();
+}
+
+async function qualityLibrary(userId, lang) {
+  const products = (await listQualityProducts(3)).filter(p => p?.active !== false && LIBRARY_TYPES.has(p.product_type));
+  const rows = await Promise.all(products.map(async p => {
+    let access = null;
+    try { access = await getQualityProductAccess(userId, p.slug); } catch (_) { access = null; }
+    const unlocked = Boolean(access?.unlocked);
+    const hasAsset = Boolean(p.asset_path_pl || p.asset_path_en);
+    return {
+      slug:p.slug,
+      category:p.category,
+      product_type:p.product_type,
+      name:lang === "en" ? (p.name_en || p.name_pl) : (p.name_pl || p.name_en),
+      description:lang === "en" ? (p.short_description_en || p.short_description_pl) : (p.short_description_pl || p.short_description_en),
+      minimum_tier_rank:Number(p.minimum_tier_rank || 1),
+      standalone:Boolean(p.standalone_purchase_enabled),
+      unlocked,
+      purchased:Boolean(access?.purchased),
+      download_url:unlocked && hasAsset && p.product_type !== "training" ? signedDownloadUrl(userId, p.slug, lang) : null,
+      sort_order:Number(p.sort_order || 0)
+    };
+  }));
+  return rows.sort((a,b) => a.minimum_tier_rank - b.minimum_tier_rank || a.sort_order - b.sort_order || a.name.localeCompare(b.name, "pl"));
+}
+
 export default async function handler(req, res) {
   portalCors(req, res);
   if (req.method === "OPTIONS") return res.status(204).end();
@@ -178,6 +217,11 @@ export default async function handler(req, res) {
           included_seconds:Number(assistant?.included_seconds || 0)
         }
       });
+    }
+
+    if (mode === "library") {
+      const lang = String(req.query?.lang || req.body?.lang || "pl") === "en" ? "en" : "pl";
+      return res.status(200).json({ ok:true, products:await qualityLibrary(user.id, lang) });
     }
 
     if (mode === "emergency") {

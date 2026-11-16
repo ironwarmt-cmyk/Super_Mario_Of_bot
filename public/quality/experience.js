@@ -111,7 +111,7 @@ function showDiagnostic({title="Coś poszło nie tak",message="Operacja nie zost
   d.hidden=false;
 }
 
-function upgradeModal(required,feature){
+function upgradeModal(required,feature,buy){
   injectShell();
   const backdrop=document.getElementById("qaFeedbackBackdrop");
   const modal=backdrop.querySelector(".qa-modal");
@@ -122,7 +122,7 @@ function upgradeModal(required,feature){
     <h3>${esc(feature||"Ta funkcja")} jest w pakiecie ${esc(required.toUpperCase())}</h3>
     <p class="qa-upgrade-copy">Widzisz ten moduł celowo — możesz sprawdzić, co zyskasz po przejściu na wyższy plan.</p>
     <div class="qa-upgrade-sheen"><span>✦</span><b>${esc(required.toUpperCase())}</b><span>✦</span></div>
-    <a class="qa-btn qa-upgrade-btn" href="/app#plans">Zobacz pakiety</a>
+    ${buy&&buy.href?`<a class="qa-btn qa-upgrade-btn" href="${esc(buy.href)}">${esc(buy.label||"Kup osobno")}</a><a class="qa-btn ghost qa-upgrade-btn" style="margin-top:8px" href="/app#plans">Zobacz pakiety</a>`:`<a class="qa-btn qa-upgrade-btn" href="/app#plans">Zobacz pakiety</a>`}
   `;
   backdrop.hidden=false;
   const restore=()=>{backdrop.hidden=true;modal.innerHTML=original;injectModalBindings()};
@@ -147,7 +147,7 @@ function applyPlan(plan,data){
   document.documentElement.dataset.plan=currentPlan;
   document.querySelectorAll("[data-required-plan]").forEach(el=>{
     const needed=String(el.dataset.requiredPlan||"basic").toLowerCase();
-    const locked=rank(currentPlan)<rank(needed);
+    const locked=el.dataset.purchased!=="1"&&rank(currentPlan)<rank(needed);
     el.classList.toggle("qa-locked",locked);
     let badge=el.querySelector(":scope > .qa-lock-badge");
     if(locked&&!badge){
@@ -160,12 +160,13 @@ function applyPlan(plan,data){
     if(locked&&!el.dataset.qaLockBound){
       el.dataset.qaLockBound="1";
       el.addEventListener("click",e=>{
+        if(!el.classList.contains("qa-locked"))return;
         const interactive=e.target.closest("a,button");
         if(interactive){
           e.preventDefault();
           e.stopPropagation();
         }
-        upgradeModal(needed,el.dataset.feature||el.querySelector("b,h3,h4")?.textContent||"Moduł");
+        upgradeModal(needed,el.dataset.feature||el.querySelector("b,h3,h4")?.textContent||"Moduł",el.dataset.buyHref?{href:el.dataset.buyHref,label:el.dataset.buyLabel}:null);
       });
     }
   });
@@ -228,6 +229,8 @@ window.QAExperience={
   dashboard:()=>dashboard,
   refreshPlan:resolvePlan,
   reportIssue:showDiagnostic,
-  applyPlan
+  applyPlan,
+  reapply:()=>applyPlan(currentPlan,dashboard),
+  embedded:()=>{try{return window.self!==window.top}catch(_){return true}}
 };
 })();

@@ -53,7 +53,10 @@ function renderLesson(){
 async function start(){
  try{await window.QAExperience?.ready}catch(e){}
  const userRank=window.QAExperience?.planRank?.()??0,needed=rank[course.tier]??0;
- if(userRank<needed){gate.innerHTML='<div class="locked-screen"><div class="eyebrow">DOSTĘP '+course.tier.toUpperCase()+'</div><h2>Ten kurs jest widoczny jako zapowiedź.</h2><p>Odblokuj odpowiedni pakiet, aby rozpocząć moduły i zapisywać postęp.</p><a class="qa-btn" href="/app#plans">Zobacz pakiety</a></div>';return}
+ const cid=new URLSearchParams(location.search).get("id")||"",slug=cid==="brcgs"?"training-brc-overview":cid==="ifs"?"training-ifs-overview":"training-"+cid;
+ let bought=false;
+ if(userRank<needed){try{if(await window.QualityAuth?.isAuthenticated?.()){const headers=await window.QualityAuth.headers({"content-type":"application/json"});const r=await fetch("/api/quality-account?mode=library",{method:"POST",headers,body:"{}"});const d=await r.json();bought=!!(d?.products||[]).find(p=>p.slug===slug&&p.purchased);}}catch(e){}}
+ if(userRank<needed&&!bought){gate.innerHTML='<div class="locked-screen"><div class="eyebrow">DOSTĘP '+course.tier.toUpperCase()+'</div><h2>Ten kurs jest widoczny jako zapowiedź.</h2><p>Odblokuj odpowiedni pakiet albo kup ten kurs osobno, aby rozpocząć moduły i zapisywać postęp.</p><a class="qa-btn" href="/quality/checkout/?kind=product&type=training&ref='+encodeURIComponent(slug)+'">Kup ten kurs — 500 zł</a> <a class="qa-btn ghost" href="/app#plans">Zobacz pakiety</a></div>';return}
  courseLayout.hidden=false;paintProgress();renderNav();renderLesson();
 }
 start();

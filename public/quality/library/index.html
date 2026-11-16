@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Biblioteka dokumentów — Quality Assurance Support</title>
+<script src="/quality/auth.js"></script>
+<style>
+:root{--bg:#07111c;--panel:#0d1b2a;--line:#203b54;--text:#f5f7fa;--muted:#9eb0c1;--accent:#3bd6a2;--blue:#54a7ff;--warn:#ffd166}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 10% 0,#133d5c 0,transparent 34%),radial-gradient(circle at 90% 5%,#134a39 0,transparent 28%),var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+.wrap{max-width:1120px;margin:auto;padding:22px 16px 110px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px}.brand{font-size:12px;font-weight:900;letter-spacing:.08em;color:var(--accent)}.top a{color:var(--text);text-decoration:none;font-weight:800;font-size:13px}
+h1{font-size:34px;margin:14px 0 6px}.lead{color:var(--muted);line-height:1.55;max-width:70ch}
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}.filters button{font:inherit;font-size:13px;font-weight:800;padding:8px 13px;border-radius:999px;border:1px solid var(--line);background:#0b1723;color:var(--text);cursor:pointer}.filters button[aria-pressed="true"]{border-color:var(--accent);background:#3bd6a218}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}@media(max-width:900px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:560px){.grid{grid-template-columns:minmax(0,1fr)}}
+.item{display:flex;flex-direction:column;gap:8px;padding:16px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(180deg,var(--panel),#091521)}
+.item .row{display:flex;justify-content:space-between;align-items:center;gap:8px}.tag{font-size:11px;font-weight:900;letter-spacing:.08em;padding:4px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.tag.own{color:#04110c;background:var(--accent);border-color:var(--accent)}.item b{font-size:16px;line-height:1.3}.item p{margin:0;color:#c8d4df;font-size:13.5px;line-height:1.5;flex:1}
+.cta{display:inline-flex;justify-content:center;align-items:center;gap:6px;text-decoration:none;font-weight:900;border-radius:12px;padding:11px 14px;background:var(--accent);color:#04110c;font-size:14px}.cta.dark{background:#162b41;color:var(--text);border:1px solid var(--line)}.cta.blue{background:var(--blue);color:#06111c}
+.acts{display:flex;flex-direction:column;gap:6px}.note{margin-top:18px;padding:14px;border-left:3px solid var(--warn);background:#ffd16612;border-radius:12px;color:#e9e2c8;font-size:13px;line-height:1.5}
+.msg{color:var(--muted);margin:18px 0}
+</style>
+<link rel="stylesheet" href="/quality/theme.css?v=20261005-premium">
+<script defer src="/quality/experience.js?v=20261116-1"></script>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><div class="brand">QUALITY ASSURANCE SUPPORT</div><a href="/app">← Hub</a></div>
+  <h1>Biblioteka dokumentów</h1>
+  <p class="lead">Wszystkie dokumenty, instrukcje, e-booki i szkolenia w jednym miejscu. Każdy dokument możesz kupić osobno za 50 zł albo dostać w pakiecie. Kupione i zawarte w pakiecie pobierasz od razu jako plik Word.</p>
+  <div class="filters" id="filters" role="group" aria-label="Filtr">
+    <button type="button" data-f="all" aria-pressed="true">Wszystko</button>
+    <button type="button" data-f="doc" aria-pressed="false">Dokumenty</button>
+    <button type="button" data-f="training" aria-pressed="false">Szkolenia</button>
+    <button type="button" data-f="ebook" aria-pressed="false">E-booki</button>
+    <button type="button" data-f="own" aria-pressed="false">Moje</button>
+  </div>
+  <div class="msg" id="msg">Ładuję bibliotekę…</div>
+  <div class="grid" id="grid"></div>
+  <div class="note">Materiały są narzędziami wdrożeniowymi. Muszą zostać dostosowane do zakładu, produktu, procesu i obowiązującego prawa. Nie są certyfikacją ani gwarancją wyniku audytu.</div>
+</div>
+<script>
+const TIER={1:"BASIC",2:"PRO",3:"VIP"};
+const TYPE={document:"Dokument",instruction:"Instrukcja",framework:"Szkielet systemu",ebook:"E-book",training:"Szkolenie"};
+let items=[],filter="all";
+function esc(s){const d=document.createElement("div");d.textContent=String(s||"");return d.innerHTML}
+function buyHref(p){return "/quality/checkout/?kind=product"+(p.product_type==="training"?"&type=training":"")+"&ref="+encodeURIComponent(p.slug)}
+function price(p){return p.product_type==="training"?"500 zł":"50 zł"}
+function card(p){
+  const own=p.unlocked;let acts="";
+  if(own&&p.download_url)acts+='<a class="cta" href="'+esc(p.download_url)+'">Pobierz (.docx)</a>';
+  else if(own&&p.product_type==="training")acts+='<a class="cta" href="/quality/training/">Otwórz w Akademii</a>';
+  else if(own)acts+='<span class="tag own">Masz dostęp</span>';
+  if(!own&&p.standalone)acts+='<a class="cta" href="'+buyHref(p)+'">Kup — '+price(p)+'</a>';
+  if(!own)acts+='<a class="cta dark" href="/app#plans">W pakiecie '+TIER[p.minimum_tier_rank]+' i wyższym</a>';
+  return '<article class="item" data-k="'+(p.product_type==="ebook"?"ebook":p.product_type==="training"?"training":"doc")+'" data-own="'+(own?1:0)+'"><div class="row"><span class="tag">'+esc(TYPE[p.product_type]||"Materiał")+'</span><span class="tag'+(own?' own':'')+'">'+(own?'MASZ':TIER[p.minimum_tier_rank])+'</span></div><b>'+esc(p.name)+'</b><p>'+esc(p.description)+'</p><div class="acts">'+acts+'</div></article>';
+}
+function paint(){const list=items.filter(p=>filter==="all"||(filter==="own"?p.unlocked:(filter==="doc"?!["ebook","training"].includes(p.product_type):p.product_type===filter)));
+  grid.innerHTML=list.map(card).join("");msg.textContent=list.length?"":"Brak pozycji w tym filtrze.";msg.hidden=!!list.length;}
+filters.addEventListener("click",e=>{const b=e.target.closest("[data-f]");if(!b)return;filter=b.dataset.f;filters.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b?"true":"false"));paint()});
+(async()=>{try{
+  if(!(await window.QualityAuth.isAuthenticated())){location.href="/quality/login/?next="+encodeURIComponent(location.pathname);return}
+  const headers=await window.QualityAuth.headers({"content-type":"application/json"});
+  const r=await fetch("/api/quality-account?mode=library",{method:"POST",headers,body:"{}"});const d=await r.json();
+  if(!r.ok||!d.ok)throw new Error(d.error||"Nie udało się wczytać biblioteki.");
+  items=d.products||[];paint();
+}catch(e){msg.textContent=e.message}})();
+</script>
+</body>
+</html>
