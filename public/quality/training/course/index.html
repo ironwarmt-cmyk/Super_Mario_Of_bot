@@ -9,7 +9,7 @@
 <script defer src="/quality/experience.js?v=20261005-1"></script>
 <style>
 .course-app{max-width:1180px;margin:auto;padding:22px 16px 110px}.topline{display:flex;justify-content:space-between;gap:12px;align-items:center}.topline a{color:var(--text);text-decoration:none}.course-head{padding:34px 0 18px}.course-layout{display:grid;grid-template-columns:300px 1fr;gap:16px}.side,.lesson{border:1px solid var(--line);border-radius:22px;background:var(--panel);padding:18px}.side{height:max-content;position:sticky;top:14px}.module-btn{width:100%;text-align:left;margin:6px 0;padding:11px;border-radius:13px;border:1px solid var(--line);background:#ffffff06;color:var(--text)}.module-btn.active{border-color:#58d9ff;background:#58d9ff12}.module-btn.done:after{content:" ✓";color:#55efb0}.lesson h2{font-size:30px}.lesson-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}.learning-card{padding:15px;border:1px solid #ffffff16;border-radius:16px;background:#ffffff06}.learning-card b{display:block;margin-bottom:6px}.lesson ul{line-height:1.65;color:var(--muted)}.quizbox{margin-top:18px;padding:17px;border-radius:18px;border:1px solid #8f6bff55;background:#8f6bff0b}.answers{display:grid;gap:8px;margin-top:10px}.answers button{padding:12px;text-align:left;border-radius:12px;border:1px solid var(--line);background:#100d21;color:var(--text)}.answers button.good{border-color:#55efb0;background:#55efb013}.answers button.bad{border-color:#ff6b8a;background:#ff6b8a10}.nextrow{display:flex;justify-content:space-between;gap:10px;margin-top:18px}.nextrow button{flex:1}.locked-screen{padding:34px;text-align:center;border:1px solid #ffd36b55;border-radius:22px;background:linear-gradient(135deg,#ffd36b0c,#58d9ff08)}.progressline{height:8px;border-radius:999px;background:#ffffff0b;overflow:hidden;margin:12px 0}.progressline i{display:block;height:100%;background:linear-gradient(90deg,#58d9ff,#ff5bd8,#ffd36b);width:0}.finish{padding:20px;border-radius:18px;border:1px solid #55efb055;background:#55efb00b;margin-top:18px}@media(max-width:820px){.course-layout{grid-template-columns:1fr}.side{position:static}.lesson-grid{grid-template-columns:1fr}}
-</style>
+.plus-card{padding:15px;border:1px solid #ffffff16;border-radius:16px;background:#ffffff06;margin:12px 0}.plus-card b{display:block;margin-bottom:6px}.plus-card ul{margin:6px 0 0;padding-left:20px}.task-card{border-color:#ffd36b55;background:#ffd36b0b}.final-q{padding:14px;border:1px solid var(--line);border-radius:14px;margin:10px 0}.final-q label{display:block;padding:8px 10px;margin:6px 0;border:1px solid var(--line);border-radius:10px;cursor:pointer}.final-q label.good{border-color:#55efb0;background:#55efb013}.final-q label.bad{border-color:#ff6b8a;background:#ff6b8a10}.final-q .why{margin-top:6px}</style>
 </head>
 <body data-build="2026-10-05-course">
 <div class="course-app">
@@ -32,23 +32,43 @@
 <script src="/quality/training/course/data/suppliers.js?v=20261020-1"></script>
 <script src="/quality/training/course/data/defense.js?v=20261020-1"></script>
 <script src="/quality/training/course/data/leadership.js?v=20261020-1"></script>
+<script src="/quality/training/course/data/plus-hygiene.js?v=20261116-1"></script>
+<script src="/quality/training/course/data/plus-haccp.js?v=20261116-1"></script>
+<script src="/quality/training/course/data/plus-allergens.js?v=20261116-1"></script>
+<script src="/quality/training/course/data/plus-audit.js?v=20261116-1"></script>
+<script src="/quality/training/course/data/plus-brcgs.js?v=20261116-1"></script>
+<script src="/quality/training/course/data/plus-capa.js?v=20261116-1"></script>
+<script src="/quality/training/course/data/plus-complaints.js?v=20261116-1"></script>
+<script src="/quality/training/course/data/plus-defense.js?v=20261116-1"></script>
+<script src="/quality/training/course/data/plus-ifs.js?v=20261116-1"></script>
+<script src="/quality/training/course/data/plus-leadership.js?v=20261116-1"></script>
+<script src="/quality/training/course/data/plus-suppliers.js?v=20261116-1"></script>
 <script>
 const courses=window.QA_COURSES||{};
 const rank={free:0,basic:1,pro:2,vip:3};
 const params=new URLSearchParams(location.search);const id=params.get("id")||"hygiene";const course=courses[id]||courses.hygiene;
 tier.textContent=course.tier.toUpperCase();courseTitle.textContent=course.title;courseLead.textContent=course.lead;document.title=course.title+" — Quality Assurance Support";
-const storageKey="qa_course_"+id+"_v1";
+const storageKey="qa_course_"+id+"_v1";const plus=(window.QA_COURSE_PLUS||{})[courses[id]?id:"hygiene"]||{};
 function loadState(){try{const v=JSON.parse(localStorage.getItem(storageKey)||"null");return v&&typeof v==="object"?v:{done:{},current:0}}catch(e){return {done:{},current:0}}}
 let state=loadState();let current=Math.min(Math.max(0,Number(state.current||0)),course.mods.length-1);
 function save(){state.current=current;try{localStorage.setItem(storageKey,JSON.stringify(state))}catch(e){}paintProgress()}
 function paintProgress(){const done=Object.values(state.done||{}).filter(Boolean).length;courseProgress.style.width=Math.round(done/course.mods.length*100)+"%";progressLabel.textContent=done+" / "+course.mods.length+" modułów ukończonych"}
 function renderNav(){moduleNav.innerHTML=course.mods.map((m,i)=>'<button class="module-btn '+(i===current?'active ':'')+(state.done?.[i]?'done':'')+'" data-i="'+i+'">'+(i+1)+'. '+m+'</button>').join("");moduleNav.querySelectorAll("button").forEach(b=>b.onclick=()=>{current=Number(b.dataset.i);save();renderLesson()})}
 function renderLesson(){
- const title=course.mods[current],t=course.lessons[current]||{p:[],pitfall:""},q=course.quiz[current%course.quiz.length];
- lesson.innerHTML='<div class="eyebrow">MODUŁ '+(current+1)+'</div><h2>'+title+'</h2>'+t.p.map(x=>'<p>'+x+'</p>').join('')+'<div class="learning-card"><b>Pułapka</b><span>'+t.pitfall+'</span></div><p class="small">Materiał edukacyjny. Aktualne wymagania sprawdzaj w źródłach urzędowych i w aktualnej wersji standardu.</p><div class="quizbox"><div class="eyebrow">SPRAWDŹ WIEDZĘ</div><h3>'+q[0]+'</h3><div class="answers">'+q[1].map((a,i)=>'<button data-a="'+i+'">'+a+'</button>').join("")+'</div><div id="quizFeedback" class="small" style="margin-top:9px"></div></div><div class="nextrow"><button class="qa-btn ghost" id="prevBtn" '+(current===0?'disabled':'')+'>← Poprzedni</button><button class="qa-btn" id="nextBtn">'+(current===course.mods.length-1?'Zakończ kurs':'Następny →')+'</button></div>';
+ const title=course.mods[current],t=course.lessons[current]||{p:[],pitfall:""},q=course.quiz[current%course.quiz.length],x=(plus.lessons||[])[current]||{};
+ const extra=(x.more||[]).map(v=>'<p>'+v+'</p>').join('')+(x.example?'<div class="plus-card"><b>Przykład z zakładu</b><span>'+x.example+'</span></div>':'')+(x.check&&x.check.length?'<div class="plus-card"><b>Lista kontrolna</b><ul>'+x.check.map(v=>'<li>'+v+'</li>').join('')+'</ul></div>':'');
+ lesson.innerHTML='<div class="eyebrow">MODUŁ '+(current+1)+'</div><h2>'+title+'</h2>'+t.p.map(x=>'<p>'+x+'</p>').join('')+extra+'<div class="learning-card"><b>Pułapka</b><span>'+t.pitfall+'</span></div>'+(x.task?'<div class="plus-card task-card"><b>Zadanie praktyczne</b><span>'+x.task+'</span></div>':'')+'<p class="small">Materiał edukacyjny. Aktualne wymagania sprawdzaj w źródłach urzędowych i w aktualnej wersji standardu.</p><div class="quizbox"><div class="eyebrow">SPRAWDŹ WIEDZĘ</div><h3>'+q[0]+'</h3><div class="answers">'+q[1].map((a,i)=>'<button data-a="'+i+'">'+a+'</button>').join("")+'</div><div id="quizFeedback" class="small" style="margin-top:9px"></div></div><div class="nextrow"><button class="qa-btn ghost" id="prevBtn" '+(current===0?'disabled':'')+'>← Poprzedni</button><button class="qa-btn" id="nextBtn">'+(current===course.mods.length-1?'Zakończ kurs':'Następny →')+'</button></div>';
  lesson.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{const choice=Number(b.dataset.a),ok=choice===q[2];lesson.querySelectorAll("[data-a]").forEach((x,i)=>{x.disabled=true;if(i===q[2])x.classList.add("good");else if(i===choice)x.classList.add("bad")});quizFeedback.textContent=ok?"Dobra decyzja. Moduł zaliczony.":"Sprawdź zaznaczoną prawidłową odpowiedź i uzasadnij sobie, dlaczego pozostałe opcje są słabsze.";if(ok){state.done=state.done||{};state.done[current]=true;save();renderNav()}});
  prevBtn.onclick=()=>{if(current>0){current--;save();renderNav();renderLesson()}};
- nextBtn.onclick=()=>{if(current<course.mods.length-1){current++;save();renderNav();renderLesson()}else{state.done=state.done||{};state.done[current]=true;save();lesson.innerHTML='<div class="finish"><div class="eyebrow">KURS UKOŃCZONY</div><h2>Ścieżka zakończona.</h2><p>Twój progres został zapisany na tym urządzeniu. Wróć do Akademii i wybierz kolejny kurs.</p><a class="qa-btn" href="/quality/training/">Wróć do Akademii</a></div>';renderNav()}};
+ nextBtn.onclick=()=>{if(current<course.mods.length-1){current++;save();renderNav();renderLesson()}else{state.done=state.done||{};state.done[current]=true;save();if(plus.final&&plus.final.length){renderFinal();renderNav();return}lesson.innerHTML='<div class="finish"><div class="eyebrow">KURS UKOŃCZONY</div><h2>Ścieżka zakończona.</h2><p>Twój progres został zapisany na tym urządzeniu. Wróć do Akademii i wybierz kolejny kurs.</p><a class="qa-btn" href="/quality/training/">Wróć do Akademii</a></div>';renderNav()}};
+}
+function renderFinal(){
+ const F=plus.final;
+ lesson.innerHTML='<div class="eyebrow">TEST KOŃCOWY</div><h2>Sprawdź wiedzę z całego kursu</h2><p>'+F.length+' pytań. Zaliczenie od 80% poprawnych odpowiedzi.</p>'+F.map((q,i)=>'<div class="final-q" data-q="'+i+'"><b>'+(i+1)+'. '+q[0]+'</b>'+q[1].map((a,j)=>'<label><input type="radio" name="f'+i+'" value="'+j+'"> '+a+'</label>').join('')+'<div class="why small" hidden></div></div>').join('')+'<div class="nextrow"><button class="qa-btn ghost" id="backBtn">← Wróć do modułów</button><button class="qa-btn" id="checkBtn">Sprawdź wynik</button></div><div id="finalOut"></div>';
+ backBtn.onclick=()=>{current=course.mods.length-1;save();renderLesson()};
+ checkBtn.onclick=()=>{let ok=0;F.forEach((q,i)=>{const box=lesson.querySelector('[data-q="'+i+'"]'),sel=box.querySelector('input:checked'),v=sel?Number(sel.value):-1;if(v===q[2])ok++;box.querySelectorAll('label').forEach((l,j)=>{l.classList.toggle('good',j===q[2]);l.classList.toggle('bad',j===v&&v!==q[2])});const w=box.querySelector('.why');w.hidden=false;w.textContent=(v===q[2]?'✓ ':'✗ ')+(q[3]||'')});
+  const pct=Math.round(ok/F.length*100),pass=pct>=80;state.final={pct,pass,at:new Date().toISOString()};save();
+  finalOut.innerHTML='<div class="finish"><div class="eyebrow">'+(pass?'KURS ZALICZONY':'SPRÓBUJ PONOWNIE')+'</div><h2>Wynik: '+ok+' / '+F.length+' ('+pct+'%)</h2><p>'+(pass?'Gratulacje. Wynik zapisano na tym urządzeniu – wpisz ukończenie kursu do matrycy kompetencji.':'Przejrzyj wyjaśnienia pod pytaniami, wróć do modułów i rozwiąż test jeszcze raz.')+'</p><a class="qa-btn" href="/quality/training/">Wróć do Akademii</a></div>';finalOut.scrollIntoView({behavior:'smooth'})};
 }
 async function start(){
  try{await window.QAExperience?.ready}catch(e){}
