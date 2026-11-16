@@ -60,6 +60,21 @@ export default async function handler(req, res) {
     const absolutePath = path.resolve(process.cwd(), relativePath);
     if (!absolutePath.startsWith(contentRoot + path.sep)) return res.status(400).json({ ok: false, error: "Invalid asset path" });
 
+    if (req.query.format === "pptx") {
+      const code = (path.basename(relativePath).match(/^([A-Z]{1,5}-\d{2,4})/) || [])[1];
+      if (!code) return res.status(404).json({ ok: false, error: "No presentation" });
+      let deck = null;
+      for (const l of [lang, lang === "en" ? "pl" : "en"]) {
+        try { deck = await fs.readFile(path.join(contentRoot, "slides", l, code + ".pptx")); break; } catch (_) { deck = null; }
+      }
+      if (!deck) return res.status(404).json({ ok: false, error: "No presentation" });
+      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.presentationml.presentation");
+      res.setHeader("Content-Disposition", `attachment; filename="${filenameFor(product, lang).replace(/\.docx$/, "")}.pptx"`);
+      res.setHeader("Content-Length", String(deck.length));
+      res.setHeader("Cache-Control", "private, no-store");
+      return res.status(200).send(deck);
+    }
+
     const markdown = await fs.readFile(absolutePath, "utf8");
     const data = await buildQualityDocx({ product, markdown, lang });
     res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document");

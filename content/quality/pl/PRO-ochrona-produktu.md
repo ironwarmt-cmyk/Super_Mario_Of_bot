@@ -22,7 +22,7 @@ Obejmuje teren zakładu, budynki, magazyny, przyjęcie i wysyłkę, produkcję, 
 
 ## 5. Odniesienia
 - Rozporządzenie (WE) nr 178/2002, art. 14 i 17.
-- BRCGS Food Safety wydanie 9, punkty 4.2 (ochrona produktu – food defence) i 4.1 (otoczenie i bezpieczeństwo zakładu); IFS Food wersja 8, wymagania dotyczące ochrony żywności (food defence).
+- BRCGS Food Safety wydanie 9, punkty 4.2 (ochrona produktu – food defence) i 4.1 (otoczenie i bezpieczeństwo zakładu); IFS Food wersja 8, rozdział 4.21 (food defence).
 - PAS 96:2017 „Guide to protecting and defending food and drink from deliberate attack” (BSI) – wytyczne metodyczne.
 - Rozporządzenie (UE) 2016/679 (RODO) w zakresie monitoringu wizyjnego i danych osób wchodzących.
 - PR-007, PR-013.

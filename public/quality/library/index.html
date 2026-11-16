@@ -47,8 +47,9 @@ function buyHref(p){return "/quality/checkout/?kind=product"+(p.product_type==="
 function price(p){return p.product_type==="training"?"500 zł":"50 zł"}
 function card(p){
   const own=p.unlocked;let acts="";
-  if(own&&p.download_url)acts+='<a class="cta" href="'+esc(p.download_url)+'">Pobierz (.docx)</a>';
-  else if(own&&p.product_type==="training")acts+='<a class="cta" href="/quality/training/">Otwórz w Akademii</a>';
+  if(own&&p.download_url)acts+='<a class="cta" href="'+esc(p.download_url)+'">'+(p.product_type==="training"?"Podręcznik i test (.docx)":"Pobierz (.docx)")+'</a>';
+  if(own&&p.slides_url)acts+='<a class="cta" href="'+esc(p.slides_url)+'">Prezentacja (.pptx)</a>';
+  if(own&&p.product_type==="training"&&!p.download_url)acts+='<a class="cta" href="/quality/training/">Otwórz w Akademii</a>';
   else if(own)acts+='<span class="tag own">Masz dostęp</span>';
   if(!own&&p.standalone)acts+='<a class="cta" href="'+buyHref(p)+'">Kup — '+price(p)+'</a>';
   if(!own)acts+='<a class="cta dark" href="/app#plans">W pakiecie '+TIER[p.minimum_tier_rank]+' i wyższym</a>';

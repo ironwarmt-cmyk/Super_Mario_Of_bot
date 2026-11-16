@@ -151,6 +151,7 @@ async function qualityLibrary(userId, lang) {
     try { access = await getQualityProductAccess(userId, p.slug); } catch (_) { access = null; }
     const unlocked = Boolean(access?.unlocked);
     const hasAsset = Boolean(p.asset_path_pl || p.asset_path_en);
+    const dl = unlocked && hasAsset ? signedDownloadUrl(userId, p.slug, lang) : null;
     return {
       slug:p.slug,
       category:p.category,
@@ -161,7 +162,8 @@ async function qualityLibrary(userId, lang) {
       standalone:Boolean(p.standalone_purchase_enabled),
       unlocked,
       purchased:Boolean(access?.purchased),
-      download_url:unlocked && hasAsset && p.product_type !== "training" ? signedDownloadUrl(userId, p.slug, lang) : null,
+      download_url:dl,
+      slides_url:dl && p.product_type === "training" ? dl + "&format=pptx" : null,
       sort_order:Number(p.sort_order || 0)
     };
   }));

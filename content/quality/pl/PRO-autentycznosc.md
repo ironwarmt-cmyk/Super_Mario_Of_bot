@@ -24,7 +24,7 @@ Obejmuje wszystkie surowce, w szczególności te z deklaracjami szczególnymi (p
 - Rozporządzenie (UE) 2017/625, art. 9 ust. 2 (kontrole urzędowe dotyczące praktyk wprowadzających w błąd).
 - Rozporządzenie (UE) 2018/848 (rolnictwo ekologiczne), rozporządzenie (UE) nr 1151/2012 (systemy jakości, ChNP, ChOG, GTS).
 - Ustawa z dnia 21 grudnia 2000 r. o jakości handlowej artykułów rolno-spożywczych (kompetencje IJHARS).
-- BRCGS Food Safety wydanie 9, punkt 5.4 (autentyczność, deklaracje i łańcuch dostaw); IFS Food wersja 8, rozdział 4.21 (food fraud).
+- BRCGS Food Safety wydanie 9, punkt 5.4 (autentyczność, deklaracje i łańcuch dostaw); IFS Food wersja 8, rozdział 4.20 (food fraud).
 - PR-002, PR-012, PR-017.
 
 ## 6. Źródła informacji

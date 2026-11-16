@@ -39,7 +39,7 @@ Dotyczy całego pakietu dokumentów PRO: dokumentu nadrzędnego, analizy zagroż
 | PR-002 | Zatwierdzanie i monitorowanie dostawców | 3.5, 3.6 | 4.2, 4.4 | 7.1.6 |
 | PR-003 | Niezgodności, analiza przyczyn, CAPA | 3.7 | 5.11 | 8.9, 10.1 |
 | PR-004 | Identyfikowalność, wycofanie, odwołanie | 3.9, 3.11 | 4.18, 5.9 | 8.3, 8.9.5 |
-| PR-005 | Alergeny | 5.3 | 4.20 | 8.2 |
+| PR-005 | Alergeny | 5.3 | 4.19 | 8.2 |
 | PR-006 | Audyty wewnętrzne i inspekcje GMP | 3.4 | 5.1, 5.2 | 9.2 |
 | PR-007 | Personel: szkolenia, higiena, odzież | 7 | 3 | 7.2 |
 | PR-008 | Szkodniki, odpady, magazynowanie, transport | 4.12, 4.14, 4.15, 4.16 | 4.11, 4.13, 4.14, 4.15 | 8.2 |
@@ -48,8 +48,8 @@ Dotyczy całego pakietu dokumentów PRO: dokumentu nadrzędnego, analizy zagroż
 | PR-011 | Reklamacje i analiza trendów | 3.10 | 5.8 | 7.4, 9.1 |
 | PR-012 | Etykietowanie, opakowania, zwalnianie | 5.2, 6.2, 6.3, 5.7 | 4.2, 4.5, 5.5, 5.7 | 8.2, 8.9.4 |
 | PR-013 | Incydenty i sytuacje kryzysowe | 3.11 | 5.9 | 8.4 |
-| PR-014 | Ochrona produktu, bezpieczeństwo zakładu | 4.1, 4.2 | wymagania food defence | 8.2 |
-| PR-015 | Autentyczność i zafałszowania | 5.4 | 4.21 | (wymagania FSSC 22000) |
+| PR-014 | Ochrona produktu, bezpieczeństwo zakładu | 4.1, 4.2 | 4.21 | 8.2 |
+| PR-015 | Autentyczność i zafałszowania | 5.4 | 4.20 | (wymagania FSSC 22000) |
 | PR-016 | Projektowanie i rozwój produktu | 5.1 | 4.3 | 8.5.1 |
 | PR-017 | Plan badań, laboratorium, monitoring środowiska | 4.11.8, 5.6 | 5.6 | 8.8 |
 | IN-001 | Mycie i dezynfekcja | 4.11 | 4.10 | 8.2 |

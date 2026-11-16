@@ -29,7 +29,7 @@ Dotyczy wszystkich surowców, półproduktów, materiałów pomocniczych (np. sm
 - Rozporządzenie (UE) nr 1169/2011 w sprawie przekazywania konsumentom informacji na temat żywności: art. 9, art. 21, art. 44 oraz załącznik II.
 - Rozporządzenie (WE) nr 178/2002 (ogólne zasady prawa żywnościowego, identyfikowalność, wycofanie).
 - Codex Alimentarius, Kodeks postępowania w zakresie zarządzania alergenami pokarmowymi dla przedsiębiorstw sektora spożywczego (CXC 80-2020).
-- BRCGS Food Safety, wydanie 9, sekcja 5.3 Zarządzanie alergenami; IFS Food wersja 8, wymagania dotyczące alergenów.
+- BRCGS Food Safety, wydanie 9, sekcja 5.3 Zarządzanie alergenami; IFS Food wersja 8, rozdział 4.19 (ograniczanie ryzyka alergenów).
 - PR-002 Dostawcy, PR-004 Identyfikowalność, IN-001 Mycie i dezynfekcja, PR-012 Etykietowanie i zwalnianie produktu.
 
 ## 6. Alergeny objęte procedurą
