@@ -154,14 +154,14 @@ Każdy dokument przygotowany dla konkretnej firmy uwzględnia co najmniej:
 | Łańcuch dostaw | | | | | | |
 | Doskonalenie | | | | | | |
 
-### Załącznik 2. Zestawienie miesięczne wskaźników
-| Wskaźnik | Cel | Sty | Lut | Mar | Kwi | Maj | Cze | Lip | Sie | Wrz | Paź | Lis | Gru |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Reklamacje na mln jednostek | | | | | | | | | | | | | |
-| Kompletność zapisów CCP | | | | | | | | | | | | | |
-| Terminowość CAPA | | | | | | | | | | | | | |
-| Wynik GMP | | | | | | | | | | | | | |
-| Monitoring środowiska | | | | | | | | | | | | | |
+### Załącznik 2. Kwartalne zestawienie wskaźników
+| Wskaźnik | Cel | I kw. | II kw. | III kw. | IV kw. | Rok |
+|---|---|---|---|---|---|---|
+| Reklamacje na mln jednostek | | | | | | |
+| Kompletność zapisów CCP | | | | | | |
+| Terminowość CAPA | | | | | | |
+| Wynik GMP | | | | | | |
+| Monitoring środowiska | | | | | | |
 
 ### Załącznik 3. Program spotkania jakości (miesięczne)
 | Punkt | Prowadzący | Czas |
