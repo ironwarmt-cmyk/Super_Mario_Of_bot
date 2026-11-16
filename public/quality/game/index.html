@@ -2,84 +2,613 @@
 <html lang="pl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>Myszka Audytorka — Quality Assurance Support</title>
 <script src="/quality/auth.js"></script>
 <link rel="stylesheet" href="/quality/theme.css?v=20261005-premium">
-<script defer src="/quality/experience.js?v=20261005-1"></script>
+<script defer src="/quality/experience.js?v=20261116-1"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap">
 <style>
-.game-wrap{max-width:1060px;margin:auto;padding:24px 16px 100px}.game-top{display:flex;justify-content:space-between;gap:14px;align-items:center}.game-top a{color:var(--text);text-decoration:none}.hero-game{display:grid;grid-template-columns:1.05fr .95fr;gap:18px;align-items:center;padding:38px 0}.mouse-stage{min-height:280px;border:1px solid var(--line);border-radius:26px;background:linear-gradient(145deg,#151126,#0b1022);position:relative;overflow:hidden;padding:20px}.mouse{position:absolute;font-size:54px;left:10%;bottom:26px;filter:drop-shadow(0 12px 18px #0008);animation:mouse-walk 8s ease-in-out infinite alternate}.glass{position:absolute;font-size:36px;left:21%;bottom:64px;animation:glass-look 2.4s ease-in-out infinite}.station{position:absolute;padding:8px 11px;border:1px solid #ffffff22;border-radius:12px;background:#ffffff0b;font-size:12px}.s1{left:10%;top:22%}.s2{left:42%;top:12%}.s3{right:8%;top:32%}.s4{right:20%;bottom:18%}@keyframes mouse-walk{0%{left:8%;transform:scaleX(1)}45%{left:42%;transform:scaleX(1)}55%{left:42%;transform:scaleX(-1)}100%{left:76%;transform:scaleX(-1)}}@keyframes glass-look{50%{transform:rotate(-16deg) translateY(-4px)}}.locations{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.location{padding:18px;border:1px solid var(--line);border-radius:20px;background:var(--panel);cursor:pointer;position:relative;min-height:150px}.location .icon{font-size:32px}.location h3{margin:10px 0 5px}.plan-tag{display:inline-flex;margin-top:8px;padding:5px 9px;border-radius:999px;border:1px solid #ffffff22;font-size:11px;font-weight:900;letter-spacing:.08em}.game-start{min-height:180px;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;gap:8px}.game-start-title{font-size:28px;font-weight:1000}.game-start-sub{color:var(--muted)}.location.qa-locked .plan-tag{display:none}.quiz{margin-top:22px;padding:22px;border:1px solid var(--line);border-radius:22px;background:var(--panel)}.answers{display:grid;gap:9px;margin-top:14px}.answer{padding:13px;text-align:left;border-radius:14px;border:1px solid var(--line);background:#131026;color:var(--text);font-weight:700}.answer.good{border-color:#55efb0;background:#55efb017}.answer.bad{border-color:#ff6b8a;background:#ff6b8a12}.feedback{margin-top:13px;line-height:1.5;color:var(--muted)}.scorebar{display:flex;gap:8px;flex-wrap:wrap}.scorechip{padding:7px 10px;border:1px solid var(--line);border-radius:999px;background:#ffffff08}.progress{height:7px;background:#ffffff10;border-radius:999px;overflow:hidden;margin:12px 0}.progress i{display:block;height:100%;background:linear-gradient(90deg,#58d9ff,#ff5bd8,#ffd36b);width:0;transition:width .3s}.empty{color:var(--muted)}@media(max-width:760px){.hero-game{grid-template-columns:1fr}.locations{grid-template-columns:1fr 1fr}.mouse-stage{min-height:230px}}@media(max-width:460px){.locations{grid-template-columns:1fr}}
+[hidden]{display:none!important}
+:root{--ink:#0b1210;--panel:#121c18;--line:#2b3d35;--text:#f4f8f5;--muted:#a7b8ae;--emerald:#10B981;--lime:#C6F432;--gold:#ffcf4a;--bad:#ff6b6b;--display:'Baloo 2','Plus Jakarta Sans',system-ui,sans-serif;--body:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',sans-serif}
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--ink);color:var(--text);font-family:var(--body);overflow:hidden;-webkit-user-select:none;user-select:none;touch-action:none}
+#game{position:fixed;inset:0}
+#game canvas{display:block;width:100%;height:100%}
+body.playing .qa-dock,body.playing #qaFeedbackFab,body.playing .qa-diagnostic{display:none!important}
+.hud{position:fixed;left:0;right:0;top:0;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) 0 max(12px,env(safe-area-inset-left,0px));pointer-events:none;z-index:5}
+.hud .grp{display:flex;gap:8px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;background:rgba(10,16,14,.62);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);font-family:var(--display);font-weight:800;font-size:17px;line-height:1;font-variant-numeric:tabular-nums;border:1px solid rgba(255,255,255,.12)}
+.chip .i{font-size:16px}
+.chip.lv{font-size:14px;letter-spacing:.04em}
+.hud button{pointer-events:auto}
+.iconbtn{font:inherit;font-family:var(--display);font-weight:800;font-size:15px;padding:7px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:rgba(10,16,14,.62);color:#fff;cursor:pointer}
+.say{position:fixed;left:50%;bottom:calc(150px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(680px,92vw);text-align:center;font-weight:700;font-size:clamp(14px,2.2vw,18px);line-height:1.35;text-shadow:0 2px 6px #000,0 0 2px #000;pointer-events:none;z-index:5;transition:opacity .3s}
+.say b{font-family:var(--display);color:var(--lime);letter-spacing:.08em;font-size:.8em;margin-right:6px}
+.say[data-off="1"]{opacity:0}
+@media(min-width:900px){.say{bottom:calc(36px + env(safe-area-inset-bottom,0px))}}
+/* touch controls */
+.tctl{position:fixed;left:0;right:0;bottom:0;height:42vh;z-index:4;display:none}
+body.is-touch.playing .tctl{display:block}
+body.is-touch #keysHelp{display:none}
+.stick{position:absolute;left:max(22px,env(safe-area-inset-left,0px));bottom:calc(22px + env(safe-area-inset-bottom,0px));width:128px;height:128px;border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.22)}
+.knob{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;background:rgba(255,255,255,.35);border:2px solid rgba(255,255,255,.6)}
+.tbtn{position:absolute;bottom:calc(26px + env(safe-area-inset-bottom,0px));width:78px;height:78px;border-radius:50%;border:2px solid rgba(255,255,255,.45);background:rgba(16,185,129,.45);color:#fff;font-family:var(--display);font-weight:800;font-size:15px}
+.tbtn.jump{right:max(22px,env(safe-area-inset-right,0px))}
+.tbtn.spin{right:calc(max(22px,env(safe-area-inset-right,0px)) + 92px);bottom:calc(14px + env(safe-area-inset-bottom,0px));width:64px;height:64px;background:rgba(255,207,74,.5);font-size:13px}
+/* overlays */
+.ov{position:fixed;inset:0;z-index:8;display:grid;place-items:center;padding:calc(16px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:linear-gradient(180deg,rgba(6,10,9,.35),rgba(6,10,9,.82));overflow:auto;-webkit-user-select:text;user-select:text;touch-action:auto}
+.ov[hidden]{display:none!important}
+.g-card{width:min(980px,100%);display:grid;gap:16px}
+.title{font-family:var(--display);font-weight:800;font-size:clamp(34px,7vw,64px);line-height:.95;letter-spacing:-.01em;text-shadow:0 4px 0 #0a5a3f,0 10px 30px rgba(0,0,0,.5)}
+.title small{display:block;font-size:.34em;letter-spacing:.18em;color:var(--lime);text-shadow:none;margin-bottom:8px}
+.g-lead{color:#d9e5de;max-width:62ch;line-height:1.5;margin:0}
+.levels{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media(max-width:820px){.levels{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.lvl{position:relative;display:grid;gap:4px;justify-items:start;text-align:left;padding:14px;border-radius:16px;border:1px solid var(--line);background:rgba(18,28,24,.88);color:var(--text);font:inherit;cursor:pointer;min-height:140px}
+.lvl:hover{border-color:var(--emerald)}
+.lvl .em{font-size:28px}
+.lvl .tier{font-family:var(--display);font-weight:800;font-size:12px;letter-spacing:.12em;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.lvl .nm{font-family:var(--display);font-weight:800;font-size:21px;line-height:1}
+.lvl .tg{font-size:12.5px;color:var(--muted)}
+.lvl .best{font-size:12px;color:var(--lime);font-weight:700}
+.lvl:focus-visible,.g-btn:focus-visible,.ans:focus-visible,.iconbtn:focus-visible{outline:3px solid var(--lime);outline-offset:2px}
+.keys{display:flex;flex-wrap:wrap;gap:8px 16px;color:var(--muted);font-size:13px}
+.keys kbd{font-family:var(--body);font-weight:800;padding:2px 7px;border-radius:6px;background:#22302a;border:1px solid #3a4d44;color:#fff}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.g-btn{font:inherit;font-family:var(--display);font-weight:800;font-size:18px;padding:12px 20px;border-radius:14px;border:0;background:var(--emerald);color:#04241a;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:8px}
+.g-btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+.g-btn.gold{background:var(--gold);color:#3a2600}
+.qcard{width:min(720px,100%);padding:20px;border-radius:20px;background:rgba(14,22,19,.96);border:1px solid var(--line);display:grid;gap:12px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.qk{font-family:var(--display);font-weight:800;letter-spacing:.12em;font-size:13px;color:var(--lime)}
+.qcard h2{margin:0;font-size:clamp(18px,3vw,22px);line-height:1.3;text-wrap:balance}
+.answers{display:grid;gap:8px}
+.ans{text-align:left;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:#1a2722;color:var(--text);font:inherit;font-weight:600;cursor:pointer}
+.ans:hover:not(:disabled){border-color:#48655a}
+.ans.good{border-color:#4ee08a;background:#143a27}.ans.bad{border-color:var(--bad);background:#3a1c1f}
+.ans:disabled{cursor:default}
+.fb{color:#d6e2d9;line-height:1.5}.fb b{display:block}.fb b.ok{color:#4ee08a}.fb b.no{color:var(--bad)}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media(max-width:560px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stat{padding:12px;border-radius:14px;background:#17231e;border:1px solid var(--line);display:grid;gap:2px}
+.stat b{font-family:var(--display);font-size:26px;line-height:1;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted)}
+.badge{width:96px;height:112px}
+.flash{position:fixed;inset:0;pointer-events:none;z-index:6;background:radial-gradient(circle,rgba(255,80,80,0) 40%,rgba(255,60,60,.45));opacity:0;transition:opacity .25s}
+.flash.on{opacity:1}
+.loading{position:fixed;inset:0;display:grid;place-items:center;z-index:9;background:var(--ink);font-family:var(--display);font-weight:800;letter-spacing:.12em;color:var(--muted)}
+.loading[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
-<body data-build="2026-10-05-game">
-<div class="game-wrap">
-  <div class="game-top"><div><div class="brand">QUALITY ASSURANCE SUPPORT</div><b>MYSZKA AUDYTORKA</b></div><a href="/app">← Hub</a></div>
-  <section class="hero-game">
-    <div><div class="eyebrow">FOOD SAFETY QUEST</div><h1>Wejdź, rozejrzyj się i znajdź niezgodność.</h1><p>Krótka gra audytowa. Myszka sprawdza higienę, temperatury, alergeny, identyfikowalność i zachowania personelu. Ty podejmujesz decyzję.</p><div class="scorebar"><span class="scorechip">XP <b id="xp">0</b></span><span class="scorechip">Seria <b id="streak">0</b></span><span class="scorechip">Poziom <b id="level">Junior Inspector</b></span></div></div>
-    <div class="mouse-stage"><span class="station s1">🧤 higiena</span><span class="station s2">🌡 temperatura</span><span class="station s3">🏷 etykiety</span><span class="station s4">🧹 czystość</span><div class="mouse">🐭</div><div class="glass">🔎</div></div>
-  </section>
+<body>
+<div id="game"></div>
+<div class="flash" id="flash"></div>
 
-  <h2>Wybierz swój pakiet i rozpocznij grę</h2>
-  <div class="locations">
-    <article class="location" data-place="bakery" data-required-plan="free" data-feature="Piekarnia — Quick Audit"><div class="icon">🥐</div><div class="plan-tag">REGULAR</div><h3>Piekarnia</h3><p>Quick Audit · higiena i ekspozycja</p></article>
-    <article class="location" data-place="restaurant" data-required-plan="basic" data-feature="Restauracja — Audit Walk"><div class="icon">🍽️</div><div class="plan-tag">BASIC</div><h3>Restauracja</h3><p>Cross-contamination i temperatury</p></article>
-    <article class="location" data-place="factory" data-required-plan="pro" data-feature="Fabryka — Process Audit"><div class="icon">🏭</div><div class="plan-tag">PRO</div><h3>Fabryka</h3><p>Traceability, HACCP, CAPA</p></article>
-    <article class="location" data-place="coldstore" data-required-plan="vip" data-feature="Chłodnia — Expert Audit"><div class="icon">❄️</div><div class="plan-tag">VIP</div><h3>Chłodnia</h3><p>Cold chain i decyzje eksperckie</p></article>
+<div class="hud" id="hud" hidden>
+  <div class="grp">
+    <span class="chip lv" id="hLevel">PIEKARNIA</span>
+    <span class="chip"><span class="i">❤</span><span id="hLives">3</span></span>
+    <span class="chip"><span class="i">✓</span><span id="hChecks">0</span>/<span id="hChecksT">0</span></span>
+    <span class="chip"><span class="i">▣</span><span id="hCrates">0</span>/<span id="hCratesT">0</span></span>
   </div>
-
-  <section class="quiz" id="quiz"><div class="empty">Wybierz obiekt, a Myszka rozpocznie audyt.</div></section>
+  <div class="grp">
+    <span class="chip">XP <span id="hXp">0</span></span>
+    <button class="iconbtn" id="voiceBtn" type="button">Głos: wł.</button>
+    <button class="iconbtn" id="pauseBtn" type="button">Pauza</button>
+  </div>
 </div>
-<script>
-const scenarios={
- bakery:[
-  {q:"Pracownik pakuje pieczywo i ma pierścionek oraz bardzo długie paznokcie. Co robisz?",a:["Nic, jeśli ręce wyglądają na czyste","Zatrzymuję czynność, koryguję higienę osobistą i oceniam ryzyko produktu","Zapisuję tylko uwagę do następnego audytu"],c:[1],f:"Biżuteria i niewłaściwa higiena dłoni mogą zwiększać ryzyko zanieczyszczenia. Reakcja powinna być natychmiastowa i adekwatna do ryzyka."},
-  {q:"Pod stołem produkcyjnym widzisz resztki surowca z poprzedniej zmiany. Najlepsza reakcja?",a:["Ocenić czyszczenie, usunąć pozostałości i sprawdzić wykonanie programu higieny","Przesunąć resztki poza linię","Poczekać do końca dnia"],c:[0],f:"Pozostałości wskazują na nieskuteczne czyszczenie lub weryfikację. Trzeba usunąć problem i sprawdzić systemowo przyczynę."}
- ],
- restaurant:[
-  {q:"Surowy drób jest przechowywany nad gotową sałatką. Co oznacza ta sytuacja?",a:["Dopuszczalne, jeśli chłodnia ma mniej niż 5°C","Ryzyko zanieczyszczenia krzyżowego — należy natychmiast zmienić układ i ocenić bezpieczeństwo sałatki","Tylko problem estetyczny"],c:[1],f:"Rozdzielenie surowych i gotowych produktów ogranicza zanieczyszczenie krzyżowe. Temperatura sama nie usuwa tego zagrożenia."},
-  {q:"Kucharz mierzy temperaturę potrawy, ale sonda nie została zdezynfekowana między pomiarami.",a:["Kontynuować, bo sonda dotyka tylko żywności","Wstrzymać pomiary, oczyścić i zdezynfekować sondę zgodnie z procedurą","Wymienić termometr dopiero po zmianie"],c:[1],f:"Sonda może przenosić mikroorganizmy pomiędzy produktami. Liczy się prawidłowa higiena narzędzia przed kolejnym pomiarem."}
- ],
- factory:[
-  {q:"Paleta surowca ma nieczytelną etykietę partii. Produkcja właśnie ma ruszyć.",a:["Przyjąć numer z poprzedniej palety","Wstrzymać użycie surowca do czasu potwierdzenia identyfikowalności","Nadać nowy numer bez sprawdzenia"],c:[1],f:"Brak pewnej identyfikacji partii jest ryzykiem dla traceability i wycofania. Nie należy zgadywać ani tworzyć sztucznego powiązania."},
-  {q:"CCP ma wynik poza limitem krytycznym. Operator wpisał wartość, ale nic więcej.",a:["To wystarczy, zapis jest dowodem","Uruchomić działania zgodne z planem HACCP: zabezpieczyć produkt, skorygować proces, udokumentować i ocenić przyczynę","Skasować wynik i zmierzyć ponownie"],c:[1],f:"Przekroczenie limitu krytycznego wymaga zdefiniowanej reakcji, postępowania z produktem i zapisu działań."}
- ],
- coldstore:[
-  {q:"Rejestrator pokazuje wzrost temperatury ponad limit przez 70 minut. Produkt wygląda prawidłowo.",a:["Zwolnić produkt, bo wygląd jest prawidłowy","Zablokować partię i przeprowadzić udokumentowaną ocenę czasu/temperatury oraz ryzyka","Obniżyć temperaturę i usunąć zapis alarmu"],c:[1],f:"Wygląd nie wystarcza do oceny bezpieczeństwa. Potrzebna jest analiza odchylenia i udokumentowana decyzja o losie produktu."},
-  {q:"Alarm chłodni wraca trzeci raz w tygodniu po tej samej naprawie.",a:["Traktować każde zdarzenie oddzielnie","Uruchomić analizę przyczyny źródłowej i CAPA, bo problem jest powtarzalny","Zwiększyć limit alarmowy"],c:[1],f:"Powtarzalność wskazuje, że korekta nie usunęła przyczyny. To sygnał do RCA/CAPA i oceny skuteczności."}
- ]
-};
-let place=null,index=0,answered=false;
-const storeKey="qa_game_progress_v1";
-let state=JSON.parse(localStorage.getItem(storeKey)||'{"xp":0,"streak":0}');
-function save(){localStorage.setItem(storeKey,JSON.stringify(state));paintScore()}
-function paintScore(){xp.textContent=state.xp||0;streak.textContent=state.streak||0;level.textContent=state.xp>=220?"Food Safety Master":state.xp>=120?"Audit Pro":state.xp>=50?"QA Specialist":"Junior Inspector"}
-paintScore();
-function start(p){
-  place=p;index=0;
-  const card=document.querySelector('.location[data-place="'+p+'"]');
-  const tier=(card?.dataset.requiredPlan||'free').toUpperCase().replace('FREE','REGULAR');
-  const title=card?.querySelector('h3')?.textContent||'Audyt';
-  quiz.innerHTML='<div class="game-start"><div class="eyebrow">'+tier+' · '+title+'</div><div class="game-start-title">Rozpoczynamy grę</div><div class="game-start-sub">Myszka Audytorka przygotowuje pierwsze pytanie…</div></div>';
-  quiz.scrollIntoView({behavior:'smooth',block:'start'});
-  setTimeout(()=>render(),650);
-}
-function render(){
- const q=scenarios[place]?.[index];
- if(!q){quiz.innerHTML='<div class="eyebrow">AUDYT ZAKOŃCZONY</div><h2>Świetna robota.</h2><p>XP zapisano na tym urządzeniu. Wybierz kolejny obiekt albo wróć do Hubu.</p>';return}
- answered=false;
- quiz.innerHTML='<div class="eyebrow">'+place.toUpperCase()+' · '+(index+1)+'/'+scenarios[place].length+'</div><h2>'+q.q+'</h2><div class="progress"><i style="width:'+((index/scenarios[place].length)*100)+'%"></i></div><div class="answers">'+q.a.map((x,i)=>'<button class="answer" data-i="'+i+'">'+x+'</button>').join("")+'</div><div class="feedback" id="feedback"></div>';
- quiz.querySelectorAll(".answer").forEach(b=>b.onclick=()=>answer(Number(b.dataset.i)));
-}
-function answer(i){
- if(answered)return;answered=true;
- const q=scenarios[place][index];const ok=q.c.includes(i);
- quiz.querySelectorAll(".answer").forEach((b,j)=>{if(q.c.includes(j))b.classList.add("good");else if(j===i)b.classList.add("bad");b.disabled=true});
- if(ok){state.xp=(state.xp||0)+20;state.streak=(state.streak||0)+1}else{state.streak=0}
- save();
- feedback.innerHTML='<b>'+(ok?'✓ Dobra decyzja':'✕ Nie tym razem')+'</b><br>'+q.f+'<br><button class="qa-btn" id="nextQ" style="margin-top:12px">'+(index+1<scenarios[place].length?'Następne pytanie':'Zakończ audyt')+'</button>';
- nextQ.onclick=()=>{index++;render()};
-}
-document.querySelectorAll(".location").forEach(card=>card.addEventListener("click",e=>{if(card.classList.contains("qa-locked"))return;start(card.dataset.place)}));
+<div class="say" id="say" data-off="1"><b>MYSZKA</b><span id="sayT"></span></div>
 
+<div class="tctl" id="touch">
+  <div class="stick" id="stick"><div class="knob" id="knob"></div></div>
+  <button class="tbtn spin" id="tSpin" type="button" aria-label="Obrót">OBRÓT</button>
+  <button class="tbtn jump" id="tJump" type="button" aria-label="Skok">SKOK</button>
+</div>
+
+<!-- menu -->
+<div class="ov" id="menu">
+  <div class="g-card">
+    <div class="row" style="justify-content:space-between"><a class="g-btn ghost" href="/app" style="font-size:15px;padding:8px 14px">← Hub</a><span class="chip">XP <span id="mXp">0</span> · <span id="mLevel">Junior Inspector</span></span></div>
+    <div class="title"><small>FOOD SAFETY QUEST 3D</small>Myszka Audytorka</div>
+    <div class="g-lead">Poprowadź Myszkę przez cztery obiekty. Biegnij, skacz przez dziury, rozbijaj skrzynki i zbieraj znaczki kontroli. Unikaj szkodników i toczących się beczek. Na stanowiskach audytu podejmij właściwą decyzję.</div>
+    <div class="levels" id="levels">
+      <button class="lvl" type="button" data-level="bakery" data-required-plan="free" data-feature="Piekarnia — Quick Audit"><span class="em">🥐</span><span class="tier">REGULAR</span><span class="nm">Piekarnia</span><span class="tg">Higiena i ekspozycja</span><span class="best" data-best="bakery"></span></button>
+      <button class="lvl" type="button" data-level="restaurant" data-required-plan="basic" data-feature="Restauracja — Audit Run"><span class="em">🍽️</span><span class="tier">BASIC</span><span class="nm">Restauracja</span><span class="tg">Zanieczyszczenia krzyżowe i temperatury</span><span class="best" data-best="restaurant"></span></button>
+      <button class="lvl" type="button" data-level="factory" data-required-plan="pro" data-feature="Fabryka — Process Run"><span class="em">🏭</span><span class="tier">PRO</span><span class="nm">Fabryka</span><span class="tg">Identyfikowalność, HACCP, CAPA</span><span class="best" data-best="factory"></span></button>
+      <button class="lvl" type="button" data-level="coldstore" data-required-plan="vip" data-feature="Chłodnia — Expert Run"><span class="em">❄️</span><span class="tier">VIP</span><span class="nm">Chłodnia</span><span class="tg">Łańcuch chłodniczy, lód pod łapkami</span><span class="best" data-best="coldstore"></span></button>
+    </div>
+    <div class="keys" id="keysHelp"><span><kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd> albo <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> bieg</span><span><kbd>Spacja</kbd> skok</span><span><kbd>E</kbd> albo <kbd>Shift</kbd> obrót (rozbija skrzynki i szkodniki)</span><span><kbd>P</kbd> pauza</span></div>
+  </div>
+</div>
+
+<!-- question -->
+<div class="ov" id="qov" hidden><div class="qcard" id="qcard"></div></div>
+
+<!-- pause -->
+<div class="ov" id="pov" hidden><div class="qcard"><div class="qk">PAUZA</div><h2>Myszka czeka</h2><div class="row"><button class="g-btn" id="resumeBtn" type="button">Graj dalej</button><button class="g-btn ghost" id="restartBtn" type="button">Od początku</button><button class="g-btn ghost" id="quitBtn" type="button">Wybór poziomu</button></div></div></div>
+
+<!-- end -->
+<div class="ov" id="eov" hidden><div class="qcard" id="ecard"></div></div>
+
+<div class="loading" id="loading">ŁADUJĘ GRĘ…</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+'use strict';
+const loading=document.getElementById('loading');
+if(!window.THREE){loading.textContent='Nie udało się wczytać grafiki 3D. Odśwież stronę.';return;}
+const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+const isTouch=('ontouchstart' in window)||navigator.maxTouchPoints>0;
+if(isTouch)document.body.classList.add('is-touch');
+let seed=1234;function rnd(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}
+const V=(x,y,z)=>new THREE.Vector3(x,y,z);
+const col=h=>new THREE.Color(h).convertSRGBToLinear();
+function STD(c,o){o=Object.assign({},o||{});const em=o.emissive;delete o.emissive;const m=new THREE.MeshStandardMaterial(Object.assign({roughness:.8,metalness:0},o));m.color.copy(col(c));if(em)m.emissive.copy(col(em));return m;}
+function BASIC(o){return new THREE.MeshBasicMaterial(Object.assign({toneMapped:false},o));}
+function add(parent,geo,mat,p,r,s,noShadow){const m=new THREE.Mesh(geo,mat);if(p)m.position.set(p[0],p[1],p[2]);if(r)m.rotation.set(r[0],r[1],r[2]);if(s!=null){if(typeof s==='number')m.scale.setScalar(s);else m.scale.set(s[0],s[1],s[2]);}m.castShadow=!noShadow;m.receiveShadow=true;parent.add(m);return m;}
+function grp(parent,p,r){const g=new THREE.Group();if(p)g.position.set(p[0],p[1],p[2]);if(r)g.rotation.set(r[0],r[1],r[2]);parent.add(g);return g;}
+function ctex(w,h,draw,rep,linear){const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');draw(g,w,h,0);const t=new THREE.CanvasTexture(c);if(!linear)t.encoding=THREE.sRGBEncoding;if(rep){t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(rep[0],rep[1]);}t.anisotropy=4;t.userData={g:g,w:w,h:h,draw:draw};return t;}
+function redraw(t,arg){const u=t.userData;u.g.clearRect(0,0,u.w,u.h);u.draw(u.g,u.w,u.h,arg);t.needsUpdate=true;}
+function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();}
+const SANS='"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif';
+function inst(parent,geo,mat,arr){const im=new THREE.InstancedMesh(geo,mat,arr.length);const d=new THREE.Object3D();arr.forEach((a,i)=>{d.position.set(a.p[0],a.p[1],a.p[2]);d.rotation.set(a.r?a.r[0]:0,a.r?a.r[1]:0,a.r?a.r[2]:0);const s=a.s||[1,1,1];d.scale.set(s[0],s[1],s[2]);d.updateMatrix();im.setMatrixAt(i,d.matrix);if(a.c)im.setColorAt(i,col(a.c));});if(im.instanceColor)im.instanceColor.needsUpdate=true;im.castShadow=true;im.receiveShadow=true;im.frustumCulled=false;parent.add(im);return im;}
+
+/* ======================= CONTENT ======================= */
+const LEVELS={
+ bakery:{name:'Piekarnia',tier:'REGULAR',badge:'BRC',theme:{floor:'#c9a574',wall:'#efe1c6',accent:'#2c7a5a',sky:'#2a1d12',fog:'#2a1d12',hemi:['#ffe9c8','#4a3420',.75],sun:['#ffe2bb',1.15]},
+  intro:'Dzień dobry! Wchodzę do piekarni. Piec ma 21 stopni, pieczywo pachnie. Sprawdzam higienę i ekspozycję.',
+  qs:[
+   {k:'Higiena osobista',n:'Na pakowaniu pracownica ma pierścionek i bardzo długie paznokcie. Co robimy?',q:'Pracownik pakuje pieczywo i ma pierścionek oraz bardzo długie paznokcie. Co robisz?',a:['Nic, jeśli ręce wyglądają na czyste','Zatrzymuję czynność, koryguję higienę osobistą i oceniam ryzyko produktu','Zapisuję tylko uwagę do następnego audytu'],c:[1],f:'Biżuteria i niewłaściwa higiena dłoni mogą zwiększać ryzyko zanieczyszczenia. Reakcja powinna być natychmiastowa i adekwatna do ryzyka.'},
+   {k:'Czystość po zmianie',n:'Zaglądam pod stół produkcyjny. Leżą tu resztki surowca z poprzedniej zmiany!',q:'Pod stołem produkcyjnym widzisz resztki surowca z poprzedniej zmiany. Najlepsza reakcja?',a:['Ocenić czyszczenie, usunąć pozostałości i sprawdzić wykonanie programu higieny','Przesunąć resztki poza linię','Poczekać do końca dnia'],c:[0],f:'Pozostałości wskazują na nieskuteczne czyszczenie lub weryfikację. Trzeba usunąć problem i sprawdzić systemowo przyczynę.'}]},
+ restaurant:{name:'Restauracja',tier:'BASIC',badge:'GHP',theme:{floor:'#e9e2d4',floor2:'#7a2f26',wall:'#e8ecea',accent:'#b8322c',sky:'#1d2224',fog:'#1d2224',hemi:['#f2f6ff','#3a3f44',.7],sun:['#f4f8ff',1.1]},
+  intro:'Teraz restauracja. Sprawdzę zanieczyszczenia krzyżowe i temperatury.',
+  qs:[
+   {k:'Przechowywanie w chłodni',n:'Otwieram chłodnię. Surowy drób stoi nad gotową sałatką.',q:'Surowy drób jest przechowywany nad gotową sałatką. Co oznacza ta sytuacja?',a:['Dopuszczalne, jeśli chłodnia ma mniej niż 5°C','Ryzyko zanieczyszczenia krzyżowego — należy natychmiast zmienić układ i ocenić bezpieczeństwo sałatki','Tylko problem estetyczny'],c:[1],f:'Rozdzielenie surowych i gotowych produktów ogranicza zanieczyszczenie krzyżowe. Temperatura sama nie usuwa tego zagrożenia.'},
+   {k:'Higiena sondy',n:'Kucharz mierzy temperaturę zupy. Sonda nie była dezynfekowana między pomiarami.',q:'Kucharz mierzy temperaturę potrawy, ale sonda nie została zdezynfekowana między pomiarami.',a:['Kontynuować, bo sonda dotyka tylko żywności','Wstrzymać pomiary, oczyścić i zdezynfekować sondę zgodnie z procedurą','Wymienić termometr dopiero po zmianie'],c:[1],f:'Sonda może przenosić mikroorganizmy pomiędzy produktami. Liczy się prawidłowa higiena narzędzia przed kolejnym pomiarem.'}]},
+ factory:{name:'Fabryka',tier:'PRO',badge:'IFS',theme:{floor:'#8e979b',wall:'#cfd5d8',accent:'#e8c22c',sky:'#141b20',fog:'#141b20',hemi:['#e6f2ff','#30383d',.65],sun:['#eef6ff',1.1]},
+  intro:'Jestem na linii pakowania w fabryce. Panel pokazuje kontrolę jakości. Sprawdzam identyfikowalność i punkty krytyczne.',
+  qs:[
+   {k:'Identyfikowalność partii',n:'Paleta surowca ma nieczytelną etykietę partii, a produkcja zaraz rusza.',q:'Paleta surowca ma nieczytelną etykietę partii. Produkcja właśnie ma ruszyć.',a:['Przyjąć numer z poprzedniej palety','Wstrzymać użycie surowca do czasu potwierdzenia identyfikowalności','Nadać nowy numer bez sprawdzenia'],c:[1],f:'Brak pewnej identyfikacji partii jest ryzykiem dla traceability i wycofania. Nie należy zgadywać ani tworzyć sztucznego powiązania.'},
+   {k:'CCP poza limitem',n:'Punkt krytyczny ma wynik poza limitem. Operator wpisał wartość i nic więcej.',q:'CCP ma wynik poza limitem krytycznym. Operator wpisał wartość, ale nic więcej.',a:['To wystarczy, zapis jest dowodem','Uruchomić działania zgodne z planem HACCP: zabezpieczyć produkt, skorygować proces, udokumentować i ocenić przyczynę','Skasować wynik i zmierzyć ponownie'],c:[1],f:'Przekroczenie limitu krytycznego wymaga zdefiniowanej reakcji, postępowania z produktem i zapisu działań.'}]},
+ coldstore:{name:'Chłodnia',tier:'VIP',badge:'HACCP',theme:{floor:'#dfeef5',wall:'#e9f4fa',accent:'#2f86c4',sky:'#0f1a24',fog:'#0f1a24',hemi:['#eaf6ff','#2e3a44',.75],sun:['#f2faff',1.1]},
+  intro:'Teraz lady chłodnicze w sklepie. Wyświetlacz pokazuje 4 stopnie. Sprawdzam łańcuch chłodniczy.',
+  qs:[
+   {k:'Odchylenie temperatury',n:'Rejestrator pokazuje temperaturę ponad limit przez 70 minut. Produkt wygląda dobrze. Czy to wystarczy?',q:'Rejestrator pokazuje wzrost temperatury ponad limit przez 70 minut. Produkt wygląda prawidłowo.',a:['Zwolnić produkt, bo wygląd jest prawidłowy','Zablokować partię i przeprowadzić udokumentowaną ocenę czasu/temperatury oraz ryzyka','Obniżyć temperaturę i usunąć zapis alarmu'],c:[1],f:'Wygląd nie wystarcza do oceny bezpieczeństwa. Potrzebna jest analiza odchylenia i udokumentowana decyzja o losie produktu.'},
+   {k:'Powtarzalny alarm',n:'Znowu alarm! To trzeci raz w tym tygodniu, po tej samej naprawie.',q:'Alarm chłodni wraca trzeci raz w tygodniu po tej samej naprawie.',a:['Traktować każde zdarzenie oddzielnie','Uruchomić analizę przyczyny źródłowej i CAPA, bo problem jest powtarzalny','Zwiększyć limit alarmowy'],c:[1],f:'Powtarzalność wskazuje, że korekta nie usunęła przyczyny. To sygnał do RCA/CAPA i oceny skuteczności.'}]}
+};
+const ORDER=['bakery','restaurant','factory','coldstore'];
+const levelName=xp=>xp>=220?'Food Safety Master':xp>=120?'Audit Pro':xp>=50?'QA Specialist':'Junior Inspector';
+const storeKey='qa_game_progress_v1';
+let prog={xp:0,streak:0,best:{}};
+try{const s=JSON.parse(localStorage.getItem(storeKey)||'null');if(s)prog=Object.assign(prog,s);if(!prog.best)prog.best={};}catch(e){}
+function save(){try{localStorage.setItem(storeKey,JSON.stringify(prog));}catch(e){}paintMenu();}
+
+/* ======================= RENDERER ======================= */
+const host=document.getElementById('game');
+const renderer=new THREE.WebGLRenderer({antialias:!isTouch||devicePixelRatio<2,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,isTouch?1.5:1.75));
+renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+host.appendChild(renderer.domElement);
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(55,1,.1,160);
+const hemi=new THREE.HemisphereLight(0xffffff,0x444444,.7);scene.add(hemi);
+const sun=new THREE.DirectionalLight(0xffffff,1.1);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.bias=-.0005;sun.shadow.normalBias=.03;
+Object.assign(sun.shadow.camera,{left:-12,right:12,top:14,bottom:-14,near:1,far:50});scene.add(sun);scene.add(sun.target);
+
+const T={};
+T.fur=ctex(512,512,(g,w,h)=>{g.fillStyle='#c09a72';g.fillRect(0,0,w,h);for(let i=0;i<26000;i++){const x=rnd()*w,y=rnd()*h,a=rnd()*.5-.25;g.strokeStyle=rnd()<.5?'rgba(150,108,70,.18)':'rgba(230,200,160,.18)';g.lineWidth=1;g.beginPath();g.moveTo(x,y);g.lineTo(x+Math.sin(a)*6,y+6);g.stroke();}},[2,2]);
+T.furA=ctex(256,256,(g,w,h)=>{g.fillStyle='#000';g.fillRect(0,0,w,h);for(let i=0;i<22000;i++){const v=rnd();g.fillStyle='rgb('+(v*255|0)+','+(v*255|0)+','+(v*255|0)+')';g.fillRect(rnd()*w,rnd()*h,1,1);}},[6,6],true);
+T.net=ctex(128,128,(g,w,h)=>{g.fillStyle='#000';g.fillRect(0,0,w,h);g.strokeStyle='#fff';g.lineWidth=3;for(let i=-w;i<w*2;i+=12){g.beginPath();g.moveTo(i,0);g.lineTo(i+h,h);g.stroke();g.beginPath();g.moveTo(i,h);g.lineTo(i+h,0);g.stroke();}},[6,3],true);
+T.metal=ctex(256,256,(g,w,h)=>{g.fillStyle='#b9bec2';g.fillRect(0,0,w,h);for(let i=0;i<400;i++){g.fillStyle=rnd()<.5?'rgba(255,255,255,.12)':'rgba(0,0,0,.06)';g.fillRect(0,rnd()*h,w,1);}});
+T.crate=ctex(256,256,(g,w,h)=>{g.fillStyle='#b97a3c';g.fillRect(0,0,w,h);for(let i=0;i<6;i++){g.fillStyle=i%2?'#a86a30':'#c58a4a';g.fillRect(0,i*h/6,w,h/6);g.fillStyle='rgba(60,30,10,.35)';g.fillRect(0,i*h/6,w,3);}g.strokeStyle='#6b3f17';g.lineWidth=18;g.strokeRect(9,9,w-18,h-18);g.beginPath();g.moveTo(18,18);g.lineTo(w-18,h-18);g.stroke();g.fillStyle='#2c7a5a';g.font='800 64px '+SANS;g.textAlign='center';g.textBaseline='middle';g.fillText('✓',w/2,h/2+4);});
+T.crateNC=ctex(256,256,(g,w,h)=>{g.fillStyle='#c94a3a';g.fillRect(0,0,w,h);g.strokeStyle='#7a1f16';g.lineWidth=18;g.strokeRect(9,9,w-18,h-18);g.fillStyle='#fff';g.font='800 72px '+SANS;g.textAlign='center';g.textBaseline='middle';g.fillText('NC',w/2,h/2+6);});
+const MAT={steel:STD('#c9ced2',{metalness:.85,roughness:.32,map:T.metal}),white:STD('#f4f2ec',{roughness:.6}),skin:STD('#f2c8a4',{roughness:.6})};
+
+function buildMouse(){
+ const fur=STD('#ffffff',{map:T.fur,roughness:.9}),cream=STD('#f1dfc6',{roughness:.85}),pink=STD('#f3a7ae',{roughness:.55}),pinkIn=STD('#f7b9be',{roughness:.6,emissive:'#3a0d10'}),
+  coat=STD('#f7f7f4',{roughness:.62,side:THREE.DoubleSide}),teal=STD('#2bb3a3',{roughness:.6}),dark=STD('#111214',{roughness:.25}),iris=STD('#6b3f1f',{roughness:.2}),
+  frame=STD('#1c1c1e',{roughness:.3,metalness:.4}),hatM=STD('#fbfbf8',{roughness:.22,metalness:0}),netM=STD('#7fc2f0',{roughness:.6,alphaMap:T.net,alphaTest:.5,side:THREE.DoubleSide}),
+  netBand=STD('#86c8f3',{roughness:.7}),lensM=new THREE.MeshPhysicalMaterial({color:col('#cfe9ff'),roughness:.05,transparent:true,opacity:.22});
+ const root=new THREE.Group();const bp=grp(root);
+ // body under coat
+ add(bp,new THREE.SphereGeometry(.27,32,24),teal,[0,.42,0],null,[1,1.25,.95]);
+ const lathe=new THREE.LatheGeometry([V(.12,.69),V(.18,.66),V(.255,.58),V(.285,.46),V(.3,.3),V(.325,.14),V(.335,.07),V(.33,.06)].map(p=>new THREE.Vector2(p.x,p.y)),48,.16,Math.PI*2-.32);
+ add(bp,lathe,coat,[0,0,0]);
+ add(bp,new THREE.TorusGeometry(.13,.035,10,28),teal,[0,.665,.0],[Math.PI/2,0,0]);
+ [-1,1].forEach(s=>{const lp=add(bp,new THREE.PlaneGeometry(.11,.2),coat,[s*.075,.57,.245],[-.25,s*.35,s*.25]);});
+ [.44,.3].forEach(y=>add(bp,new THREE.SphereGeometry(.018,10,8),STD('#d9d9d4',{roughness:.3}),[.035,y,.315]));
+ add(bp,new THREE.BoxGeometry(.1,.08,.012),coat,[-.16,.44,.262],[0,-.55,0]);
+ add(bp,new THREE.CylinderGeometry(.009,.009,.1,8),STD('#2156c9',{roughness:.4}),[-.15,.5,.262],[0,0,.1]);
+ // head
+ const head=grp(bp,[0,.9,.02]);
+ const skull=add(head,new THREE.SphereGeometry(.3,48,36),fur,[0,0,0],null,[1.02,.97,.96]);
+ for(let i=1;i<=4;i++){const m=STD('#ffffff',{map:T.fur,alphaMap:T.furA,alphaTest:.45+i*.11,roughness:.95});add(head,new THREE.SphereGeometry(.3,40,30),m,[0,0,0],null,[1.02+i*.006,.97+i*.006,.96+i*.006],true);}
+ add(head,new THREE.SphereGeometry(.17,32,24),cream,[0,-.085,.2],null,[1.1,.8,.95]);
+ add(head,new THREE.SphereGeometry(.042,18,14),STD('#e88896',{roughness:.25}),[0,-.04,.36]);
+ const smile=add(head,new THREE.TorusGeometry(.045,.008,8,20,Math.PI),STD('#6a2a35'),[0,-.135,.335],[Math.PI+.25,0,0],null,true);
+ const mouth=add(head,new THREE.SphereGeometry(.04,16,12),STD('#7a2433',{roughness:.5}),[0,-.15,.33],null,[1,.12,.5],true);
+ [-1,1].forEach(s=>add(head,new THREE.SphereGeometry(.05,14,10),STD('#f4a3a8',{roughness:.7,transparent:true,opacity:.55}),[s*.175,-.075,.225],[0,s*.6,0],[1,.6,.25],true));
+ const eyes=[];[-1,1].forEach(s=>{const e=grp(head,[s*.112,.03,.245]);add(e,new THREE.SphereGeometry(.07,24,18),STD('#fbfbf9',{roughness:.15}),[0,0,0],null,null,true);
+   add(e,new THREE.SphereGeometry(.05,20,16),iris,[0,-.004,.035],null,[1,1,.55],true);add(e,new THREE.SphereGeometry(.028,16,12),dark,[0,-.004,.058],null,[1,1,.5],true);
+   add(e,new THREE.SphereGeometry(.011,8,6),BASIC({color:0xffffff}),[.018,.018,.066],null,null,true);eyes.push(e);
+   add(head,new THREE.TorusGeometry(.088,.01,10,36),frame,[s*.112,.03,.318],null,null,true);
+   add(head,new THREE.CircleGeometry(.085,28),lensM,[s*.112,.03,.317],null,null,true);
+   add(head,new THREE.BoxGeometry(.012,.012,.2),frame,[s*.2,.04,.23],[0,s*.35,0],null,true);});
+ add(head,new THREE.CylinderGeometry(.008,.008,.05,8),frame,[0,.04,.322],[0,0,Math.PI/2],null,true);
+ const ears=[];[-1,1].forEach(s=>{const eg=grp(head,[s*.27,.14,-.03],[0,s*.15,-s*.62]);add(eg,new THREE.SphereGeometry(.2,32,24),fur,[0,.13,0],null,[1,1.06,.2]);add(eg,new THREE.SphereGeometry(.15,28,20),pinkIn,[0,.13,.028],null,[1,1,.14],true);ears.push(eg);});
+ const wh=STD('#3e3631');[-1,1].forEach(s=>{for(let i=0;i<3;i++){const w=add(head,new THREE.CylinderGeometry(.0035,.002,.4,4),wh,[s*.24,-.07+(i-1)*.022,.29],[0,-s*.32,Math.PI/2+s*(i-1)*.16],null,true);}});
+ // hairnet + hard hat + goggles
+ add(head,new THREE.SphereGeometry(.318,40,20,0,Math.PI*2,0,Math.PI*.44),netM,[0,0,0],null,[1.02,.97,.96],true);
+ add(head,new THREE.TorusGeometry(.3,.026,10,48),netBand,[0,.058,0],[Math.PI/2,0,0],[1.02,.96,1]);
+ const hat=grp(head,[0,.025,-.01]);
+ add(hat,new THREE.SphereGeometry(.335,40,20,0,Math.PI*2,0,Math.PI*.33),hatM,[0,0,0]);
+ add(hat,new THREE.CylinderGeometry(.365,.37,.025,48),hatM,[0,.17,0]);
+ add(hat,new THREE.BoxGeometry(.05,.03,.5),hatM,[0,.335,0],[0,0,0],[1,1,1]).scale.set(1,1,1);
+ add(hat,new THREE.TorusGeometry(.33,.016,8,48),STD('#2e3134',{roughness:.6}),[0,.215,0],[Math.PI/2,0,0]);
+ const gog=grp(hat,[0,.25,.27],[-.45,0,0]);
+ [-1,1].forEach(s=>{add(gog,new THREE.CylinderGeometry(.062,.068,.05,24),STD('#3a3f44',{roughness:.5}),[s*.07,0,0],[Math.PI/2,0,0]);add(gog,new THREE.CircleGeometry(.055,24),new THREE.MeshPhysicalMaterial({color:col('#9fc4dc'),roughness:.05,metalness:.1,transparent:true,opacity:.6}),[s*.07,0,.026],null,null,true);});
+ // arms
+ const arms=[];[-1,1].forEach(s=>{const sh=grp(bp,[s*.27,.57,.03]);add(sh,new THREE.CylinderGeometry(.062,.075,.3,16),coat,[0,-.14,0]);add(sh,new THREE.CylinderGeometry(.078,.078,.04,16),coat,[0,-.29,0]);
+   const paw=add(sh,new THREE.SphereGeometry(.058,16,12),pink,[0,-.33,.01]);for(let f=0;f<3;f++)add(paw,new THREE.SphereGeometry(.022,8,6),pink,[(f-1)*.025,-.045,.02],null,null,true);arms.push({sh:sh,paw:paw});});
+ const feet=[];[-1,1].forEach(s=>{feet.push(add(bp,new THREE.SphereGeometry(.075,16,12),pink,[s*.11,.035,.07],null,[1,.5,1.75]));});
+ const tail=grp(bp,[0,.12,-.28]);add(tail,new THREE.TubeGeometry(new THREE.CatmullRomCurve3([V(0,0,0),V(.05,-.08,-.25),V(.25,-.1,-.5),V(.5,0,-.62),V(.62,.2,-.55),V(.58,.34,-.42)]),50,.026,8,false),pink,[0,0,0]);
+ // clipboard + pen
+ const clip=grp(bp,[-.02,.5,.36],[-.6,.15,0]);
+ add(clip,new THREE.BoxGeometry(.24,.32,.015),STD('#8c5a2e',{roughness:.6}),[0,0,0]);
+ const listT=ctex(256,320,(g,w,h,arg)=>{g.fillStyle='#fbfaf5';g.fillRect(0,0,w,h);g.fillStyle='#1d2420';g.font='800 22px '+SANS;g.fillText('AUDYT',16,36);const items=(arg&&arg.items)||['Higiena','Temperatury','Etykiety','Czystość'];
+   items.forEach((it,i)=>{const y=80+i*52;g.strokeStyle='#666';g.lineWidth=2;g.strokeRect(16,y-18,22,22);const st=arg&&arg.st?arg.st[i]:undefined;if(st===true){g.strokeStyle='#12a36f';g.lineWidth=5;g.beginPath();g.moveTo(19,y-8);g.lineTo(26,y);g.lineTo(38,y-20);g.stroke();}if(st===false){g.strokeStyle='#d64545';g.lineWidth=5;g.beginPath();g.moveTo(19,y-16);g.lineTo(36,y+1);g.moveTo(36,y-16);g.lineTo(19,y+1);g.stroke();}
+   g.fillStyle='#333';g.font='600 19px '+SANS;g.fillText(it,50,y);});});
+ add(clip,new THREE.PlaneGeometry(.21,.27),STD('#ffffff',{map:listT,roughness:.9}),[0,-.015,.009],null,null,true);
+ add(clip,new THREE.BoxGeometry(.09,.04,.03),MAT.steel,[0,.15,.012]);
+ const pen=grp(arms[1].paw,[0,-.02,.05],[1.1,0,0]);add(pen,new THREE.CylinderGeometry(.011,.011,.15,8),STD('#2156c9',{roughness:.35}),[0,.03,0]);add(pen,new THREE.ConeGeometry(.011,.03,8),MAT.steel,[0,-.06,0],[Math.PI,0,0]);
+ root.scale.setScalar(.95);
+ root.traverse(o=>{if(o.isMesh&&o.castShadow){o.castShadow=true;}});
+ return {root:root,bp:bp,head:head,eyes:eyes,ears:ears,arms:arms,feet:feet,tail:tail,mouth:mouth,smile:smile,clip:clip,listT:listT,pen:pen};
+}
+
+
+
+const M=buildMouse();scene.add(M.root);M.root.scale.setScalar(.9);
+M.clip.visible=false;
+
+/* ======================= LEVEL BUILD ======================= */
+let world=null;
+const PATH_W=5.2;
+function tileTex(a,b,n){return ctex(256,256,(g,w,h)=>{for(let y=0;y<n;y++)for(let x=0;x<n;x++){g.fillStyle=(x+y)%2?b:a;g.fillRect(x*w/n,y*h/n,w/n,h/n);}g.strokeStyle='rgba(0,0,0,.18)';g.lineWidth=2;for(let i=0;i<=n;i++){g.beginPath();g.moveTo(i*w/n,0);g.lineTo(i*w/n,h);g.moveTo(0,i*h/n);g.lineTo(w,i*h/n);g.stroke();}},[1,1]);}
+function woodTex(){return ctex(256,256,(g,w,h)=>{const cs=['#b88550','#c4915a','#ad7a46','#bf8c55'];for(let i=0;i<8;i++){g.fillStyle=cs[i%4];g.fillRect(0,i*h/8,w,h/8);g.fillStyle='rgba(70,40,15,.35)';g.fillRect(0,i*h/8,w,2);}});}
+
+// level layout: list of platforms {z0,z1,x,w,y,kind}, entities
+function design(id){
+ seed=({bakery:11,restaurant:22,factory:33,coldstore:44})[id];
+ const hard=ORDER.indexOf(id);
+ const P=[],E=[];let z=6;
+ const plat=(len,o)=>{o=o||{};P.push({z0:z,z1:z-len,x:o.x||0,w:o.w||PATH_W,y:o.y||0,kind:o.kind||'floor',ice:!!o.ice,belt:o.belt||0});z-=len;};
+ const gap=len=>{z-=len;};
+ const total=150+hard*20;
+ plat(16);
+ const qAt=[Math.floor(total*.36),Math.floor(total*.72)];let qi=0;
+ while(-z<total){
+  const r=rnd();
+  const ice=id==='coldstore'&&rnd()<.5;
+  const belt=id==='factory'&&rnd()<.4?(rnd()<.5?-1.6:1.6):0;
+  if(qi<2&&-z>qAt[qi]){plat(10,{});E.push({t:'station',z:z+5,x:0,q:qi});qi++;continue;}
+  if(r<.28){ // gap jump
+   plat(3+rnd()*3,{ice});gap(1.9+hard*.2+rnd()*.5);plat(7+rnd()*3,{ice});
+   E.push({t:'check',z:z+4.5,x:(rnd()-.5)*2,y:1.2});
+  }else if(r<.46){ // stepping blocks
+   plat(4,{});for(let i=0;i<3;i++){gap(1.4+hard*.1);const len=3;P.push({z0:z,z1:z-len,x:(i%2?1:-1)*(.35+rnd()*.35),w:3.0,y:.45+i*.3,kind:'block'});E.push({t:'check',z:z-len/2,x:P[P.length-1].x,y:P[P.length-1].y+1.1});z-=len;}gap(1.5);plat(6,{});
+  }else if(r<.66){ // pests corridor
+   plat(14,{ice,belt});E.push({t:'pest',z:z+9,x:0,range:1.8,speed:1.6+hard*.35});if(hard>0)E.push({t:'pest',z:z+4,x:0,range:2,speed:1.9+hard*.3});
+   for(let i=0;i<4;i++)E.push({t:'check',z:z+12-i*2.5,x:(i%2?.9:-.9),y:.9});
+  }else if(r<.84){ // crates
+   plat(13,{ice,belt});const n=3+Math.floor(rnd()*3);for(let i=0;i<n;i++)E.push({t:rnd()<.22?'crateNC':'crate',z:z+11-i*2.1,x:(rnd()-.5)*3.2,stack:rnd()<.25});
+  }else{ // barrels rolling
+   plat(16,{ice});E.push({t:'barrel',z:z+15,x:(rnd()-.5)*2.4,len:15,speed:3.8+hard*.6});if(hard>1)E.push({t:'barrel',z:z+15,x:(rnd()-.5)*2.4,len:15,speed:4.6,delay:1.4});
+   for(let i=0;i<3;i++)E.push({t:'check',z:z+12-i*3.5,x:(rnd()-.5)*3,y:.9});
+  }
+ }
+ plat(14,{});E.push({t:'finish',z:z+6,x:0});
+ return {P:P,E:E,end:z};
+}
+
+function buildLevel(id){
+ if(world){scene.remove(world.g);world.g.traverse(o=>{if(o.geometry)o.geometry.dispose();});}
+ const L=LEVELS[id],th=L.theme,D=design(id);
+ const g=new THREE.Group();scene.add(g);
+ scene.background=col(th.sky);scene.fog=new THREE.Fog(col(th.fog),26,70);
+ hemi.color.copy(col(th.hemi[0]));hemi.groundColor.copy(col(th.hemi[1]));hemi.intensity=th.hemi[2];sun.color.copy(col(th.sun[0]));sun.intensity=th.sun[1];
+ // platform materials
+ let floorTex;
+ if(id==='bakery')floorTex=woodTex();else if(id==='restaurant')floorTex=tileTex(th.floor,th.floor2,4);else if(id==='factory')floorTex=ctex(256,256,(c,w,h)=>{c.fillStyle='#8e979b';c.fillRect(0,0,w,h);for(let i=0;i<1500;i++){c.fillStyle=rnd()<.5?'rgba(255,255,255,.05)':'rgba(0,0,0,.06)';c.fillRect(rnd()*w,rnd()*h,3,3);}c.fillStyle='#e8c22c';c.fillRect(0,0,10,h);c.fillRect(w-10,0,10,h);});else floorTex=ctex(256,256,(c,w,h)=>{c.fillStyle='#e6f2f7';c.fillRect(0,0,w,h);c.strokeStyle='rgba(120,160,190,.35)';c.lineWidth=2;for(let i=0;i<=4;i++){c.beginPath();c.moveTo(i*w/4,0);c.lineTo(i*w/4,h);c.moveTo(0,i*h/4);c.lineTo(w,i*h/4);c.stroke();}});
+ floorTex.wrapS=floorTex.wrapT=THREE.RepeatWrapping;
+ const sideM=STD(id==='bakery'?'#7a5233':id==='restaurant'?'#55606a':id==='factory'?'#4b555c':'#7fa9c4',{roughness:.7});
+ const iceTex=ctex(128,128,(c,w,h)=>{const gr=c.createLinearGradient(0,0,w,h);gr.addColorStop(0,'#bfe8ff');gr.addColorStop(1,'#e9f8ff');c.fillStyle=gr;c.fillRect(0,0,w,h);c.strokeStyle='rgba(255,255,255,.8)';c.lineWidth=2;for(let i=0;i<8;i++){c.beginPath();c.moveTo(rnd()*w,rnd()*h);c.lineTo(rnd()*w,rnd()*h);c.stroke();}});
+ const beltTex=ctex(128,64,(c,w,h)=>{c.fillStyle='#2b2f33';c.fillRect(0,0,w,h);c.fillStyle='#3d434a';for(let x=0;x<w;x+=16)c.fillRect(x,0,8,h);});beltTex.wrapS=beltTex.wrapT=THREE.RepeatWrapping;
+ const belts=[];
+ D.P.forEach(p=>{const len=p.z0-p.z1,cz=(p.z0+p.z1)/2;const th2=p.kind==='block'?.5:1.2;
+  let topM;
+  if(p.ice)topM=STD('#ffffff',{map:iceTex,roughness:.08,metalness:.1});
+  else if(p.belt){const bt=beltTex.clone();bt.needsUpdate=true;bt.repeat.set(p.w/1.2,1);bt.rotation=Math.PI/2;bt.center.set(.5,.5);topM=STD('#ffffff',{map:bt,roughness:.6});belts.push({tex:bt,dir:p.belt});}
+  else{const ft=floorTex.clone();ft.needsUpdate=true;ft.repeat.set(p.w/2,len/2);topM=STD('#ffffff',{map:ft,roughness:id==='coldstore'?.3:.7});}
+  const box=add(g,new THREE.BoxGeometry(p.w,th2,len),[sideM,sideM,topM,sideM,sideM,sideM],[p.x,p.y-th2/2,cz]);
+  if(p.kind!=='block'){[-1,1].forEach(s=>add(g,new THREE.BoxGeometry(.18,.18,len),STD(th.accent,{roughness:.5}),[p.x+s*(p.w/2-.09),p.y+.06,cz]));}
+ });
+ // scenery walls left/right + props
+ const zMax=8,zMin=D.end-6,len=zMax-zMin,cz=(zMax+zMin)/2;
+ add(g,new THREE.PlaneGeometry(60,len+40),STD(id==='coldstore'?'#26394a':'#1a1410',{roughness:1}),[0,-6,cz],[-Math.PI/2,0,0],null,true);
+ const wallTex=ctex(256,256,(c,w,h)=>{c.fillStyle=th.wall;c.fillRect(0,0,w,h);if(id==='bakery'||id==='restaurant'){const ty=h*.55;for(let y=ty;y<h;y+=24)for(let x=0;x<w;x+=48){c.fillStyle=(x/48+y/24)%2?'#ffffff':'#f0f3f2';c.fillRect(x+1,y+1,46,22);}c.fillStyle=th.accent;c.fillRect(0,ty-8,w,8);}else{c.strokeStyle='rgba(0,0,0,.12)';c.lineWidth=3;for(let x=0;x<=w;x+=64){c.beginPath();c.moveTo(x,0);c.lineTo(x,h);c.stroke();}c.fillStyle=th.accent;c.fillRect(0,h*.84,w,h*.16);}});
+ wallTex.wrapS=wallTex.wrapT=THREE.RepeatWrapping;wallTex.repeat.set(len/4,1);
+ [-1,1].forEach(s=>add(g,new THREE.PlaneGeometry(len,9),STD('#ffffff',{map:wallTex,roughness:.8}),[s*7.5,2.5,cz],[0,-s*Math.PI/2,0],null,true));
+ add(g,new THREE.PlaneGeometry(15,len),STD(id==='coldstore'?'#d7e6ee':id==='factory'?'#5b656c':'#e9e2d2',{roughness:.9}),[0,7,cz],[Math.PI/2,0,0],null,true);
+ sceneryProps(g,id,zMin,zMax);
+ // entities
+ const ents=[];
+ const checkGeo=new THREE.TorusGeometry(.22,.07,10,22),checkMat=STD('#22c55e',{emissive:'#0c6a35',roughness:.3,metalness:.2});
+ const tickGeo=new THREE.BoxGeometry(.07,.32,.07);
+ D.E.forEach(e=>{
+  const ground=groundAt(D.P,e.x,e.z);const gy=ground==null?0:ground;
+  if(e.t==='check'){const m=grp(g,[e.x,(e.y!=null?gy+e.y-0.2:gy+.9),e.z]);add(m,checkGeo,checkMat,[0,0,0]);const t1=add(m,tickGeo,STD('#ffffff',{emissive:'#666666'}),[-.05,-.02,0],[0,0,.8],[1,.5,1]);const t2=add(m,tickGeo,STD('#ffffff',{emissive:'#666666'}),[.05,.02,0],[0,0,-.55]);ents.push({t:'check',m:m,alive:true});}
+  else if(e.t==='crate'||e.t==='crateNC'){const n=e.stack?2:1;for(let k=0;k<n;k++){const m=add(g,new THREE.BoxGeometry(.8,.8,.8),STD('#ffffff',{map:e.t==='crate'?T.crate:T.crateNC,roughness:.7}),[e.x,gy+.4+k*.8,e.z]);ents.push({t:e.t,m:m,alive:true,gy:gy+k*.8});}}
+  else if(e.t==='pest'){const m=buildPest(g);m.position.set(e.x,gy,e.z);ents.push({t:'pest',m:m,alive:true,x0:e.x,range:e.range,speed:e.speed,ph:rnd()*6});}
+  else if(e.t==='barrel'){const m=grp(g,[e.x,gy+.45,e.z]);const b=add(m,new THREE.CylinderGeometry(.45,.45,.9,20),STD(id==='coldstore'?'#3f7cae':'#8a5a33',{roughness:.6}),[0,0,0],[0,0,Math.PI/2]);[-.28,.28].forEach(x=>add(m,new THREE.TorusGeometry(.46,.04,6,20),STD('#3a3d40',{metalness:.7}),[x,0,0],[0,Math.PI/2,0]));ents.push({t:'barrel',m:m,alive:true,z0:e.z,len:e.len,speed:e.speed,t0:-(e.delay||0),gy:gy});}
+  else if(e.t==='station'){const m=buildStation(g,id,e.q);m.position.set(e.x,gy,e.z);ents.push({t:'station',m:m,q:e.q,done:false});}
+  else if(e.t==='finish'){const m=buildFinish(g,L);m.position.set(0,gy,e.z);ents.push({t:'finish',m:m,z:e.z});}
+ });
+ world={g:g,id:id,P:D.P,ents:ents,end:D.end,belts:belts,totalChecks:ents.filter(e=>e.t==='check').length+ents.filter(e=>e.t==='crate').length*3,totalCrates:ents.filter(e=>e.t==='crate'||e.t==='crateNC').length};
+ return world;
+}
+function groundAt(P,x,z,yMax){let best=null;for(const p of P){if(z<=p.z0&&z>=p.z1&&Math.abs(x-p.x)<=p.w/2+.15){if(yMax!=null&&p.y>yMax+.05)continue;if(best==null||p.y>best)best=p.y;}}return best;}
+function platAt(P,x,z,y){for(const p of P){if(z<=p.z0&&z>=p.z1&&Math.abs(x-p.x)<=p.w/2+.15&&Math.abs(p.y-y)<.06)return p;}return null;}
+
+function buildPest(g){const m=grp(g);const body=STD('#4a3b30',{roughness:.6});
+ add(m,new THREE.SphereGeometry(.28,16,12),body,[0,.28,0],null,[1,.75,1.4]);
+ add(m,new THREE.SphereGeometry(.16,14,10),body,[0,.34,.36]);
+ [-1,1].forEach(s=>{add(m,new THREE.SphereGeometry(.07,10,8),STD('#d98c8c'),[s*.1,.48,.32],null,[1,1,.4]);add(m,new THREE.SphereGeometry(.035,8,6),BASIC({color:new THREE.Color(2.5,.3,.2)}),[s*.07,.38,.5],null,null,true);});
+ add(m,new THREE.CylinderGeometry(.02,.005,.6,6),STD('#c98a8a'),[0,.24,-.6],[1.3,0,0]);
+ const legs=[];for(let i=0;i<4;i++){legs.push(add(m,new THREE.CylinderGeometry(.03,.03,.16,6),body,[(i%2?.15:-.15),.08,(i<2?.18:-.18)]));}
+ m.userData.legs=legs;return m;}
+function buildStation(g,id,q){const m=grp(g);
+ add(m,new THREE.CylinderGeometry(.9,1,.2,28),STD('#1d2b25',{roughness:.5}),[0,.1,0]);
+ add(m,new THREE.CylinderGeometry(.92,.92,.04,28),BASIC({color:new THREE.Color(.35,1.6,.9)}),[0,.22,0],null,null,true);
+ const post=add(m,new THREE.BoxGeometry(.14,1.3,.14),STD('#2f3a35',{metalness:.5,roughness:.4}),[0,.85,0]);
+ const board=grp(m,[0,1.55,0],[-.25,0,0]);add(board,new THREE.BoxGeometry(.9,.6,.05),STD('#8c5a2e'),[0,0,0]);
+ const st=ctex(256,170,(c,w,h)=>{c.fillStyle='#fbfaf5';c.fillRect(0,0,w,h);c.fillStyle='#0b7c58';c.font='800 30px '+SANS;c.fillText('AUDYT '+(q+1)+'/2',16,40);c.fillStyle='#333';for(let i=0;i<4;i++){c.strokeStyle='#666';c.lineWidth=3;c.strokeRect(16,62+i*26,16,16);c.fillStyle='#bbb';c.fillRect(42,68+i*26,140-i*14,6);}});
+ add(board,new THREE.PlaneGeometry(.82,.52),STD('#ffffff',{map:st}),[0,0,.03],null,null,true);
+ const ring=add(m,new THREE.TorusGeometry(1.0,.04,8,40),BASIC({color:new THREE.Color(.4,2,1.2),transparent:true,opacity:.8}),[0,.35,0],[Math.PI/2,0,0],null,true);
+ const ex=ctex(128,128,(c,w,h)=>{c.fillStyle='#ffcf4a';c.beginPath();c.arc(64,64,54,0,7);c.fill();c.strokeStyle='#fff';c.lineWidth=8;c.stroke();c.fillStyle='#3a2600';c.font='800 80px '+SANS;c.textAlign='center';c.textBaseline='middle';c.fillText('!',64,70);});
+ const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:ex,depthTest:false}));sp.scale.set(.6,.6,.6);sp.position.set(0,2.4,0);m.add(sp);m.userData.sprite=sp;m.userData.ring=ring;return m;}
+function buildFinish(g,L){const m=grp(g);const gold=STD('#f0c45a',{metalness:.9,roughness:.25,emissive:'#3a2600'});
+ [-1,1].forEach(s=>add(m,new THREE.CylinderGeometry(.16,.18,3.4,16),gold,[s*2.4,1.7,0]));
+ const bt=ctex(512,128,(c,w,h)=>{c.fillStyle='#0f9e6f';rr(c,0,0,w,h,24);c.fill();c.fillStyle='#fff';c.font='800 58px '+SANS;c.textAlign='center';c.textBaseline='middle';c.fillText('AUDYT ZALICZONY',w/2,h/2+4);});
+ add(m,new THREE.BoxGeometry(5.2,.9,.12),STD('#ffffff',{map:bt,emissive:'#0a3a28'}),[0,3.2,0]);
+ const sh=new THREE.Shape();sh.moveTo(0,.62);sh.lineTo(.48,.48);sh.lineTo(.48,.05);sh.quadraticCurveTo(.46,-.42,0,-.66);sh.quadraticCurveTo(-.46,-.42,-.48,.05);sh.lineTo(-.48,.48);sh.closePath();
+ const s=grp(m,[0,4.3,0]);add(s,new THREE.ExtrudeGeometry(sh,{depth:.08,bevelEnabled:true,bevelSize:.04,bevelThickness:.04,bevelSegments:2}),gold,[0,0,-.04]);
+ const tt=ctex(256,256,(c,w,h)=>{c.fillStyle='#18a86a';c.beginPath();c.arc(128,120,96,0,7);c.fill();c.fillStyle='#fff';c.font='800 '+(L.badge.length>3?62:80)+'px '+SANS;c.textAlign='center';c.textBaseline='middle';c.fillText(L.badge,128,124);});
+ add(s,new THREE.PlaneGeometry(.8,.8),BASIC({map:tt,transparent:true}),[0,0,.1],null,null,true);m.userData.shield=s;return m;}
+
+function sceneryProps(g,id,zMin,zMax){
+ const crust=STD('#c47a33',{roughness:.6}),wood=STD('#9a6a3c',{roughness:.7});
+ for(let z=zMax-4;z>zMin;z-=8){[-1,1].forEach(s=>{const x=s*6.3;
+  if(id==='bakery'){const sh=grp(g,[x,0,z]);[.6,1.4,2.2].forEach(y=>{add(sh,new THREE.BoxGeometry(1.2,.06,3.2),wood,[0,y,0]);const arr=[];for(let i=0;i<6;i++)arr.push({p:[0,y+.12,-1.3+i*.52],s:[1,.8,1.3]});inst(sh,new THREE.SphereGeometry(.16,12,10),crust,arr);});add(sh,new THREE.BoxGeometry(1.2,2.6,.06),wood,[0,1.3,-1.6]);add(sh,new THREE.BoxGeometry(1.2,2.6,.06),wood,[0,1.3,1.6]);
+   if((Math.round(z/8))%3===0){const ov=grp(g,[x,0,z-4]);add(ov,new THREE.BoxGeometry(1.4,2.6,2.4),MAT.steel,[0,1.3,0]);add(ov,new THREE.PlaneGeometry(1.8,.36),BASIC({color:new THREE.Color(3,1.3,.3)}),[-s*.71,1.4,0],[0,-s*Math.PI/2,0],null,true);}}
+  else if(id==='restaurant'){const c=grp(g,[x,0,z]);add(c,new THREE.BoxGeometry(1.3,1,3.6),MAT.steel,[0,.5,0]);const arr=[];for(let i=0;i<5;i++)arr.push({p:[0,1.08,-1.4+i*.7],c:['#e85d4a','#f2a03a','#6fbf4a','#f6e3a1','#d64545'][i]});inst(c,new THREE.SphereGeometry(.13,12,10),STD('#ffffff',{roughness:.5}),arr);
+   if((Math.round(z/8))%2===0){add(c,new THREE.CylinderGeometry(.22,.2,.3,18),STD('#c7ccd0',{metalness:.9,roughness:.2}),[0,1.15,1.2]);}}
+  else if(id==='factory'){const mc=grp(g,[x,0,z]);add(mc,new THREE.BoxGeometry(1.6,2.4,2.6),STD('#d9dfe2',{metalness:.5,roughness:.35}),[0,1.2,0]);add(mc,new THREE.PlaneGeometry(.8,.5),BASIC({color:new THREE.Color(.3,1.4,1)}),[-s*.81,1.6,0],[0,-s*Math.PI/2,0],null,true);add(mc,new THREE.CylinderGeometry(.12,.12,4,12),STD('#4aa3d8',{metalness:.5,roughness:.3}),[0,4,0],[Math.PI/2,0,0]);
+   [[.5,'#2bd16b'],[.8,'#e5484d']].forEach(q=>add(mc,new THREE.SphereGeometry(.06,10,8),BASIC({color:new THREE.Color(q[1]).multiplyScalar(1.8)}),[-s*.81,q[0],.8],null,null,true));}
+  else{const ch=grp(g,[x,0,z]);add(ch,new THREE.BoxGeometry(1.2,2.4,3.6),STD('#e9eef1',{roughness:.5}),[0,1.2,0]);add(ch,new THREE.PlaneGeometry(3.4,2),BASIC({color:new THREE.Color(.75,.95,1.1)}),[-s*.61,1.25,0],[0,-s*Math.PI/2,0],null,true);
+   const arr=[];[.6,1.1,1.6].forEach(y=>{for(let i=0;i<8;i++)arr.push({p:[-s*.45,y,-1.5+i*.42],c:['#ffffff','#f5d0e0','#fff0b3','#d8ecff'][i%4]});});inst(ch,new THREE.CylinderGeometry(.08,.07,.18,10),STD('#ffffff',{roughness:.5}),arr);}
+ });}
+ // ceiling lamps
+ for(let z=zMax-6;z>zMin;z-=12){add(g,new THREE.BoxGeometry(2.4,.08,.4),BASIC({color:new THREE.Color(2,1.9,1.7)}),[0,6,z],null,null,true);}
+}
+
+/* ======================= GAME STATE ======================= */
+const S={log:[],mode:'menu',level:null,lives:3,checks:0,crates:0,xp:0,correct:0,answered:0,cp:null,startT:0};
+const P={pos:V(0,0,4),vel:V(0,0,0),yaw:Math.PI,onGround:true,spinT:0,spinCD:0,invT:0,coyote:0,jumpBuf:0,wp:0,dead:false,deadT:0,ground:0};
+const input={x:0,z:0,jump:false,spin:false,jumpHeld:false};
+const keys={};
+addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k))e.preventDefault();if(!keys[k]){if(k===' '||k==='w'&&false)input.jump=true;if(k==='e'||k==='shift')input.spin=true;if(k==='p'||k==='escape')togglePause();}keys[k]=true;});
+addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;});
+function readKeys(){let x=0,z=0;if(keys['arrowleft']||keys['a'])x-=1;if(keys['arrowright']||keys['d'])x+=1;if(keys['arrowup']||keys['w'])z-=1;if(keys['arrowdown']||keys['s'])z+=1;return {x:x,z:z};}
+// touch stick
+const stick=document.getElementById('stick'),knob=document.getElementById('knob');let stickId=null,stickV={x:0,z:0};
+function stickMove(t){const r=stick.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;let dx=t.clientX-cx,dy=t.clientY-cy;const m=Math.hypot(dx,dy),max=r.width/2-10;if(m>max){dx*=max/m;dy*=max/m;}knob.style.transform='translate('+dx+'px,'+dy+'px)';stickV={x:dx/max,z:dy/max};}
+stick.addEventListener('touchstart',e=>{e.preventDefault();const t=e.changedTouches[0];stickId=t.identifier;stickMove(t);},{passive:false});
+stick.addEventListener('touchmove',e=>{e.preventDefault();for(const t of e.changedTouches)if(t.identifier===stickId)stickMove(t);},{passive:false});
+const stickEnd=e=>{for(const t of e.changedTouches)if(t.identifier===stickId){stickId=null;stickV={x:0,z:0};knob.style.transform='';}};
+stick.addEventListener('touchend',stickEnd);stick.addEventListener('touchcancel',stickEnd);
+const tJump=document.getElementById('tJump'),tSpin=document.getElementById('tSpin');
+tJump.addEventListener('touchstart',e=>{e.preventDefault();input.jump=true;input.jumpHeld=true;},{passive:false});tJump.addEventListener('touchend',()=>{input.jumpHeld=false;});
+tSpin.addEventListener('touchstart',e=>{e.preventDefault();input.spin=true;},{passive:false});
+tJump.addEventListener('click',()=>{input.jump=true;});tSpin.addEventListener('click',()=>{input.spin=true;});
+
+/* ======================= AUDIO (voice + sfx) ======================= */
+const voice=new Audio();voice.preload='auto';let voiceOn=true;let voicePlaying=false;
+voice.addEventListener('playing',()=>voicePlaying=true);voice.addEventListener('pause',()=>voicePlaying=false);voice.addEventListener('ended',()=>voicePlaying=false);
+const voiceBtn=document.getElementById('voiceBtn');voiceBtn.addEventListener('click',()=>{voiceOn=!voiceOn;voiceBtn.textContent=voiceOn?'Głos: wł.':'Głos: wył.';if(!voiceOn)voice.pause();});
+const sayEl=document.getElementById('say'),sayT=document.getElementById('sayT');let sayTimer=null,typeTimer=null;
+function say(text,key,ms){clearTimeout(sayTimer);clearInterval(typeTimer);sayEl.dataset.off='0';let i=0;sayT.textContent='';typeTimer=setInterval(()=>{i+=2;sayT.textContent=text.slice(0,i);if(i>=text.length)clearInterval(typeTimer);},reduce?1:28);
+ voice.pause();if(voiceOn&&key){voice.src='/quality/game/vo/'+key+'.mp3';voice.currentTime=0;const p=voice.play();if(p&&p.catch)p.catch(()=>{});}
+ sayTimer=setTimeout(()=>{sayEl.dataset.off='1';},ms||Math.max(3500,text.length*70));}
+let AC=null;function ac(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}return AC;}
+function beep(f,d,type,vol,slide){const a=ac();if(!a)return;const o=a.createOscillator(),g=a.createGain();o.type=type||'square';o.frequency.setValueAtTime(f,a.currentTime);if(slide)o.frequency.exponentialRampToValueAtTime(slide,a.currentTime+d);g.gain.setValueAtTime(vol||.06,a.currentTime);g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+d);o.connect(g);g.connect(a.destination);o.start();o.stop(a.currentTime+d);}
+const SFX={jump:()=>beep(420,.18,'square',.05,760),check:()=>{beep(880,.08,'triangle',.06);setTimeout(()=>beep(1320,.1,'triangle',.06),70);},crate:()=>beep(160,.16,'sawtooth',.07,60),hurt:()=>beep(300,.35,'sawtooth',.08,80),spin:()=>beep(600,.15,'triangle',.04,300),stomp:()=>beep(240,.12,'square',.07,120),win:()=>{[660,880,990,1320].forEach((f,i)=>setTimeout(()=>beep(f,.16,'triangle',.07),i*120));}};
+
+/* ======================= HUD ======================= */
+const $=id=>document.getElementById(id);
+function hud(){ $('hLives').textContent=S.lives;$('hChecks').textContent=S.checks;$('hChecksT').textContent=world?world.totalChecks:0;$('hCrates').textContent=S.crates;$('hCratesT').textContent=world?world.totalCrates:0;$('hXp').textContent=(prog.xp||0); }
+function paintMenu(){ $('mXp').textContent=prog.xp||0;$('mLevel').textContent=levelName(prog.xp||0);document.querySelectorAll('[data-best]').forEach(el=>{const b=prog.best[el.dataset.best];el.textContent=b?('Najlepiej: '+b.checks+' ✓ · '+b.correct+'/2 decyzji'):'';}); }
+paintMenu();
+
+/* ======================= PARTICLES ======================= */
+const PN=500,pGeo=new THREE.BufferGeometry(),pPos=new Float32Array(PN*3),pCol=new Float32Array(PN*3),pVel=[],pLife=new Float32Array(PN);
+for(let i=0;i<PN;i++){pVel.push(V(0,0,0));pPos[i*3+1]=-99;}
+pGeo.setAttribute('position',new THREE.BufferAttribute(pPos,3));pGeo.setAttribute('color',new THREE.BufferAttribute(pCol,3));
+const pts=new THREE.Points(pGeo,new THREE.PointsMaterial({size:.12,vertexColors:true,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,toneMapped:false}));pts.frustumCulled=false;scene.add(pts);let pIdx=0;
+function emit(p,n,sp,c,up){if(reduce)n=Math.ceil(n/3);for(let k=0;k<n;k++){const i=pIdx++%PN;const a=Math.random()*6.283,b=Math.acos(2*Math.random()-1),s=sp*(.4+Math.random()*.7);pVel[i].set(Math.sin(b)*Math.cos(a)*s,Math.abs(Math.cos(b))*s+(up||0),Math.sin(b)*Math.sin(a)*s);pPos[i*3]=p.x;pPos[i*3+1]=p.y;pPos[i*3+2]=p.z;pCol[i*3]=c[0];pCol[i*3+1]=c[1];pCol[i*3+2]=c[2];pLife[i]=1;}}
+function updParticles(dt){for(let i=0;i<PN;i++){if(pLife[i]<=0)continue;pLife[i]-=dt*1.3;const v=pVel[i];v.y-=6*dt;pPos[i*3]+=v.x*dt;pPos[i*3+1]+=v.y*dt;pPos[i*3+2]+=v.z*dt;if(pLife[i]<=0)pPos[i*3+1]=-99;}pGeo.attributes.position.needsUpdate=true;}
+// crate debris
+const debris=[];const debGeo=new THREE.BoxGeometry(.25,.08,.25);
+function crateBurst(m,nc){for(let i=0;i<6;i++){const d=new THREE.Mesh(debGeo,STD(nc?'#c94a3a':'#b97a3c'));d.position.copy(m.position);d.userData.v=V((Math.random()-.5)*5,3+Math.random()*3,(Math.random()-.5)*5);d.userData.r=V(Math.random()*8,Math.random()*8,Math.random()*8);d.userData.t=1.2;world.g.add(d);debris.push(d);}}
+
+/* ======================= FLOW ======================= */
+const menu=$('menu'),qov=$('qov'),pov=$('pov'),eov=$('eov'),hudEl=$('hud');
+document.getElementById('levels').addEventListener('click',e=>{const b=e.target.closest('[data-level]');if(!b||b.classList.contains('qa-locked'))return;startLevel(b.dataset.level);});
+function startLevel(id){ac();S.level=id;S.log=[];S.lives=3;S.checks=0;S.crates=0;S.correct=0;S.answered=0;S.xpGain=0;buildLevel(id);
+ placePlayer(V(0,0,3.5));S.cp={pos:V(0,0,3.5)};menu.hidden=true;eov.hidden=true;pov.hidden=true;hudEl.hidden=false;document.body.classList.add('playing');
+ $('hLevel').textContent=LEVELS[id].name.toUpperCase();S.mode='play';hud();say(LEVELS[id].intro,'in_'+id);camSnap=true;}
+function placePlayer(p){P.pos.copy(p);P.vel.set(0,0,0);P.yaw=Math.PI;P.onGround=true;P.dead=false;P.invT=1.2;}
+function togglePause(){if(S.mode==='play'){S.mode='pause';pov.hidden=false;voice.pause();}else if(S.mode==='pause'){S.mode='play';pov.hidden=true;}}
+$('pauseBtn').addEventListener('click',togglePause);$('resumeBtn').addEventListener('click',togglePause);
+$('restartBtn').addEventListener('click',()=>{pov.hidden=true;startLevel(S.level);});
+$('quitBtn').addEventListener('click',toMenu);
+function toMenu(){S.mode='menu';pov.hidden=true;eov.hidden=true;qov.hidden=true;hudEl.hidden=true;menu.hidden=false;document.body.classList.remove('playing');sayEl.dataset.off='1';voice.pause();paintMenu();window.QAExperience?.reapply?.();}
+function hurt(why){(S.log=S.log||[]).push((why||'?')+'@'+P.pos.z.toFixed(1)+','+P.pos.x.toFixed(1));if(P.invT>0||P.dead||S.mode!=='play')return;S.lives--;SFX.hurt();$('flash').classList.add('on');setTimeout(()=>$('flash').classList.remove('on'),260);hud();
+ if(S.lives<=0){gameOver();return;}P.dead=true;P.deadT=.8;}
+function respawn(){placePlayer(S.cp.pos.clone());}
+function gameOver(){S.mode='end';voice.pause();
+ $('ecard').innerHTML='<div class="qk">KONIEC ŻYĆ</div><h2>Myszka musi odpocząć</h2><p class="fb">Spróbuj jeszcze raz. Punkty kontrolne zapisują miejsce, od którego wracasz po utracie życia.</p><div class="row"><button class="g-btn" type="button" id="eRetry">Jeszcze raz</button><button class="g-btn ghost" type="button" id="eMenu">Wybór poziomu</button></div>';
+ eov.hidden=false;$('eRetry').onclick=()=>startLevel(S.level);$('eMenu').onclick=toMenu;}
+function openQuestion(ent){S.mode='question';const L=LEVELS[S.level],q=L.qs[ent.q];say(q.n,'n_'+S.level+'_'+ent.q,9000);
+ const qc=$('qcard');qc.innerHTML='<div class="qk">STANOWISKO AUDYTU '+(ent.q+1)+'/2 · '+q.k.toUpperCase()+'</div><h2>'+q.q+'</h2><div class="answers">'+q.a.map((a,i)=>'<button class="ans" type="button" data-i="'+i+'">'+a+'</button>').join('')+'</div><div class="fb" id="qfb"></div>';
+ qov.hidden=false;qc.querySelectorAll('.ans').forEach(b=>b.addEventListener('click',()=>{
+  const i=+b.dataset.i,ok=q.c.includes(i);qc.querySelectorAll('.ans').forEach((x,j)=>{if(q.c.includes(j))x.classList.add('good');else if(j===i)x.classList.add('bad');x.disabled=true;});
+  S.answered++;if(ok){S.correct++;prog.xp=(prog.xp||0)+20;prog.streak=(prog.streak||0)+1;S.xpGain+=20;SFX.check();emit(P.pos.clone().add(V(0,1.2,0)),40,4,[1,3,1.6],2);}else{prog.streak=0;}
+  save();hud();say((ok?'Dobra decyzja! ':'Nie tym razem. ')+q.f,(ok?'ok_':'no_')+S.level+'_'+ent.q,8000);
+  $('qfb').innerHTML='<b class="'+(ok?'ok':'no')+'">'+(ok?'✓ Dobra decyzja, +20 XP':'✕ Nie tym razem')+'</b>'+q.f+'<div class="row" style="margin-top:12px"><button class="g-btn" type="button" id="qGo">Biegnę dalej →</button></div>';
+  ent.done=true;ent.m.userData.sprite.material.map=ok?okTex:noTex;ent.m.userData.sprite.material.needsUpdate=true;
+  $('qGo').onclick=()=>{qov.hidden=true;S.mode='play';P.invT=1;};$('qGo').focus();
+ }));
+ setTimeout(()=>{const f=qc.querySelector('.ans');if(f&&!isTouch)f.focus();},50);}
+const okTex=ctex(128,128,(c,w,h)=>{c.fillStyle='#12a36f';c.beginPath();c.arc(64,64,54,0,7);c.fill();c.strokeStyle='#fff';c.lineWidth=8;c.stroke();c.fillStyle='#fff';c.font='800 72px '+SANS;c.textAlign='center';c.textBaseline='middle';c.fillText('✓',64,70);});
+const noTex=ctex(128,128,(c,w,h)=>{c.fillStyle='#e08a2c';c.beginPath();c.arc(64,64,54,0,7);c.fill();c.strokeStyle='#fff';c.lineWidth=8;c.stroke();c.fillStyle='#fff';c.font='800 72px '+SANS;c.textAlign='center';c.textBaseline='middle';c.fillText('✕',64,70);});
+function finishLevel(){S.mode='end';SFX.win();emit(P.pos.clone().add(V(0,2,0)),120,6,[3,2.4,.8],3);
+ const L=LEVELS[S.level],perfect=S.correct===2;const bonus=Math.floor(S.checks/5)+(S.crates===world.totalCrates?10:0);prog.xp=(prog.xp||0)+bonus;S.xpGain+=bonus;
+ const prev=prog.best[S.level];if(!prev||S.checks>prev.checks||S.correct>prev.correct)prog.best[S.level]={checks:S.checks,correct:S.correct,crates:S.crates};save();
+ say(perfect?'Audyt zaliczony! '+L.name+' na sto procent. Odznaka '+L.badge+' jest moja!':'Audyt zakończony. Jeszcze poćwiczymy!',perfect?'end_'+S.level:'end_part',7000);
+ const nextId=ORDER[ORDER.indexOf(S.level)+1];
+ const shield='<svg class="badge" viewBox="0 0 100 118" aria-label="Odznaka '+L.badge+'"><path d="M50 4 92 18v38c0 30-20 48-42 58C28 104 8 86 8 56V18Z" fill="#e2b23c"/><path d="M50 13 84 24v32c0 25-16 40-34 49C32 96 16 81 16 56V24Z" fill="'+(perfect?'#18a86a':'#5d6b64')+'"/><text x="50" y="66" text-anchor="middle" font-family="Baloo 2,system-ui,sans-serif" font-weight="800" font-size="'+(L.badge.length>3?20:26)+'" fill="#fff">'+L.badge+'</text></svg>';
+ $('ecard').innerHTML='<div class="row" style="gap:16px">'+shield+'<div><div class="qk">'+L.name.toUpperCase()+' · '+(perfect?'AUDYT ZALICZONY':'AUDYT ZAKOŃCZONY')+'</div><h2>'+(perfect?'Odznaka '+L.badge+' zdobyta!':'Dwie decyzje do poprawy przy następnym podejściu')+'</h2></div></div>'+
+  '<div class="stats"><div class="stat"><b>'+S.checks+'</b><span>znaczków kontroli</span></div><div class="stat"><b>'+S.crates+'/'+world.totalCrates+'</b><span>skrzynek</span></div><div class="stat"><b>'+S.correct+'/2</b><span>dobrych decyzji</span></div><div class="stat"><b>+'+S.xpGain+'</b><span>XP (razem '+prog.xp+')</span></div></div>'+
+  '<div class="row">'+(nextId?'<button class="g-btn" type="button" id="eNext">Następny obiekt: '+LEVELS[nextId].name+' →</button>':'<span class="g-btn gold">Wszystkie obiekty ukończone</span>')+'<button class="g-btn ghost" type="button" id="eRetry">Zagraj ponownie</button><button class="g-btn ghost" type="button" id="eMenu">Wybór poziomu</button></div>';
+ eov.hidden=false;$('eRetry').onclick=()=>startLevel(S.level);$('eMenu').onclick=toMenu;
+ if(nextId)$('eNext').onclick=()=>{const card=document.querySelector('[data-level="'+nextId+'"]');if(card&&card.classList.contains('qa-locked')){toMenu();card.click();}else startLevel(nextId);};}
+
+/* ======================= PHYSICS & UPDATE ======================= */
+const GRAV=26,JUMP=10.6,SPEED=6.2;
+const damp=(a,b,k,dt)=>a+(b-a)*(1-Math.exp(-k*dt));
+const angDiff=(a,b)=>{let d=(b-a)%(Math.PI*2);if(d>Math.PI)d-=Math.PI*2;if(d<-Math.PI)d+=Math.PI*2;return d;};
+let camSnap=true;const camPos=V(0,4,10),camLook=V(0,1,0);
+const st={arms:[{x:-.3,z:0},{x:-.3,z:0}],hx:0,blink:2,bl:0,eye:1,talk:0};
+function update(dt,t){
+ if(S.mode==='play'&&world){
+  const k=readKeys();input.x=Math.max(-1,Math.min(1,k.x+stickV.x));input.z=Math.max(-1,Math.min(1,k.z+stickV.z));
+  if(keys[' '])input.jumpHeld=true;else if(!isTouch)input.jumpHeld=false;
+  if(P.dead){P.deadT-=dt;M.root.scale.setScalar(.9*Math.max(.05,P.deadT/.8));if(P.deadT<=0){M.root.scale.setScalar(.9);respawn();}input.jump=false;input.spin=false;}
+  else{
+   // movement relative to track (camera behind, looking -z)
+   const ice=P.onGround&&P.plat&&P.plat.ice;
+   const tx=input.x*SPEED,tz=input.z*SPEED;
+   const acc=ice?4.2:(P.onGround?14:7);
+   P.vel.x=damp(P.vel.x,tx,acc,dt);P.vel.z=damp(P.vel.z,tz,acc,dt);
+   if(P.onGround&&P.plat&&P.plat.belt)P.pos.x+=P.plat.belt*dt;
+   if(Math.hypot(input.x,input.z)>.15)P.yaw=P.yaw+angDiff(P.yaw,Math.atan2(input.x,input.z))*Math.min(1,dt*12);
+   // jump
+   if(input.jump){P.jumpBuf=.14;input.jump=false;}
+   P.jumpBuf-=dt;P.coyote=P.onGround?.1:P.coyote-dt;
+   if(P.jumpBuf>0&&P.coyote>0){P.vel.y=JUMP;P.onGround=false;P.coyote=0;P.jumpBuf=0;SFX.jump();}
+   if(!input.jumpHeld&&P.vel.y>3)P.vel.y-=GRAV*.45*dt;
+   // spin
+   P.spinCD-=dt;if(input.spin&&P.spinCD<=0){P.spinT=.45;P.spinCD=.7;SFX.spin();}input.spin=false;P.spinT-=dt;
+   // gravity
+   P.vel.y-=GRAV*dt;
+   const prevY=P.pos.y;
+   P.pos.x+=P.vel.x*dt;P.pos.z+=P.vel.z*dt;P.pos.y+=P.vel.y*dt;
+   // crates as solid boxes
+   for(const e of world.ents){if((e.t==='crate'||e.t==='crateNC')&&e.alive){const c=e.m.position;const dx=P.pos.x-c.x,dz=P.pos.z-c.z;if(Math.abs(dx)<.72&&Math.abs(dz)<.72){const top=c.y+.4;
+      if(prevY>=top-.05&&P.pos.y<=top+.02&&P.vel.y<=0){breakCrate(e);P.vel.y=JUMP*.75;SFX.stomp();}
+      else if(P.spinT>0){breakCrate(e);}
+      else if(P.pos.y<top-.1&&P.pos.y+1>c.y-.4){if(Math.abs(dx)>Math.abs(dz))P.pos.x=c.x+Math.sign(dx)*.72;else P.pos.z=c.z+Math.sign(dz)*.72;}}}}
+   // ground
+   const gy=groundAt(world.P,P.pos.x,P.pos.z,Math.max(prevY,P.pos.y)+.4);
+   if(gy!=null&&P.pos.y<=gy&&prevY>=gy-.42){P.pos.y=gy;P.vel.y=0;P.onGround=true;P.plat=platAt(world.P,P.pos.x,P.pos.z,gy);}
+   else{if(P.onGround&&(gy==null||P.pos.y>gy+.02))P.onGround=false;}
+   if(P.pos.z>6)P.pos.z=6;P.pos.x=Math.max(-6,Math.min(6,P.pos.x));
+   if(P.pos.y<-5){P.invT=0;hurt('fall');if(S.mode==='play'&&!P.dead){P.dead=true;P.deadT=.01;}}
+   P.invT-=dt;
+   // entities
+   for(const e of world.ents){
+    if(e.t==='check'&&e.alive){e.m.rotation.y+=dt*3;if(e.m.position.distanceTo(P.pos.clone().add(V(0,.7,0)))<.85){e.alive=false;e.m.visible=false;S.checks++;SFX.check();emit(e.m.position,10,2.5,[1,3,1.6]);hud();}}
+    else if(e.t==='pest'&&e.alive){e.ph+=dt*e.speed;const px=e.x0+Math.sin(e.ph)*e.range;const dirx=Math.cos(e.ph);e.m.position.x=px;e.m.rotation.y=dirx>0?Math.PI/2:-Math.PI/2;e.m.userData.legs.forEach((l,i)=>l.rotation.x=Math.sin(t*18+i)*.6);
+     const d=Math.hypot(P.pos.x-px,P.pos.z-e.m.position.z);if(d<.75&&P.pos.y<e.m.position.y+1){
+      if(P.vel.y<0&&P.pos.y>e.m.position.y+.25){killPest(e);P.vel.y=JUMP*.7;SFX.stomp();}
+      else if(P.spinT>0){killPest(e);}
+      else hurt('pest');}}
+    else if(e.t==='barrel'){e.t0+=dt;if(e.t0<0){e.m.visible=false;continue;}e.m.visible=true;const prog2=(e.t0*e.speed)%e.len;e.m.position.z=e.z0-e.len+prog2;e.m.children[0].rotation.x+=0;e.m.rotation.x-=dt*e.speed/.45;
+     const d=Math.hypot(P.pos.x-e.m.position.x,P.pos.z-e.m.position.z);if(d<.8&&P.pos.y<e.gy+.8){if(P.spinT>0){e.t0=-1.2;emit(e.m.position,14,3,[2.5,1.6,.6]);SFX.crate();}else hurt('barrel');}}
+    else if(e.t==='station'){e.m.userData.ring.rotation.z+=dt;e.m.userData.sprite.position.y=2.4+Math.sin(t*3)*.08;if(!e.done&&Math.hypot(P.pos.x-e.m.position.x,P.pos.z-e.m.position.z)<1.2&&P.onGround){S.cp={pos:V(e.m.position.x,e.m.position.y,e.m.position.z+1.2)};openQuestion(e);}}
+    else if(e.t==='finish'){e.m.userData.shield.rotation.y+=dt*1.5;if(P.pos.z<e.z+.2&&Math.abs(P.pos.x)<2.6){finishLevel();}}
+   }
+   // checkpoint auto every safe platform section passed (keep last safe ground)
+   if(P.onGround&&P.plat&&P.plat.kind!=='block'&&!P.plat.belt&&!P.plat.ice&&P.pos.z<S.cp.pos.z-14){S.cp={pos:V(P.plat.x,P.plat.y,Math.min(P.plat.z0-.8,P.pos.z+.5))};}
+  }
+  world.belts.forEach(b=>{b.tex.offset.x-=b.dir*dt*.6;});
+ }
+ // debris
+ for(let i=debris.length-1;i>=0;i--){const d=debris[i];d.userData.t-=dt;d.userData.v.y-=14*dt;d.position.addScaledVector(d.userData.v,dt);d.rotation.x+=d.userData.r.x*dt;d.rotation.y+=d.userData.r.y*dt;if(d.userData.t<=0){d.parent&&d.parent.remove(d);debris.splice(i,1);}}
+ updParticles(dt);animateMouse(dt,t);updateCamera(dt);
+}
+function breakCrate(e){if(!e.alive)return;e.alive=false;e.m.visible=false;S.crates++;crateBurst(e.m,e.t==='crateNC');SFX.crate();
+ if(e.t==='crate'){S.checks+=3;emit(e.m.position,16,3,[1,3,1.6],1);}else{emit(e.m.position,22,3.5,[3,.6,.4],1);say('Skrzynka z niezgodnością usunięta z linii!',null,2200);}
+ hud();}
+function killPest(e){e.alive=false;e.m.visible=false;emit(e.m.position.clone().add(V(0,.4,0)),18,3,[2.5,2.2,1.2],1);}
+
+function animateMouse(dt,t){const R=M.root;
+ const moving=S.mode==='play'&&!P.dead&&Math.hypot(P.vel.x,P.vel.z)>.6&&P.onGround;
+ R.position.copy(P.pos);R.rotation.y=P.yaw+(P.spinT>0?(1-P.spinT/.45)*Math.PI*4:0);
+ if(moving)P.wp+=dt*Math.hypot(P.vel.x,P.vel.z)*2.3;
+ M.bp.position.y=damp(M.bp.position.y,moving?Math.abs(Math.sin(P.wp))*.06:0,16,dt);
+ M.bp.rotation.x=damp(M.bp.rotation.x,(!P.onGround?-.15:moving?.12:0),8,dt);
+ M.feet[0].position.z=.07+(moving?Math.sin(P.wp)*.14:0);M.feet[1].position.z=.07+(moving?-Math.sin(P.wp)*.14:0);
+ M.feet[0].position.y=.035+(moving?Math.max(0,Math.sin(P.wp))*.06:0);M.feet[1].position.y=.035+(moving?Math.max(0,-Math.sin(P.wp))*.06:0);
+ M.tail.rotation.y=Math.sin(t*(moving?9:2))*.35;
+ let aL={x:-.3,z:-.15},aR={x:-.3,z:.15};
+ if(moving){aL={x:-.3+Math.sin(P.wp)*.9,z:-.25};aR={x:-.3-Math.sin(P.wp)*.9,z:.25};}
+ if(!P.onGround){aL={x:-2.6,z:-.5};aR={x:-2.6,z:.5};}
+ if(P.spinT>0){aL={x:-1.5,z:-1.3};aR={x:-1.5,z:1.3};}
+ const kp=1-Math.exp(-dt*12);st.arms[0].x+=(aL.x-st.arms[0].x)*kp;st.arms[0].z+=(aL.z-st.arms[0].z)*kp;st.arms[1].x+=(aR.x-st.arms[1].x)*kp;st.arms[1].z+=(aR.z-st.arms[1].z)*kp;
+ M.arms[0].sh.rotation.set(st.arms[0].x,0,st.arms[0].z);M.arms[1].sh.rotation.set(st.arms[1].x,0,st.arms[1].z);
+ M.head.rotation.x=damp(M.head.rotation.x,moving?-.1:0,6,dt);
+ st.blink-=dt;if(st.blink<0){st.blink=2.4+Math.random()*3;st.bl=.12;}if(st.bl>0)st.bl-=dt;st.eye=damp(st.eye,st.bl>0?.08:1,20,dt);M.eyes.forEach(e=>e.scale.y=st.eye);
+ st.talk=damp(st.talk,voicePlaying?(.25+Math.abs(Math.sin(t*16))*.85):0,18,dt);M.mouth.scale.y=.12+st.talk*.6;M.smile.visible=st.talk<.15;
+ M.root.visible=!(P.invT>0&&!P.dead&&S.mode==='play'&&Math.floor(t*14)%2===0);
+}
+function updateCamera(dt){
+ let want,look;
+ if(S.mode==='menu'||!world){const a=perfT*.15;want=V(Math.sin(a)*4.5,2.6,P.pos.z+5.5+Math.cos(a)*1.5);look=P.pos.clone().add(V(0,1,0));}
+ else{want=V(P.pos.x*.55,P.pos.y+3.4,P.pos.z+6.6);look=V(P.pos.x*.75,P.pos.y+.9,P.pos.z-3.5);}
+ if(mobileTall&&world&&S.mode!=='menu'){want.y+=1.6;want.z+=1.4;look.y-=.9;look.z+=2.6;}
+ if(camSnap){camPos.copy(want);camLook.copy(look);camSnap=false;}
+ camPos.lerp(want,1-Math.exp(-dt*5));camLook.lerp(look,1-Math.exp(-dt*7));camera.position.copy(camPos);camera.lookAt(camLook);
+ sun.position.set(P.pos.x+5,14,P.pos.z+6);sun.target.position.set(P.pos.x,0,P.pos.z-4);
+}
+
+/* ======================= LOOP ======================= */
+let perfT=0,last=performance.now(),mobileTall=false;
+function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;mobileTall=w/h<.8;camera.fov=mobileTall?68:55;camera.updateProjectionMatrix();}
+addEventListener('resize',resize);resize();
+function frame(now){const dt=Math.min(.033,(now-last)/1000);last=now;perfT+=dt;
+ if(S.mode!=='pause')update(dt,perfT);
+ renderer.render(scene,camera);requestAnimationFrame(frame);}
+// boot: preview bakery behind menu
+buildLevel('bakery');placePlayer(V(0,0,3.5));
+requestAnimationFrame(frame);setTimeout(()=>{loading.hidden=true;},80);
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&S.mode==='play')togglePause();});
+window.__game={S:S,P:P,keys:keys,input:input,startLevel:startLevel,world:()=>world,finish:finishLevel,openQuestion:openQuestion,step:(n,dt)=>{for(let i=0;i<n;i++){perfT+=dt;update(dt,perfT);}}};
+})();
 </script>
-</body></html>
+</body>
+</html>
