@@ -7,7 +7,7 @@ import {
   resolveQualityStripeCheckoutIntent,
   syncQualityStripeSubscription
 } from "../lib/db.js";
-import { isJbSession, handleJbCheckout, jbEntitlement, jbMetaFromInvoice } from "../lib/jb.js";
+import { isJbSession, handleJbCheckout, jbEntitlement, jbMetaFromInvoice, jbPlanFromSubscription } from "../lib/jb.js";
 
 export const config = { api:{ bodyParser:false } };
 
@@ -171,7 +171,7 @@ export default async function handler(req,res) {
       const subscriptionId=invoiceSubscriptionId(invoice);
       if (subscriptionId && jbMetaFromInvoice(invoice)?.jb_app === "jem_bezpiecznie") {
         const period=invoicePeriod(invoice);
-        await jbEntitlement("sync_subscription",{subscription_id:subscriptionId,status:"active",period_end:period.end,plan:jbMetaFromInvoice(invoice)?.jb_plan});
+        await jbEntitlement("sync_subscription",{subscription_id:subscriptionId,status:"active",period_end:period.end});
       } else if (subscriptionId) {
         const period=invoicePeriod(invoice);
         await syncQualityStripeSubscription({
@@ -195,7 +195,7 @@ export default async function handler(req,res) {
           status:event.type.endsWith(".deleted") ? "canceled" : String(subscription.status||""),
           period_end:period.end,
           cancel_at_period_end:Boolean(subscription.cancel_at_period_end),
-          plan:subscription.metadata.jb_plan
+          plan:jbPlanFromSubscription(subscription)
         });
         return res.status(200).json({received:true});
       }
