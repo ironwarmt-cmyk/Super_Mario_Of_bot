@@ -12,10 +12,14 @@
       "includeFiles": "content/quality/**"
     },
     "api/quality-support.js": {
-      "maxDuration": 30
+      "maxDuration": 60
     }
   },
   "rewrites": [
+    {
+      "source": "/api/jb-receipt",
+      "destination": "/api/quality-support?jb=receipt"
+    },
     {
       "source": "/api/jb-billing",
       "destination": "/api/quality-support?jb=billing"
