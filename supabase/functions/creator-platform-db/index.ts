@@ -1726,6 +1726,22 @@ Deno.serve(async (req) => {
       return json({ ok: true, data: state });
     }
 
+    if (action === "count_quality_assistant_user_messages") {
+      const telegramUserId = Number(body?.telegram_user_id);
+      const since = String(body?.since || "");
+      if (!Number.isFinite(telegramUserId) || !since) {
+        return json({ ok: false, error: "Invalid count request" }, 400);
+      }
+      const { count, error } = await supabase
+        .from("quality_assistant_messages")
+        .select("id", { count: "exact", head: true })
+        .eq("telegram_user_id", telegramUserId)
+        .eq("role", "user")
+        .gte("created_at", since);
+      if (error) throw error;
+      return json({ ok: true, data: { count: count || 0 } });
+    }
+
     if (action === "list_quality_assistant_messages") {
       const telegramUserId = Number(body?.telegram_user_id);
       const specialist = String(body?.specialist || "").toLowerCase();

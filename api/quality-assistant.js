@@ -7,6 +7,7 @@ import {
   heartbeatQualityAssistantSession,
   stopQualityAssistantSession,
   listQualityAssistantMessages,
+  countQualityAssistantUserMessagesSince,
   saveQualityAssistantMessage,
   createQualityEmergencyEvidenceUrl,
   reserveQualityEmergencyAi,
@@ -116,7 +117,7 @@ readiness_delta must be between -30 and 10.`;
 async function aiTransport(requestedModel=null) {
   const openaiKey=String(process.env.OPENAI_API_KEY||"").trim();
   if(openaiKey){
-    const directModel=String(requestedModel||process.env.OPENAI_QUALITY_MODEL||"gpt-5.6-sol").replace(/^openai\//,"");
+    const directModel=String(requestedModel||process.env.OPENAI_QUALITY_MODEL||"gpt-5.6-luna").replace(/^openai\//,"");
     return {
       provider:"openai",
       url:"https://api.openai.com/v1/responses",
@@ -131,7 +132,7 @@ async function aiTransport(requestedModel=null) {
       provider:"vercel-ai-gateway",
       url:"https://ai-gateway.vercel.sh/v1/responses",
       token:explicitGatewayToken,
-      model:String(requestedModel||process.env.OPENAI_QUALITY_MODEL_GATEWAY||"openai/gpt-5.6-sol")
+      model:String(requestedModel||process.env.OPENAI_QUALITY_MODEL_GATEWAY||"openai/gpt-5.6-luna")
     };
   }
 
@@ -142,7 +143,7 @@ async function aiTransport(requestedModel=null) {
         provider:"vercel-ai-gateway-oidc",
         url:"https://ai-gateway.vercel.sh/v1/responses",
         token:oidcToken,
-        model:String(requestedModel||process.env.OPENAI_QUALITY_MODEL_GATEWAY||"openai/gpt-5.6-sol")
+        model:String(requestedModel||process.env.OPENAI_QUALITY_MODEL_GATEWAY||"openai/gpt-5.6-luna")
       };
     }
   } catch (error) {
@@ -306,7 +307,26 @@ async function callEmergencyAI({ standard, version, auditDate, context, imageDat
   };
 }
 
-async function callQualityAI({ specialist, locale, history, message }) {
+const QUALITY_AUDIT_SPECIALISTS=new Set(["audit","auditor","red_team"]);
+const QUALITY_AUDIT_MODES=new Set(["audit","auditor","red_team"]);
+
+function qualityModelFor(specialist,mode){
+  const audit=QUALITY_AUDIT_SPECIALISTS.has(String(specialist||"").toLowerCase())||QUALITY_AUDIT_MODES.has(String(mode||"").toLowerCase());
+  if(!audit)return null;
+  return String(process.env.OPENAI_QUALITY_AUDIT_MODEL||"openai/gpt-5.6-sol");
+}
+
+function qualityMonthlyMessageLimit(){
+  const raw=Number(process.env.QUALITY_COPILOT_MONTHLY_MESSAGES);
+  return Number.isFinite(raw)&&raw>0?Math.floor(raw):600;
+}
+
+function currentPeriodStartIso(){
+  const now=new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),1)).toISOString();
+}
+
+async function callQualityAI({ specialist, locale, history, message, mode = "" }) {
   const internalKnowledge = await loadQualityKnowledge(specialist);
   const instructions =
     buildQualityAgentInstructions(specialist, locale) +
@@ -319,7 +339,7 @@ async function callQualityAI({ specialist, locale, history, message }) {
     input:historyAsInput(history,message),
     max_output_tokens:2200,
     store:false
-  },{allowWebSearch:true});
+  },{allowWebSearch:true,model:qualityModelFor(specialist,mode)});
 
   const text=extractResponseText(ai.payload);
   if(!text)throw new Error("AI nie zwróciło odpowiedzi.");
@@ -476,6 +496,25 @@ export default async function handler(req, res) {
         });
       }
 
+      const monthlyLimit = qualityMonthlyMessageLimit();
+      const usedThisMonth = await countQualityAssistantUserMessagesSince(
+        user.id,
+        currentPeriodStartIso(),
+        Object.keys(QUALITY_AGENT_SPECIALISTS)
+      ).catch((error) => {
+        console.error("quality_monthly_count_failed", error instanceof Error ? error.message : error);
+        return 0;
+      });
+      if (usedThisMonth >= monthlyLimit) {
+        return json(res, 429, {
+          ok: false,
+          code: "monthly_message_limit",
+          limit: monthlyLimit,
+          used: usedThisMonth,
+          error: `Wykorzystano miesięczny limit ${monthlyLimit} wiadomości do Quality Copilota. Limit odnowi się 1. dnia kolejnego miesiąca.`
+        });
+      }
+
       const [profile, history] = await Promise.all([
         getUserProfile(user.id),
         listQualityAssistantMessages(user.id, specialist)
@@ -492,7 +531,8 @@ export default async function handler(req, res) {
         specialist,
         locale: profile?.locale || "pl",
         history,
-        message
+        message,
+        mode: String(req.body?.mode || "")
       });
 
       await saveQualityAssistantMessage(
