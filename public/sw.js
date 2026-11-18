@@ -1,5 +1,5 @@
 /* QA Support service worker – MT */
-const VERSION = "qa-pwa-v1";
+const VERSION = "qa-pwa-v2";
 const STATIC_CACHE = VERSION + "-static";
 const PAGE_CACHE = VERSION + "-pages";
 const OFFLINE_URL = "/quality/offline.html";
@@ -37,6 +37,19 @@ self.addEventListener("fetch", (event) => {
           return res;
         })
         .catch(async () => (await caches.match(request)) || (await caches.match(OFFLINE_URL)))
+    );
+    return;
+  }
+
+  // Skrypty i style: zawsze najpierw sieć (poprawki docierają od razu), kopia tylko na offline.
+  if (url.pathname.startsWith("/quality/") && /\.(js|css)$/.test(url.pathname)) {
+    event.respondWith(
+      fetch(request)
+        .then((res) => {
+          if (res.ok) { const copy = res.clone(); caches.open(STATIC_CACHE).then((c) => c.put(request, copy)); }
+          return res;
+        })
+        .catch(() => caches.match(request))
     );
     return;
   }
