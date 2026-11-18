@@ -1,5 +1,15 @@
 /* QA Support – rejestracja aplikacji i instalacja (MT) */
 (function () {
+  // Aplikacja wymaga konta: bez zalogowania przekierowanie do logowania / rejestracji.
+  try {
+    var path = location.pathname;
+    var open = /^\/quality\/(login|reset|link|offline)/.test(path) || /access_token=/.test(location.hash || "");
+    if (!open) {
+      var s = JSON.parse(localStorage.getItem("quality_web_session_v4") || "null");
+      var ok = s && s.access_token && (s.refresh_token || Number(s.expires_at || 0) > Date.now() / 1000);
+      if (!ok) { location.replace("/login?next=" + encodeURIComponent(path + location.search + location.hash)); return; }
+    }
+  } catch (e) {}
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", function () {
       navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(function () {});

@@ -160,5 +160,12 @@ setLang(localStorage.getItem('qa_lang')||new URLSearchParams(location.search).ge
   }catch(_){}
 })();
 </script>
+<script>
+(function(){if(new URLSearchParams(location.search).get("upgrade")!=="copilot")return;
+var s=document.getElementById("plans");if(!s)return;var d=document.createElement("div");
+d.style.cssText="margin:0 auto 18px;max-width:900px;padding:14px 18px;border-radius:14px;border:1px solid rgba(255,210,122,.5);background:rgba(255,210,122,.12);color:#ffd27a;font-weight:700";
+d.textContent="Wykorzystano limit Quality Copilota w Twoim pakiecie. Wybierz wyższy pakiet (PRO lub VIP) albo dokup tokeny, żeby pisać dalej.";
+s.insertBefore(d,s.firstChild);setTimeout(function(){s.scrollIntoView({behavior:"smooth"})},300);})();
+</script>
 </body>
 </html>

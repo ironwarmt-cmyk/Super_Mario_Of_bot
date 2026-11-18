@@ -115,6 +115,12 @@ async function api(action, extra={}){
     body:JSON.stringify({action,specialist,...extra})
   });
   const data=await r.json().catch(()=>({ok:false,error:"Invalid server response"}));
+  if((r.status===402||r.status===429)&&!(r.status===429&&/vip/i.test(String(serverState?.plan||serverState?.plan_code||"")))){
+    // Limit pakietu: przekierowanie do zakupu wyższego pakietu lub doładowania.
+    const msg=r.status===402?t("Wykorzystano czas Copilota w Twoim pakiecie. Przejdź na wyższy pakiet albo dokup tokeny.","Your plan's Copilot time is used up. Upgrade or buy tokens."):(data.error||"");
+    setTimeout(()=>{location.href="/quality/?upgrade=copilot#plans"},2200);
+    throw new Error(msg+" "+t("Przenoszę do pakietów…","Opening plans…"));
+  }
   if(!r.ok||!data.ok) throw new Error(data.error||("HTTP "+r.status));
   return data;
 }
