@@ -5,9 +5,12 @@ import {
   getUserProfile
 } from "../lib/db.js";
 
+import { jbHandler } from "../lib/jb.js";
+
 const SUPPORT_EMAIL = "qasupportmt@gmail.com";
 
 export default async function handler(req, res) {
+  if (req.query?.jb) return jbHandler(req, res, String(req.query.jb));
   if (!["GET", "POST"].includes(req.method)) {
     return res.status(405).json({ ok: false, error: "Method not allowed" });
   }

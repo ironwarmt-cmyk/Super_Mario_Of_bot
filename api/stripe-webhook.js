@@ -7,6 +7,7 @@ import {
   resolveQualityStripeCheckoutIntent,
   syncQualityStripeSubscription
 } from "../lib/db.js";
+import { isJbSession, handleJbCheckout, jbEntitlement, jbMetaFromInvoice } from "../lib/jb.js";
 
 export const config = { api:{ bodyParser:false } };
 
@@ -72,6 +73,7 @@ function subscriptionPeriod(subscription) {
 }
 
 async function handleCheckoutSession(session) {
+  if (isJbSession(session)) return handleJbCheckout(session);
   const meta=session?.metadata || {};
   const token=checkoutToken(session?.client_reference_id);
 
@@ -167,7 +169,10 @@ export default async function handler(req,res) {
     } else if (event.type === "invoice.paid") {
       const invoice=event.data?.object || {};
       const subscriptionId=invoiceSubscriptionId(invoice);
-      if (subscriptionId) {
+      if (subscriptionId && jbMetaFromInvoice(invoice)?.jb_app === "jem_bezpiecznie") {
+        const period=invoicePeriod(invoice);
+        await jbEntitlement("sync_subscription",{subscription_id:subscriptionId,status:"active",period_end:period.end,plan:jbMetaFromInvoice(invoice)?.jb_plan});
+      } else if (subscriptionId) {
         const period=invoicePeriod(invoice);
         await syncQualityStripeSubscription({
           subscription_id:subscriptionId,
@@ -184,6 +189,16 @@ export default async function handler(req,res) {
     } else if (event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") {
       const subscription=event.data?.object || {};
       const period=subscriptionPeriod(subscription);
+      if (subscription?.metadata?.jb_app === "jem_bezpiecznie") {
+        await jbEntitlement("sync_subscription",{
+          subscription_id:String(subscription.id||""),
+          status:event.type.endsWith(".deleted") ? "canceled" : String(subscription.status||""),
+          period_end:period.end,
+          cancel_at_period_end:Boolean(subscription.cancel_at_period_end),
+          plan:subscription.metadata.jb_plan
+        });
+        return res.status(200).json({received:true});
+      }
       await syncQualityStripeSubscription({
         subscription_id:String(subscription.id||""),
         customer_id:objectId(subscription.customer),

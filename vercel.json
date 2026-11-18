@@ -10,9 +10,24 @@
     "api/quality-assistant.js": {
       "maxDuration": 30,
       "includeFiles": "content/quality/**"
+    },
+    "api/quality-support.js": {
+      "maxDuration": 30
     }
   },
   "rewrites": [
+    {
+      "source": "/api/jb-billing",
+      "destination": "/api/quality-support?jb=billing"
+    },
+    {
+      "source": "/api/jb-assistant",
+      "destination": "/api/quality-support?jb=assistant"
+    },
+    {
+      "source": "/api/jb-links",
+      "destination": "/api/quality-support?jb=links"
+    },
     {
       "source": "/login",
       "destination": "/quality/login/"
