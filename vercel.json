@@ -17,6 +17,18 @@
   },
   "rewrites": [
     {
+      "source": "/api/jb-push",
+      "destination": "/api/quality-support?jb=push"
+    },
+    {
+      "source": "/api/jb-account",
+      "destination": "/api/quality-support?jb=account"
+    },
+    {
+      "source": "/api/jb-push-cron",
+      "destination": "/api/quality-support?jb=pushcron"
+    },
+    {
       "source": "/api/jb-receipt",
       "destination": "/api/quality-support?jb=receipt"
     },
@@ -53,6 +65,10 @@
     {
       "path": "/api/telegram?channel=community&mode=daily",
       "schedule": "40 6 * * *"
+    },
+    {
+      "path": "/api/jb-push-cron",
+      "schedule": "30 6 * * *"
     }
   ],
   "redirects": [

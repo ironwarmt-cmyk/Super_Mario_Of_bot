@@ -78,6 +78,63 @@ Deno.serve(async (req: Request) => {
       return json({ ok: true, data: { allowed: true, used: used + 1 } });
     }
 
+    if (action === "push_save") {
+      const userId = String(b.user_id || "");
+      const sub = b.subscription;
+      const endpoint = String(sub?.endpoint || "");
+      if (!UUID.test(userId) || !/^https:\/\//.test(endpoint)) return json({ ok: false, error: "Invalid subscription" }, 400);
+      const { error } = await supabase.from("jb_push_subscriptions").upsert({ endpoint, user_id: userId, subscription: sub, enabled: b.enabled !== false }, { onConflict: "endpoint" });
+      if (error) throw error;
+      return json({ ok: true, data: { saved: true } });
+    }
+
+    if (action === "push_due") {
+      // Subskrypcje + pozycje lodówki z terminem w ciągu `days` dni (domyślnie 2), dla porannych przypomnień.
+      const days = Math.min(7, Math.max(0, Number(b.days ?? 2)));
+      const { data: subs, error } = await supabase.from("jb_push_subscriptions").select("endpoint,user_id,subscription,last_sent_at").eq("enabled", true).limit(5000);
+      if (error) throw error;
+      const users = [...new Set((subs || []).map((s) => s.user_id))];
+      const fridge: Record<string, unknown> = {};
+      for (let i = 0; i < users.length; i += 200) {
+        const { data: rows, error: e2 } = await supabase.from("jb_user_data").select("user_id,value").eq("key", "fridge").in("user_id", users.slice(i, i + 200));
+        if (e2) throw e2;
+        for (const r of rows || []) fridge[r.user_id] = r.value;
+      }
+      const today = new Date(); const limit = new Date(today.getTime() + days * 864e5).toISOString().slice(0, 10);
+      const out = (subs || []).map((s) => {
+        const items = Array.isArray(fridge[s.user_id]) ? (fridge[s.user_id] as any[]) : [];
+        const due = items.filter((x) => x && typeof x.expires === "string" && x.expires <= limit && Number(x.qty ?? 1) > 0).map((x) => ({ name: String(x.name || ""), expires: x.expires }));
+        return { endpoint: s.endpoint, user_id: s.user_id, subscription: s.subscription, last_sent_at: s.last_sent_at, due };
+      });
+      return json({ ok: true, data: out });
+    }
+
+    if (action === "push_mark") {
+      const endpoints = Array.isArray(b.sent) ? b.sent.map(String) : [];
+      const gone = Array.isArray(b.gone) ? b.gone.map(String) : [];
+      if (endpoints.length) await supabase.from("jb_push_subscriptions").update({ last_sent_at: new Date().toISOString() }).in("endpoint", endpoints);
+      if (gone.length) await supabase.from("jb_push_subscriptions").delete().in("endpoint", gone);
+      return json({ ok: true, data: { marked: endpoints.length, removed: gone.length } });
+    }
+
+    if (action === "delete_jb_data") {
+      const userId = String(b.user_id || "");
+      if (!UUID.test(userId)) return json({ ok: false, error: "Invalid user" }, 400);
+      for (const t of ["jb_user_data", "jb_push_subscriptions", "jb_assistant_usage"]) {
+        const { error } = await supabase.from(t).delete().eq("user_id", userId);
+        if (error) throw error;
+      }
+      return json({ ok: true, data: { deleted: true } });
+    }
+
+    if (action === "delete_account") {
+      const userId = String(b.user_id || "");
+      if (!UUID.test(userId)) return json({ ok: false, error: "Invalid user" }, 400);
+      const { error } = await supabase.auth.admin.deleteUser(userId);
+      if (error) throw error;
+      return json({ ok: true, data: { deleted: true } });
+    }
+
     return json({ ok: false, error: "Unknown action" }, 400);
   } catch (e) {
     return json({ ok: false, error: e instanceof Error ? e.message : "Error" }, 500);
