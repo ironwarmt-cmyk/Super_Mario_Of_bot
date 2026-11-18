@@ -27,8 +27,9 @@ label{display:block;margin:13px 0 7px;font-weight:800;font-size:13px}input{width
 </head>
 <body>
 <div class="wrap">
-<div class="brand">QUALITY ASSURANCE SUPPORT</div>
+<div class="brand" id="brand">QUALITY ASSURANCE SUPPORT</div>
 <h1>Ustaw nowe hasło</h1>
+<script>if(new URLSearchParams(location.search).get("app")==="jb")document.getElementById("brand").textContent="JEM BEZPIECZNIE · WSPÓLNE KONTO";</script>
 <div class="lead">Wpisz nowe hasło do swojego konta. Musi mieć co najmniej 12 znaków, małą i wielką literę, cyfrę oraz znak specjalny.</div>
 <div class="panel" id="formPanel">
 <label for="pw">Nowe hasło</label><input id="pw" type="password" autocomplete="new-password" minlength="12">
@@ -53,6 +54,11 @@ saveBtn.onclick=async()=>{
   const {error}=await qa.auth.updatePassword(a);
   saveBtn.disabled=false;
   if(error){show(error.message||"Nie udało się zmienić hasła.");return}
+  const fromJb=new URLSearchParams(location.search).get("app")==="jb";
+  if(fromJb){
+    statusEl.innerHTML='<span class="ok">Hasło zostało zmienione. Działa w Jem Bezpiecznie, w QA Support i na stronie jembezpiecznie.com.</span><br><br><a class="btn" href="https://app.jembezpiecznie.com/?tab=Profil">Wróć do aplikacji Jem Bezpiecznie</a>';
+    return;
+  }
   show("Hasło zostało zmienione. Za chwilę przeniesiemy Cię do konta.",true);
   setTimeout(()=>{location.href="/quality/account/"},1500);
 };

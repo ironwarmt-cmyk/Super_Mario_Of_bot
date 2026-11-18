@@ -21,6 +21,8 @@
   }
   function consumeRedirect(){
     const p=new URLSearchParams((location.hash||"").replace(/^#/,""));
+    // Link „nowe hasło” trafił na inną stronę (np. adres domyślny) – przenieś na formularz zmiany hasła.
+    if(p.get("type")==="recovery"&&!/\/quality\/reset\/?$/.test(location.pathname)){location.replace("/quality/reset/"+location.search+location.hash);return;}
     if(!p.get("access_token"))return;
     save({access_token:p.get("access_token"),refresh_token:p.get("refresh_token"),expires_in:p.get("expires_in")});
     history.replaceState(null,"",location.pathname+location.search);
