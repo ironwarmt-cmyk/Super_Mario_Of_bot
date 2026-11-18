@@ -14,7 +14,7 @@ function adminClient() {
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const PLANS = new Set(["pro", "premium"]);
+const PLANS = new Set(["pro", "premium", "firma"]);
 
 Deno.serve(async (req: Request) => {
   if (req.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
