@@ -103,6 +103,19 @@ Deno.serve(async (req) => {
       ]);
       return json({ ok: true, status: { paused: Boolean(conf.paused), total: total || 0, today: todayCount || 0, last: last || [] } });
     }
+    if (action === "claim") {
+      const cid = String(body.comment_id || "");
+      if (!/^\d{5,30}$/.test(cid)) return json({ ok: false, error: "comment_id" }, 400);
+      if ((await igConfig()).paused) return json({ ok: true, claimed: false, paused: true });
+      const { error } = await db.from("ig_reply_log").insert({ comment_id: cid, media_id: body.media_id || null, username: body.username || null, comment: String(body.comment || "").slice(0, 2000), status: "started" });
+      return json({ ok: true, claimed: !error });
+    }
+    if (action === "done") {
+      const cid = String(body.comment_id || "");
+      if (body.status === "error") await db.from("ig_reply_log").delete().eq("comment_id", cid);
+      else await db.from("ig_reply_log").update({ status: body.status === "replied" ? "replied" : "skipped", reply: body.reply || null, updated_at: new Date().toISOString() }).eq("comment_id", cid);
+      return json({ ok: true });
+    }
     const call = await windsorSession(key);
     if (action === "hide" || action === "delete") {
       const cid = String(body.comment_id || "");
@@ -114,7 +127,7 @@ Deno.serve(async (req) => {
     if (action !== "run") return json({ ok: false, error: "action" }, 400);
     const dry = body.dry === true;
     if (!dry && !body.force && (await igConfig()).paused) return json({ ok: true, paused: true });
-    const days = Math.min(30, Math.max(1, Number(body.days || 7)));
+    const days = Math.min(30, Math.max(1, Number(body.days || 30)));
     const max = Math.min(20, Math.max(1, Number(body.max || 8)));
     const rows = await readComments(call, days);
     const comments = rows.filter((r: any) => r.comment_id && r.comment_text && String(r.comment_username || "").toLowerCase() !== OWN);
