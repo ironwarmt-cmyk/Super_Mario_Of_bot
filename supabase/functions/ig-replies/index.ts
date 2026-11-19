@@ -8,6 +8,7 @@ const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SE
 const ACCOUNT = "17841452533483595"; // jem_bezpiecznie
 const OWN = "jem_bezpiecznie";
 const REPLY_API = "https://qasupport.jembezpiecznie.com/api/jb-igreply";
+const NOTIFY_API = "https://qasupport.jembezpiecznie.com/api/community?mode=ig_notify";
 const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { "content-type": "application/json" } });
 
 async function sha256Hex(v: string) {
@@ -67,16 +68,54 @@ async function readComments(call: Awaited<ReturnType<typeof windsorSession>>, da
   throw new Error("Windsor: dane jeszcze się pobierają");
 }
 
+async function notify(secret: string, items: any[]) {
+  if (!items.length || !secret) return;
+  await fetch(NOTIFY_API, { method: "POST", headers: { "content-type": "application/json", "x-bot-secret": secret }, body: JSON.stringify({ items }), signal: AbortSignal.timeout(30000) }).catch(() => {});
+}
+
+async function igConfig() {
+  const { data } = await db.from("platform_config").select("value").eq("key", "ig_replies").maybeSingle();
+  return (data?.value || {}) as { paused?: boolean };
+}
+
 Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ ok: false }, 405);
   const key = (await db.rpc("ig_windsor_key")).data as string | null;
-  if (!key || req.headers.get("x-autopost-key") !== (await sha256Hex(key))) return json({ ok: false, error: "unauthorized" }, 401);
+  const { data: cfg } = await db.from("platform_config").select("value").eq("key", "bot_auth").maybeSingle();
+  const secret = cfg?.value?.secret_hash || "";
+  const viaCron = Boolean(key) && req.headers.get("x-autopost-key") === (await sha256Hex(key!));
+  const viaBot = Boolean(secret) && req.headers.get("x-bot-secret") === secret;
+  if (!key || (!viaCron && !viaBot)) return json({ ok: false, error: "unauthorized" }, 401);
   const body = await req.json().catch(() => ({}));
-  const dry = body.dry === true;
-  const days = Math.min(30, Math.max(1, Number(body.days || 7)));
-  const max = Math.min(20, Math.max(1, Number(body.max || 8)));
+  const action = String(body.action || "run");
   try {
+    if (action === "pause" || action === "resume") {
+      await db.from("platform_config").upsert({ key: "ig_replies", value: { paused: action === "pause" } }, { onConflict: "key" });
+      return json({ ok: true, paused: action === "pause" });
+    }
+    if (action === "status") {
+      const today = new Date().toISOString().slice(0, 10);
+      const [{ count: total }, { count: todayCount }, { data: last }, conf] = await Promise.all([
+        db.from("ig_reply_log").select("comment_id", { count: "exact", head: true }).eq("status", "replied"),
+        db.from("ig_reply_log").select("comment_id", { count: "exact", head: true }).eq("status", "replied").gte("created_at", today),
+        db.from("ig_reply_log").select("username,comment,status,created_at").order("created_at", { ascending: false }).limit(5),
+        igConfig()
+      ]);
+      return json({ ok: true, status: { paused: Boolean(conf.paused), total: total || 0, today: todayCount || 0, last: last || [] } });
+    }
     const call = await windsorSession(key);
+    if (action === "hide" || action === "delete") {
+      const cid = String(body.comment_id || "");
+      if (!/^\d{5,30}$/.test(cid)) return json({ ok: false, error: "comment_id" }, 400);
+      await call("execute_action", { connector: "instagram", account: ACCOUNT, action: action === "hide" ? "hide_comment" : "delete_comment", params: { comment_id: cid } });
+      await db.from("ig_reply_log").update({ status: action === "hide" ? "hidden" : "deleted", updated_at: new Date().toISOString() }).eq("comment_id", cid);
+      return json({ ok: true });
+    }
+    if (action !== "run") return json({ ok: false, error: "action" }, 400);
+    const dry = body.dry === true;
+    if (!dry && !body.force && (await igConfig()).paused) return json({ ok: true, paused: true });
+    const days = Math.min(30, Math.max(1, Number(body.days || 7)));
+    const max = Math.min(20, Math.max(1, Number(body.max || 8)));
     const rows = await readComments(call, days);
     const comments = rows.filter((r: any) => r.comment_id && r.comment_text && String(r.comment_username || "").toLowerCase() !== OWN);
     const ids = comments.map((c: any) => String(c.comment_id));
@@ -84,16 +123,16 @@ Deno.serve(async (req) => {
     const seen = new Set((done || []).map((d: any) => d.comment_id));
     const todo = comments.filter((c: any) => !seen.has(String(c.comment_id)))
       .sort((a: any, b: any) => String(a.comment_timestamp).localeCompare(String(b.comment_timestamp))).slice(0, max);
-    const { data: cfg } = await db.from("platform_config").select("value").eq("key", "bot_auth").maybeSingle();
-    const secret = cfg?.value?.secret_hash || "";
     const results: any[] = [];
+    const report: any[] = [];
     for (const c of todo) {
       const cid = String(c.comment_id);
+      const base = { comment_id: cid, username: c.comment_username || "", comment: c.comment_text };
       const r = await fetch(REPLY_API, { method: "POST", headers: { "content-type": "application/json", "x-bot-secret": secret }, body: JSON.stringify({ comment: c.comment_text, username: c.comment_username || "", caption: c.media_caption || "" }), signal: AbortSignal.timeout(40000) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) { results.push({ comment_id: cid, error: `reply api ${r.status}` }); continue; }
       if (!j.reply) {
-        if (!dry) await db.from("ig_reply_log").insert({ comment_id: cid, media_id: c.media_id || null, username: c.comment_username || null, comment: c.comment_text, status: "skipped" });
+        if (!dry) { await db.from("ig_reply_log").insert({ comment_id: cid, media_id: c.media_id || null, username: c.comment_username || null, comment: c.comment_text, status: "skipped" }); report.push({ ...base, skipped: true }); }
         results.push({ comment_id: cid, skipped: true });
         continue;
       }
@@ -104,11 +143,13 @@ Deno.serve(async (req) => {
         const out = await call("execute_action", { connector: "instagram", account: ACCOUNT, action: "reply_to_comment", params: { comment_id: cid, message: j.reply } });
         await db.from("ig_reply_log").update({ status: "replied", result: { text: out.text.slice(0, 500) }, updated_at: new Date().toISOString() }).eq("comment_id", cid);
         results.push({ comment_id: cid, replied: true });
+        report.push({ ...base, reply: j.reply, replied: true });
       } catch (e) {
         await db.from("ig_reply_log").delete().eq("comment_id", cid); // następny przebieg spróbuje ponownie
         results.push({ comment_id: cid, error: String((e as Error).message).slice(0, 300) });
       }
     }
+    await notify(secret, report);
     return json({ ok: true, found: comments.length, new: todo.length, results, ...(dry && !rows.length ? { raw: lastRaw } : {}) });
   } catch (e) {
     return json({ ok: false, error: String((e as Error).message).slice(0, 400) }, 500);
