@@ -74,13 +74,14 @@ async function notify(secret: string, items: any[]) {
 }
 
 const GRAPH = "https://graph.instagram.com/v23.0";
+const GRAPH_FB = "https://graph.facebook.com/v23.0"; // token systemowy z Facebook Login for Business (EAA…) – nie wygasa
 type Tok = { token: string; user_id?: string; expires_at?: string; refreshed_at?: string };
 async function igToken(): Promise<Tok | null> {
   const { data } = await db.from("platform_config").select("value").eq("key", "ig_token").maybeSingle();
   const v = data?.value as Tok | undefined;
   if (!v?.token) return null;
   // odświeżenie długiego tokenu (ważny 60 dni) najwyżej raz na 5 dni
-  if (!v.refreshed_at || Date.now() - Date.parse(v.refreshed_at) > 5 * 864e5) {
+  if (!v.token.startsWith("EAA") && (!v.refreshed_at || Date.now() - Date.parse(v.refreshed_at) > 5 * 864e5)) {
     try {
       const r = await fetch(`${GRAPH.replace("/v23.0", "")}/refresh_access_token?grant_type=ig_refresh_token&access_token=${encodeURIComponent(v.token)}`);
       const d = await r.json();
@@ -94,7 +95,9 @@ async function igToken(): Promise<Tok | null> {
   return v;
 }
 async function graph(tok: string, path: string, init: RequestInit = {}) {
-  const r = await fetch(`${GRAPH}/${path}`, { ...init, headers: { ...(init.headers || {}), authorization: `Bearer ${tok}`, "content-type": "application/json" }, signal: AbortSignal.timeout(20000) });
+  const fb = tok.startsWith("EAA");
+  if (fb && path.startsWith("me/")) path = `${ACCOUNT}/` + path.slice(3);
+  const r = await fetch(`${fb ? GRAPH_FB : GRAPH}/${path}`, { ...init, headers: { ...(init.headers || {}), authorization: `Bearer ${tok}`, "content-type": "application/json" }, signal: AbortSignal.timeout(20000) });
   const d = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(d?.error?.message || `graph ${r.status}`);
   return d;
