@@ -78,6 +78,21 @@ Deno.serve(async (req: Request) => {
       return json({ ok: true, data: { allowed: true, used: used + 1 } });
     }
 
+    if (action === "usage") {
+      const userId = String(b.user_id || "");
+      const kind = String(b.kind || "");
+      const month = String(b.month || "");
+      const limit = Number(b.limit || 0);
+      if (!UUID.test(userId) || !["receipt", "plan"].includes(kind) || !/^\d{4}-\d{2}$/.test(month)) return json({ ok: false, error: "Invalid usage" }, 400);
+      const { data: cur, error: e1 } = await supabase.from("jb_usage").select("count").eq("user_id", userId).eq("kind", kind).eq("month", month).maybeSingle();
+      if (e1) throw e1;
+      const used = Number(cur?.count || 0);
+      if (limit > 0 && used >= limit) return json({ ok: true, data: { allowed: false, used } });
+      const { error: e2 } = await supabase.from("jb_usage").upsert({ user_id: userId, kind, month, count: used + 1 }, { onConflict: "user_id,kind,month" });
+      if (e2) throw e2;
+      return json({ ok: true, data: { allowed: true, used: used + 1 } });
+    }
+
     if (action === "push_save") {
       const userId = String(b.user_id || "");
       const sub = b.subscription;
@@ -120,7 +135,7 @@ Deno.serve(async (req: Request) => {
     if (action === "delete_jb_data") {
       const userId = String(b.user_id || "");
       if (!UUID.test(userId)) return json({ ok: false, error: "Invalid user" }, 400);
-      for (const t of ["jb_user_data", "jb_push_subscriptions", "jb_assistant_usage"]) {
+      for (const t of ["jb_user_data", "jb_push_subscriptions", "jb_assistant_usage", "jb_usage"]) {
         const { error } = await supabase.from(t).delete().eq("user_id", userId);
         if (error) throw error;
       }
