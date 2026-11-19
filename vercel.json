@@ -17,6 +17,10 @@
   },
   "rewrites": [
     {
+      "source": "/api/jb-igreply",
+      "destination": "/api/quality-support?jb=igreply"
+    },
+    {
       "source": "/api/jb-auth",
       "destination": "/api/quality-support?jb=auth"
     },
