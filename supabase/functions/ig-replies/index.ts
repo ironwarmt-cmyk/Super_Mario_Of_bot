@@ -124,12 +124,18 @@ Deno.serve(async (req) => {
       await db.from("ig_reply_log").update({ status: action === "hide" ? "hidden" : "deleted", updated_at: new Date().toISOString() }).eq("comment_id", cid);
       return json({ ok: true });
     }
+    if (action === "media") {
+      const out = await call("get_data", { connector: "instagram", accounts: [ACCOUNT], fields: body.fields || ["media_id", "media_permalink", "media_comments_count", "media_type"], date_preset: "last_730dT", reasoning: "liczba komentarzy pod postami" });
+      const rows = rowsFrom(out).filter((r: any) => Number(r.media_comments_count || 0) > 0);
+      return json({ ok: true, media_with_comments: rows, raw: rows.length ? undefined : out.text.slice(0, 400) });
+    }
     if (action !== "run") return json({ ok: false, error: "action" }, 400);
     const dry = body.dry === true;
     if (!dry && !body.force && (await igConfig()).paused) return json({ ok: true, paused: true });
     const days = Math.min(730, Math.max(1, Number(body.days || 30)));
     const max = Math.min(20, Math.max(1, Number(body.max || 8)));
     const rows = await readComments(call, days);
+    if (body.debug) return json({ ok: true, rows: rows.map((r: any) => ({ id: r.comment_id, user: r.comment_username, text: String(r.comment_text || "").slice(0, 80), ts: r.comment_timestamp, media: r.media_id, parent: r.comment_parent_id })) });
     const comments = rows.filter((r: any) => r.comment_id && r.comment_text && String(r.comment_username || "").toLowerCase() !== OWN);
     const ids = comments.map((c: any) => String(c.comment_id));
     const { data: done } = ids.length ? await db.from("ig_reply_log").select("comment_id").in("comment_id", ids) : { data: [] as any[] };
