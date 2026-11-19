@@ -93,6 +93,40 @@ Deno.serve(async (req: Request) => {
       return json({ ok: true, data: { allowed: true, used: used + 1 } });
     }
 
+    if (action === "auth_link") {
+      // Link potwierdzenia konta / resetu hasła wysyłany przez nas po polsku (bez wysyłki maili przez Supabase).
+      const email = String(b.email || "").trim().toLowerCase();
+      let kind = String(b.kind || "");
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !["signup", "recovery", "magiclink"].includes(kind)) return json({ ok: false, error: "Invalid request" }, 400);
+      const since = new Date(Date.now() - 3600e3).toISOString();
+      const { data: recent, error: rErr } = await supabase.from("jb_auth_mail").select("sent_at").eq("email", email).gte("sent_at", since).order("sent_at", { ascending: false }).limit(10);
+      if (rErr) throw rErr;
+      if ((recent || []).length && Date.now() - new Date(recent![0].sent_at).getTime() < 60e3) return json({ ok: true, data: { status: "rate", wait: 60 } });
+      if ((recent || []).length >= 6) return json({ ok: true, data: { status: "rate", wait: 3600 } });
+      const { data: uid } = await supabase.rpc("jb_user_by_email", { p_email: email });
+      let user: { id: string; confirmed: boolean } | null = null;
+      if (uid) {
+        const { data: u } = await supabase.auth.admin.getUserById(String(uid));
+        if (u?.user) user = { id: u.user.id, confirmed: Boolean(u.user.email_confirmed_at) };
+      }
+      if (kind === "signup" && user) {
+        if (user.confirmed) return json({ ok: true, data: { status: "exists" } });
+        kind = "magiclink";
+      }
+      if (kind !== "signup" && !user) return json({ ok: true, data: { status: "none" } });
+      if (kind === "magiclink" && user?.confirmed) return json({ ok: true, data: { status: "exists" } });
+      const params: Record<string, unknown> = { type: kind, email };
+      if (kind === "signup") {
+        const password = String(b.password || "");
+        if (password.length < 8) return json({ ok: false, error: "Weak password" }, 400);
+        params.password = password;
+      }
+      const { data: link, error: lErr } = await supabase.auth.admin.generateLink(params as any);
+      if (lErr) return json({ ok: false, error: lErr.message }, 400);
+      await supabase.from("jb_auth_mail").insert({ email, kind });
+      return json({ ok: true, data: { status: "ok", kind, hashed_token: link?.properties?.hashed_token || null } });
+    }
+
     if (action === "push_save") {
       const userId = String(b.user_id || "");
       const sub = b.subscription;

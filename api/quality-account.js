@@ -30,6 +30,27 @@ async function webAuthProxy(req, res) {
   const key = process.env.SUPABASE_PUBLISHABLE_KEY || "";
   if (!base || !key) return res.status(503).json({ ok:false, error:"Web auth is not configured" });
 
+  // Rejestracja, ponowne wysłanie i reset hasła: własny polski e-mail; przy awarii poczty – wysyłka Supabase.
+  if (["sign_up", "resend", "recover"].includes(action)) {
+    const email = String(req.body?.email || "").trim().toLowerCase();
+    const password = String(req.body?.password || "");
+    const strong = password.length >= 12 && /[a-z]/.test(password) && /[A-Z]/.test(password) && /[0-9]/.test(password) && /[^A-Za-z0-9]/.test(password);
+    const redirect = String(req.body?.redirect_to || "");
+    const app = /app\.jembezpiecznie\.com/.test(redirect) ? "jb" : /^https:\/\/(www\.)?jembezpiecznie\.com/.test(redirect) ? "portal" : "qa";
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && (action !== "sign_up" || strong)) {
+      try {
+        const { sendAuthMail } = await import("../lib/auth-mail.js");
+        const kind = action === "sign_up" ? "signup" : action === "recover" ? "recovery" : "magiclink";
+        const out = await sendAuthMail({ kind, email, password, app });
+        if (out.status === "rate") return res.status(429).json({ ok:false, error:"Link był wysłany przed chwilą. Odczekaj minutę i spróbuj ponownie.", code:"over_email_send_rate_limit" });
+        if (action === "sign_up" && out.status === "exists") return res.status(422).json({ ok:false, error:"User already registered", code:"user_already_exists" });
+        return res.status(200).json({ ok:true, data:{ user:null, session:null } });
+      } catch (e) {
+        console.error("quality_auth_mail_fallback", e?.message);
+      }
+    }
+  }
+
   let path = "";
   let body = {};
   let method = "POST";
