@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
     if (action !== "run") return json({ ok: false, error: "action" }, 400);
     const dry = body.dry === true;
     if (!dry && !body.force && (await igConfig()).paused) return json({ ok: true, paused: true });
-    const days = Math.min(30, Math.max(1, Number(body.days || 30)));
+    const days = Math.min(730, Math.max(1, Number(body.days || 30)));
     const max = Math.min(20, Math.max(1, Number(body.max || 8)));
     const rows = await readComments(call, days);
     const comments = rows.filter((r: any) => r.comment_id && r.comment_text && String(r.comment_username || "").toLowerCase() !== OWN);
