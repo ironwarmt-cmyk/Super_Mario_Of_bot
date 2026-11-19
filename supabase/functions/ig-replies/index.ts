@@ -53,13 +53,16 @@ function rowsFrom(out: { text: string; structured?: any }): any[] {
   try { return pick(JSON.parse(out.text)) || []; } catch { return []; }
 }
 
+let lastRaw = "";
 async function readComments(call: Awaited<ReturnType<typeof windsorSession>>, days: number) {
   const args = { connector: "instagram", accounts: [ACCOUNT], fields: ["comment_id", "comment_text", "comment_username", "comment_timestamp", "comment_parent_id", "media_id", "media_caption"], date_preset: `last_${days}dT`, reasoning: "odpowiedzi na komentarze pod postami" };
   for (let i = 0; i < 4; i++) {
     const out = await call("get_data", args);
     if (/"status"\s*:\s*"pending"/.test(out.text) || out.structured?.status === "pending") continue; // ten sam call kontynuuje pobieranie
     if (/reads are paused|not your real numbers/i.test(out.text)) throw new Error("Windsor wstrzymał odczyt danych (plan Free: 1 konto).");
-    return rowsFrom(out);
+    const rows = rowsFrom(out);
+    lastRaw = rows.length ? "" : (out.text || JSON.stringify(out.structured || {})).slice(0, 600);
+    return rows;
   }
   throw new Error("Windsor: dane jeszcze się pobierają");
 }
@@ -106,7 +109,7 @@ Deno.serve(async (req) => {
         results.push({ comment_id: cid, error: String((e as Error).message).slice(0, 300) });
       }
     }
-    return json({ ok: true, found: comments.length, new: todo.length, results });
+    return json({ ok: true, found: comments.length, new: todo.length, results, ...(dry && !rows.length ? { raw: lastRaw } : {}) });
   } catch (e) {
     return json({ ok: false, error: String((e as Error).message).slice(0, 400) }, 500);
   }
