@@ -73,6 +73,47 @@ async function notify(secret: string, items: any[]) {
   await fetch(NOTIFY_API, { method: "POST", headers: { "content-type": "application/json", "x-bot-secret": secret }, body: JSON.stringify({ items }), signal: AbortSignal.timeout(30000) }).catch(() => {});
 }
 
+const GRAPH = "https://graph.instagram.com/v23.0";
+type Tok = { token: string; user_id?: string; expires_at?: string; refreshed_at?: string };
+async function igToken(): Promise<Tok | null> {
+  const { data } = await db.from("platform_config").select("value").eq("key", "ig_token").maybeSingle();
+  const v = data?.value as Tok | undefined;
+  if (!v?.token) return null;
+  // odświeżenie długiego tokenu (ważny 60 dni) najwyżej raz na 5 dni
+  if (!v.refreshed_at || Date.now() - Date.parse(v.refreshed_at) > 5 * 864e5) {
+    try {
+      const r = await fetch(`${GRAPH.replace("/v23.0", "")}/refresh_access_token?grant_type=ig_refresh_token&access_token=${encodeURIComponent(v.token)}`);
+      const d = await r.json();
+      if (r.ok && d.access_token) {
+        const nv = { ...v, token: d.access_token, expires_at: new Date(Date.now() + Number(d.expires_in || 5184000) * 1000).toISOString(), refreshed_at: new Date().toISOString() };
+        await db.from("platform_config").upsert({ key: "ig_token", value: nv }, { onConflict: "key" });
+        return nv;
+      }
+    } catch { /* zostaje stary token */ }
+  }
+  return v;
+}
+async function graph(tok: string, path: string, init: RequestInit = {}) {
+  const r = await fetch(`${GRAPH}/${path}`, { ...init, headers: { ...(init.headers || {}), authorization: `Bearer ${tok}`, "content-type": "application/json" }, signal: AbortSignal.timeout(20000) });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d?.error?.message || `graph ${r.status}`);
+  return d;
+}
+// Wszystkie komentarze (i odpowiedzi pod nimi) z ostatnich postów, prosto z Instagrama.
+async function graphComments(tok: string, mediaLimit: number) {
+  const media = await graph(tok, `me/media?fields=id,caption,comments_count&limit=${mediaLimit}`);
+  const out: any[] = [];
+  for (const m of media.data || []) {
+    if (!Number(m.comments_count)) continue;
+    const c = await graph(tok, `${m.id}/comments?fields=id,text,username,timestamp,replies{id,username}&limit=50`);
+    for (const x of c.data || []) {
+      const answered = (x.replies?.data || []).some((r: any) => String(r.username || "").toLowerCase() === OWN);
+      out.push({ comment_id: x.id, comment_text: x.text, comment_username: x.username, comment_timestamp: x.timestamp, media_id: m.id, media_caption: m.caption || "", answered });
+    }
+  }
+  return out;
+}
+
 async function igConfig() {
   const { data } = await db.from("platform_config").select("value").eq("key", "ig_replies").maybeSingle();
   return (data?.value || {}) as { paused?: boolean };
@@ -101,7 +142,18 @@ Deno.serve(async (req) => {
         db.from("ig_reply_log").select("username,comment,status,created_at").order("created_at", { ascending: false }).limit(5),
         igConfig()
       ]);
-      return json({ ok: true, status: { paused: Boolean(conf.paused), total: total || 0, today: todayCount || 0, last: last || [] } });
+      const tk = await igToken();
+      return json({ ok: true, status: { paused: Boolean(conf.paused), total: total || 0, today: todayCount || 0, last: last || [], connected: Boolean(tk), expires_at: tk?.expires_at || null } });
+    }
+    if (action === "token_set") {
+      const t = String(body.token || "");
+      if (t.length < 20) return json({ ok: false, error: "token" }, 400);
+      await db.from("platform_config").upsert({ key: "ig_token", value: { token: t, user_id: String(body.user_id || ""), username: String(body.username || ""), expires_at: body.expires_at || null, refreshed_at: new Date().toISOString() } }, { onConflict: "key" });
+      return json({ ok: true });
+    }
+    if (action === "token_get") {
+      const t = await igToken();
+      return json({ ok: true, token: t?.token || null, user_id: t?.user_id || null, expires_at: t?.expires_at || null });
     }
     if (action === "claim") {
       const cid = String(body.comment_id || "");
@@ -116,7 +168,16 @@ Deno.serve(async (req) => {
       else await db.from("ig_reply_log").update({ status: body.status === "replied" ? "replied" : "skipped", reply: body.reply || null, updated_at: new Date().toISOString() }).eq("comment_id", cid);
       return json({ ok: true });
     }
-    const call = await windsorSession(key);
+    const tok = await igToken();
+    if (tok && (action === "hide" || action === "delete")) {
+      const cid = String(body.comment_id || "");
+      if (!/^\d{5,30}$/.test(cid)) return json({ ok: false, error: "comment_id" }, 400);
+      if (action === "hide") await graph(tok.token, `${cid}`, { method: "POST", body: JSON.stringify({ hide: true }) });
+      else await graph(tok.token, `${cid}`, { method: "DELETE" });
+      await db.from("ig_reply_log").update({ status: action === "hide" ? "hidden" : "deleted", updated_at: new Date().toISOString() }).eq("comment_id", cid);
+      return json({ ok: true });
+    }
+    const call = tok && action === "run" ? (null as any) : await windsorSession(key);
     if (action === "hide" || action === "delete") {
       const cid = String(body.comment_id || "");
       if (!/^\d{5,30}$/.test(cid)) return json({ ok: false, error: "comment_id" }, 400);
@@ -134,9 +195,9 @@ Deno.serve(async (req) => {
     if (!dry && !body.force && (await igConfig()).paused) return json({ ok: true, paused: true });
     const days = Math.min(730, Math.max(1, Number(body.days || 30)));
     const max = Math.min(20, Math.max(1, Number(body.max || 8)));
-    const rows = await readComments(call, days);
+    const rows = tok ? await graphComments(tok.token, Number(body.media || 50)) : await readComments(call, days);
     if (body.debug) return json({ ok: true, rows: rows.map((r: any) => ({ id: r.comment_id, user: r.comment_username, text: String(r.comment_text || "").slice(0, 80), ts: r.comment_timestamp, media: r.media_id, parent: r.comment_parent_id })) });
-    const comments = rows.filter((r: any) => r.comment_id && r.comment_text && String(r.comment_username || "").toLowerCase() !== OWN);
+    const comments = rows.filter((r: any) => r.comment_id && r.comment_text && !r.answered && String(r.comment_username || "").toLowerCase() !== OWN);
     const ids = comments.map((c: any) => String(c.comment_id));
     const { data: done } = ids.length ? await db.from("ig_reply_log").select("comment_id").in("comment_id", ids) : { data: [] as any[] };
     const seen = new Set((done || []).map((d: any) => d.comment_id));
@@ -159,8 +220,10 @@ Deno.serve(async (req) => {
       const { error: insErr } = await db.from("ig_reply_log").insert({ comment_id: cid, media_id: c.media_id || null, username: c.comment_username || null, comment: c.comment_text, reply: j.reply, status: "started" });
       if (insErr) { results.push({ comment_id: cid, skipped: "już obsłużony" }); continue; }
       try {
-        const out = await call("execute_action", { connector: "instagram", account: ACCOUNT, action: "reply_to_comment", params: { comment_id: cid, message: j.reply } });
-        await db.from("ig_reply_log").update({ status: "replied", result: { text: out.text.slice(0, 500) }, updated_at: new Date().toISOString() }).eq("comment_id", cid);
+        let info = "";
+        if (tok) { const d = await graph(tok.token, `${cid}/replies`, { method: "POST", body: JSON.stringify({ message: j.reply }) }); info = `graph reply ${d.id || ""}`; }
+        else { const out = await call("execute_action", { connector: "instagram", account: ACCOUNT, action: "reply_to_comment", params: { comment_id: cid, message: j.reply } }); info = out.text.slice(0, 500); }
+        await db.from("ig_reply_log").update({ status: "replied", result: { text: info }, updated_at: new Date().toISOString() }).eq("comment_id", cid);
         results.push({ comment_id: cid, replied: true });
         report.push({ ...base, reply: j.reply, replied: true });
       } catch (e) {

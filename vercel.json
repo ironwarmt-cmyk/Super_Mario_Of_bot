@@ -17,6 +17,10 @@
   },
   "rewrites": [
     {
+      "source": "/api/jb-igauth",
+      "destination": "/api/quality-support?jb=igauth"
+    },
+    {
       "source": "/api/jb-igdm",
       "destination": "/api/quality-support?jb=igdm"
     },
