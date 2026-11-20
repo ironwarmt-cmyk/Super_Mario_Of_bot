@@ -17,6 +17,10 @@
   },
   "rewrites": [
     {
+      "source": "/api/jb-tts",
+      "destination": "/api/quality-support?jb=tts"
+    },
+    {
       "source": "/api/jb-igauth",
       "destination": "/api/quality-support?jb=igauth"
     },
