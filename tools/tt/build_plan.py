@@ -19,8 +19,8 @@ for p in plan["posts"]:
         src = tempfile.mktemp(suffix=".mp4")
         urllib.request.urlretrieve(f"{STORE}/tiktok/plan-d{d:02d}.mp4", src)
     cap = p["caption"]
-    voice = "mc_speech" if "/app-" in (p.get("video_url") or "") else "darkman" if re.search(r"QASUPPORT|dział jakości|HACCP|audyt", cap, re.I) else "gosia"
+    voice = "Puck" if "/app-" in (p.get("video_url") or "") else "Charon" if re.search(r"QASUPPORT|dział jakości|HACCP|audyt", cap, re.I) else "Kore"
     info = voiceover(src, cap, os.path.join(out_dir, f"plan-d{d:02d}.mp4"), voice)
     manifest[d] = info
-    print(d, info["voice"], info["seconds"], info["script"][:90], flush=True)
+    print(d, info["voice"], info["engine"], info["seconds"], info["script"][:90], flush=True)
 json.dump(manifest, open(os.path.join(out_dir, "manifest.json"), "w"), ensure_ascii=False, indent=1)

@@ -37,7 +37,7 @@ for it in pending.get("items", []):
     with tempfile.TemporaryDirectory() as tmp:
         src, out = os.path.join(tmp, "in.mp4"), os.path.join(tmp, "out.mp4")
         urllib.request.urlretrieve(it["video"], src)
-        info = voiceover(src, script(it), out, "darkman", max_extend=8)
+        info = voiceover(src, script(it), out, "Charon", max_extend=8)
         b64 = base64.b64encode(open(out, "rb").read()).decode()
         r = call(oidc(), {"mode": "vo_upload", "id": it["id"], "b64": b64})
-        print(it["id"], info["seconds"], "s", r)
+        print(it["id"], info["engine"], info["seconds"], "s", r)

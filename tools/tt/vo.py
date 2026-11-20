@@ -1,9 +1,9 @@
 """Polski lektor do filmów TikToka (darmowe głosy Piper, open source). Autor: MT
 
 Użycie jako moduł:  voiceover(video_in, tekst, video_out, voice="gosia")
-Głosy: gosia (kobiecy), darkman (męski), mc_speech (męski) – pliki .onnx w katalogu PIPER_VOICES.
+Głosy Gemini (lepsze, przez /api/jb-tts): Charon, Kore, Puck, Aoede, Orus … – zapas: Piper gosia, darkman, mc_speech.
 """
-import json, os, re, subprocess, tempfile
+import base64, json, os, re, subprocess, tempfile, urllib.request
 
 VOICES = os.environ.get("PIPER_VOICES", os.path.join(os.path.dirname(__file__), "voices"))
 VOICE_FILES = {"gosia": "pl_PL-gosia-medium", "darkman": "pl_PL-darkman-medium", "mc_speech": "pl_PL-mc_speech-medium"}
@@ -51,9 +51,47 @@ def _has_audio(path: str) -> bool:
     return bool(r.stdout.strip())
 
 
+TTS_API = "https://qasupport.jembezpiecznie.com/api/jb-tts"
+PIPER_FALLBACK = {"Charon": "darkman", "Orus": "darkman", "Fenrir": "darkman", "Kore": "gosia", "Aoede": "gosia", "Leda": "gosia", "Puck": "mc_speech"}
+STYLE = "Mów po polsku, naturalnie, wyraźnie i z energią, jak profesjonalny lektor krótkiej reklamy w mediach społecznościowych."
+
+
+def _auth_headers():
+    if os.environ.get("JB_BOT_SECRET"):
+        return {"x-bot-secret": os.environ["JB_BOT_SECRET"]}
+    if os.environ.get("ACTIONS_ID_TOKEN_REQUEST_URL"):
+        req = urllib.request.Request(os.environ["ACTIONS_ID_TOKEN_REQUEST_URL"] + "&audience=jb-tiktok-vo",
+                                     headers={"Authorization": "Bearer " + os.environ["ACTIONS_ID_TOKEN_REQUEST_TOKEN"]})
+        return {"authorization": "Bearer " + json.load(urllib.request.urlopen(req))["value"]}
+    return None
+
+
+def gemini_tts(text: str, wav: str, voice: str, style: str = STYLE) -> str:
+    h = _auth_headers()
+    if not h:
+        raise RuntimeError("brak dostępu do /api/jb-tts")
+    req = urllib.request.Request(TTS_API, data=json.dumps({"text": text, "voice": voice, "instructions": style}).encode(), method="POST",
+                                 headers={"content-type": "application/json", **h})
+    try:
+        d = json.load(urllib.request.urlopen(req, timeout=90))
+    except urllib.error.HTTPError as e:
+        raise RuntimeError(f"jb-tts {e.code}: {e.read()[:300]!r}")
+    raw = os.path.join(os.path.dirname(wav), "gemini.wav")
+    open(raw, "wb").write(base64.b64decode(d["audio"]))
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", raw, "-ar", "44100", "-ac", "1", wav], check=True)  # ujednolicenie formatu
+    return d.get("model", "gemini")
+
+
 def tts(text: str, wav: str, voice: str = "gosia"):
+    if voice not in VOICE_FILES:  # głos Gemini, przy błędzie zapasowy Piper
+        try:
+            return gemini_tts(text, wav, voice)
+        except Exception as e:
+            print("Gemini TTS niedostępny, zapas Piper:", str(e)[:200], flush=True)
+            voice = PIPER_FALLBACK.get(voice, "gosia")
     model = os.path.join(VOICES, VOICE_FILES[voice] + ".onnx")
     subprocess.run(["python3", "-m", "piper", "-m", model, "-f", wav, "--length-scale", "0.95", "--sentence-silence", "0.25"], input=text, text=True, check=True, capture_output=True)
+    return "piper:" + voice
 
 
 def voiceover(video_in: str, text: str, video_out: str, voice: str = "gosia", max_extend: float = 6.0) -> dict:
@@ -62,7 +100,7 @@ def voiceover(video_in: str, text: str, video_out: str, voice: str = "gosia", ma
     script = narration(text, vdur + max_extend - 1.2)
     with tempfile.TemporaryDirectory() as tmp:
         wav = os.path.join(tmp, "vo.wav")
-        tts(script, wav, voice)
+        engine = tts(script, wav, voice)
         adur = _dur(wav)
         total = max(vdur, adur + 1.2)
         pad = max(0.0, total - vdur)
@@ -75,7 +113,7 @@ def voiceover(video_in: str, text: str, video_out: str, voice: str = "gosia", ma
         subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", video_in, "-i", wav, "-filter_complex", f"[0:v]{vf}[vv];{af}",
                         "-map", "[vv]", "-map", "[a]", "-c:v", "libx264", "-preset", "veryfast", "-crf", "22", "-pix_fmt", "yuv420p",
                         "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", video_out], check=True)
-    return {"voice": voice, "script": script, "seconds": round(total, 1)}
+    return {"voice": voice, "engine": engine, "script": script, "seconds": round(total, 1)}
 
 
 if __name__ == "__main__":
