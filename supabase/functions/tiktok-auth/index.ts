@@ -7,7 +7,7 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
 const REDIRECT = "https://ixivedtgqgryawxsxnqd.supabase.co/functions/v1/tiktok-auth";
 const NOTIFY_API = "https://qasupport.jembezpiecznie.com/api/community?mode=ig_notify";
-const SCOPES = "user.info.basic,video.upload";
+const SCOPES = "user.info.basic,video.upload,video.publish";
 // Supabase podaje HTML z funkcji jako zwykły tekst, więc wynik pokazuje strona na qasupport.
 const page = (title: string, text: string, _s = 200) => Response.redirect(
   `https://qasupport.jembezpiecznie.com/tiktok/?s=${title.startsWith("TikTok połączony") ? "ok" : "err"}&m=${encodeURIComponent(title + ": " + text)}`, 302);
@@ -52,6 +52,6 @@ Deno.serve(async (req) => {
   }).eq("id", "main");
   const { data: cfg } = await db.from("platform_config").select("value").eq("key", "bot_auth").maybeSingle();
   const bs = cfg?.value?.secret_hash || "";
-  if (bs) await fetch(NOTIFY_API, { method: "POST", headers: { "content-type": "application/json", "x-bot-secret": bs }, body: JSON.stringify({ items: [{ kind: "info", text: "✅ TikTok połączony. Codziennie o 11:00 wrzucę szkic z planu, a wycofania o 9, 14 i 19. Każdy szkic przyjdzie tu z opisem do wklejenia." }] }) }).catch(() => {});
-  return page("TikTok połączony ✅", "Gotowe. Bot będzie codziennie wrzucał filmy jako szkice do skrzynki TikToka (bez lektora). Ty wybierasz popularny dźwięk w aplikacji i publikujesz. Możesz zamknąć tę stronę.");
+  if (bs) await fetch(NOTIFY_API, { method: "POST", headers: { "content-type": "application/json", "x-bot-secret": bs }, body: JSON.stringify({ items: [{ kind: "info", text: "✅ TikTok połączony. Codziennie o 11:00 opublikuję film z planu, a wycofania o 9, 14 i 19 – z polskim lektorem. Każdą publikację zgłoszę tutaj." }] }) }).catch(() => {});
+  return page("TikTok połączony ✅", "Gotowe. Bot będzie codziennie sam publikował filmy z polskim lektorem na TikToku. Możesz zamknąć tę stronę.");
 });

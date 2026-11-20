@@ -1,0 +1,152 @@
+{
+ "1": {
+  "voice": "darkman",
+  "script": "Wiesz, co jesz? Na jem bezpiecznie kropka kom zebraliśmy wszystko, czego potrzebujesz na zakupach. alerty o wycofaniach z rynku. etykiety rozebrane punkt po punkcie, z przepisem przy każdej uwadze.",
+  "seconds": 13.3
+ },
+ "2": {
+  "voice": "gosia",
+  "script": "Produkt wycofany z rynku? Dowiesz się od razu. Codziennie czytamy komunikaty GIS i zamieniamy je w krótkie raporty: co wycofano, dlaczego i co masz zrobić. jem bezpiecznie kropka kom link w bio.",
+  "seconds": 16.6
+ },
+ "3": {
+  "voice": "darkman",
+  "script": "Dział jakości nie musi działać w pojedynkę. W grupach Kju Ej Saport na Telegramie rozmawiamy o hasap, B R C G S, I F S, kapa, dostawcach i etykietach.",
+  "seconds": 13.1
+ },
+ "4": {
+  "voice": "darkman",
+  "script": "Prowadzisz dział jakości? Poznaj Kju Ej Saport. Quality Cockpit, biblioteka dokumentów, Akademia Jakości, Quality Copilot 360° i wsparcie przed audytem.",
+  "seconds": 14.0
+ },
+ "5": {
+  "voice": "gosia",
+  "script": "Wycofanie produktu nie znaczy, że wszystkie opakowania są groźne. Liczy się numer partii i data.",
+  "seconds": 8.3
+ },
+ "6": {
+  "voice": "gosia",
+  "script": "Stoisz w sklepie i nie wiesz, co znaczy E330? Zapytaj asystenta na jem bezpiecznie kropka kom Wyjaśni skład, alergeny i Twoje prawa konsumenta, prosto i po polsku.",
+  "seconds": 13.5
+ },
+ "7": {
+  "voice": "darkman",
+  "script": "Jedno konto: strona, aplikacja Kju Ej Saport i grupy na Telegramie. fri – 0 złotych: alerty, asystent i grupa fri. bejzik – 49,99 złotych/mies.: dokumenty, hasap w praktyce, szkolenia.",
+  "seconds": 16.4
+ },
+ "8": {
+  "voice": "darkman",
+  "script": "Prowadzisz dział jakości? Dokumenty, szkolenia, Quality Copilot i przygotowanie do audytu w jednym panelu. B R C G S, I F S, hasap i kapa. Kju Ej Saport na jem bezpiecznie kropka kom.",
+  "seconds": 18.8
+ },
+ "9": {
+  "voice": "gosia",
+  "script": "Dwa razy w tygodniu, we wtorek i w piątek, wysyłamy krótki przegląd tego, co ważne w bezpieczeństwie żywności w Polsce. ostrzeżenia GIS i wycofania.",
+  "seconds": 11.1
+ },
+ "10": {
+  "voice": "darkman",
+  "script": "Grupa pro to miejsce dla osób, które na co dzień pilnują standardów.",
+  "seconds": 8.0
+ },
+ "11": {
+  "voice": "darkman",
+  "script": "Nie zaczynaj dokumentacji od pustej kartki. W Kju Ej Saport czeka biblioteka gotowych dokumentów systemu jakości: procedury, instrukcje i formularze do dopasowania do Twojego zakładu. Dostępna od pakietu bejzik.",
+  "seconds": 15.9
+ },
+ "12": {
+  "voice": "gosia",
+  "script": "Co naprawdę mówi etykieta? Bierzemy konkretny produkt i sprawdzamy go punkt po punkcie: nazwa, skład, alergeny, daty, wartość odżywcza.",
+  "seconds": 12.0
+ },
+ "13": {
+  "voice": "mc_speech",
+  "script": "Jem Bezpiecznie jest już aplikacją na Twoim telefonie! Bez sklepu z aplikacjami: otwierasz aplikacja jem bezpiecznie, stukasz Udostępnij , Do ekranu początkowego (iPhone) albo Zainstaluj (Android) i gotowe. Zobacz w rolce, jak zacząć: konto, profil, cele i plan na tydzień. link w bio , bejzik za darmo.",
+  "seconds": 88.1
+ },
+ "14": {
+  "voice": "darkman",
+  "script": "Jedno konto: strona, aplikacja i grupa na Telegramie. Zostań na darmowym pakiecie albo wybierz bejzik, pro lub wip. W grupie dostajesz własny nick i tag pakietu. jem bezpiecznie kropka kom.",
+  "seconds": 17.9
+ },
+ "15": {
+  "voice": "darkman",
+  "script": "Szkolenie, po którym coś zostaje. Akademia Jakości w Kju Ej Saport to ścieżki szkoleń, krótkie moduły i ćwiczenia na realnych przypadkach. Postępy widzisz na bieżąco.",
+  "seconds": 12.8
+ },
+ "16": {
+  "voice": "mc_speech",
+  "script": "Te same zakupy, a różnica nawet kilkudziesięciu złotych tygodniowo. Aplikacja Jem Bezpiecznie porównuje ceny z gazetek i ceny regularne sklepów w Twojej okolicy, a potem dolicza koszt dojazdu – i mówi, gdzie zakupy wyjdą najtaniej łącznie. Do tego planer posiłków z kaloriami i makro. aplikacja jem bezpiecznie link w bio.",
+  "seconds": 88.3
+ },
+ "17": {
+  "voice": "darkman",
+  "script": "Na naszą listę nie da się kupić wejścia. Polskich producentów sprawdzamy audytem, tak jak robią to audytorzy dużych sieci handlowych, a wynik opisujemy tak, żeby każdy go zrozumiał.",
+  "seconds": 13.1
+ },
+ "18": {
+  "voice": "darkman",
+  "script": "Quality Copilot 360° pomaga w codziennej pracy działu jakości: audyty, hasap, B R C G S, I F S, kapa, dostawcy, reklamacje, etykiety i prawo.",
+  "seconds": 13.9
+ },
+ "19": {
+  "voice": "mc_speech",
+  "script": "Dział jakości w kieszeni. Kju Ej Saport to aplikacja z gotowymi procedurami (Word, PL i EN), szkoleniami B R C G S i I F S oraz asystentem jakości. Instalujesz ją na telefonie w 10 sekund. Zobacz w rolce pakiety bejzik, pro i wip. Kju Ej Saport na jem bezpiecznie kropka kom link w bio.",
+  "seconds": 85.8
+ },
+ "20": {
+  "voice": "gosia",
+  "script": "Stoisz w sklepie i nie wiesz, co znaczy E330 na etykiecie? Zapytaj asystenta Jem Bezpiecznie. Skład, alergeny i Twoje prawa, prosto i po polsku. jem bezpiecznie kropka kom.",
+  "seconds": 18.3
+ },
+ "21": {
+  "voice": "darkman",
+  "script": "Masz oko audytora? Myszka Audytorka to gra, w której szukasz niezgodności w piekarni, restauracji, fabryce i chłodni. Świetna rozgrzewka przed audytem i pomysł na szkolenie zespołu.",
+  "seconds": 14.3
+ },
+ "22": {
+  "voice": "mc_speech",
+  "script": "Restauracja, sklep, produkcja? Policz koszt porcji, zanim ustalisz cenę. W planie Firma aplikacji Jem Bezpiecznie: receptura z odpadem, koszt porcji, food cost, marża, VAT, alergeny i makro na porcję, eksport do Excela. aplikacja jem bezpiecznie link w bio.",
+  "seconds": 80.3
+ },
+ "23": {
+  "voice": "darkman",
+  "script": "Audyt za tydzień, a lista zadań rośnie? Emergency Support w Kju Ej Saport to 7 dni przygotowania: analiza GAP, checklisty, harmonogram, kapa, audyt próbny i Evidence Pack.",
+  "seconds": 14.3
+ },
+ "24": {
+  "voice": "gosia",
+  "script": "Dwie daty, dwa różne znaczenia. Należy spożyć do – data bezpieczeństwa, po niej produktu nie jemy.",
+  "seconds": 8.8
+ },
+ "25": {
+  "voice": "mc_speech",
+  "script": "Pytanie o wymaganie B R C G S o 22:00 przed audytem? Asystent jakości w Kju Ej Saport odpowiada na pytania z B R C G S, I F S, hasap i prawa żywnościowego, pomaga w działaniach korygujących i sprawdza etykiety ze zdjęcia. Kju Ej Saport na jem bezpiecznie kropka kom link w bio.",
+  "seconds": 78.7
+ },
+ "26": {
+  "voice": "darkman",
+  "script": "Polscy producenci, zweryfikowani audytem. Sprawdzamy to samo, co audytorzy dużych sieci handlowych, a wynik opisujemy tak, żeby każdy go zrozumiał. jem bezpiecznie kropka kom.",
+  "seconds": 16.6
+ },
+ "27": {
+  "voice": "darkman",
+  "script": "Chcesz wiedzieć o wycofaniach z rynku zaraz po komunikacie? W bezpłatnej grupie fri na Telegramie publikujemy alerty GIS opracowane przez redakcję Jem Bezpiecznie.",
+  "seconds": 11.5
+ },
+ "28": {
+  "voice": "mc_speech",
+  "script": "Szkolenie z testem i certyfikatem – w aplikacji. Akademia Kju Ej Saport: kursy B R C G S i I F S z prezentacjami, quiz po każdym module, test końcowy (próg 80%) i certyfikat. Kju Ej Saport na jem bezpiecznie kropka kom link w bio.",
+  "seconds": 84.2
+ },
+ "29": {
+  "voice": "darkman",
+  "script": "Nie musisz nic płacić, żeby być w społeczności. Grupa fri na Telegramie: powitalnia, ogłoszenia, alerty GIS i wycofania oraz pytania ogólne. Wystarczy darmowe konto w Portalu.",
+  "seconds": 15.0
+ },
+ "30": {
+  "voice": "gosia",
+  "script": "Jem Bezpiecznie. Wiesz, co jesz. Alerty, etykiety, zweryfikowani dostawcy i asystent – wszystko w jednym miejscu. jem bezpiecznie kropka kom.",
+  "seconds": 12.1
+ }
+}

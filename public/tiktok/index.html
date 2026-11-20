@@ -4,5 +4,5 @@
 <script>
 const q=new URLSearchParams(location.search),ok=q.get('s')==='ok';
 document.getElementById('t').textContent=ok?'TikTok połączony ✅':'Nie połączono';
-document.getElementById('m').textContent=ok?'Gotowe. Bot będzie codziennie wrzucał filmy jako szkice do skrzynki TikToka (bez lektora). Ty wybierasz popularny dźwięk w aplikacji i publikujesz. Możesz zamknąć tę stronę.':(q.get('m')||'Spróbuj ponownie: wpisz /tt_polacz w bocie.');
+document.getElementById('m').textContent=ok?'Gotowe. Bot będzie codziennie sam publikował filmy z polskim lektorem na TikToku. Możesz zamknąć tę stronę.':(q.get('m')||'Spróbuj ponownie: wpisz /tt_polacz w bocie.');
 </script></html>

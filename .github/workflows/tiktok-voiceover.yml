@@ -1,0 +1,36 @@
+name: TikTok – polski lektor do wycofań
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  voiceover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Narzędzia
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg >/dev/null
+          pip install -q piper-tts==1.8.0
+      - uses: actions/cache@v4
+        with:
+          path: tools/tt/voices
+          key: piper-pl-darkman-medium-v1
+      - name: Głos darkman (Piper, open source)
+        run: |
+          mkdir -p tools/tt/voices && cd tools/tt/voices
+          for e in onnx onnx.json; do
+            [ -f pl_PL-darkman-medium.$e ] || curl -sfL -o pl_PL-darkman-medium.$e https://huggingface.co/rhasspy/piper-voices/resolve/main/pl/pl_PL/darkman/medium/pl_PL-darkman-medium.$e
+          done
+      - name: Lektor do nowych wycofań
+        run: python3 tools/tt/vo_recalls.py
