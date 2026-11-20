@@ -1,3 +1,4 @@
 node_modules/
 ig-out/
 tools/tt/voices/
+__pycache__/
