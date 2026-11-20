@@ -8,10 +8,9 @@ const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SE
 const REDIRECT = "https://ixivedtgqgryawxsxnqd.supabase.co/functions/v1/tiktok-auth";
 const NOTIFY_API = "https://qasupport.jembezpiecznie.com/api/community?mode=ig_notify";
 const SCOPES = "user.info.basic,video.upload";
-const page = (title: string, text: string, s = 200) => new Response(
-  `<!doctype html><html lang="pl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title>` +
-  `<body style="margin:0;min-height:100vh;display:grid;place-items:center;background:#05071a;color:#f2f4ff;font:17px/1.6 system-ui,sans-serif"><main style="max-width:520px;padding:32px;text-align:center"><h1 style="font-weight:600">${title}</h1><p>${text}</p></main></body></html>`,
-  { status: s, headers: { "content-type": "text/html; charset=utf-8" } });
+// Supabase podaje HTML z funkcji jako zwykły tekst, więc wynik pokazuje strona na qasupport.
+const page = (title: string, text: string, _s = 200) => Response.redirect(
+  `https://qasupport.jembezpiecznie.com/tiktok/?s=${title.startsWith("TikTok połączony") ? "ok" : "err"}&m=${encodeURIComponent(title + ": " + text)}`, 302);
 
 async function sha256Hex(v: string) {
   const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(v));
