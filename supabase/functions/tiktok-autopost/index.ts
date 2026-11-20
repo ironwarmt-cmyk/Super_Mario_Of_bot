@@ -76,7 +76,7 @@ async function once(key: string, kind: string, request: Record<string, unknown>,
     const msg = String((e as Error).message).slice(0, 300);
     await db.from("ig_autopost_log").delete().eq("key", key);
     await db.from("ig_autopost_log").upsert({ key: `error:${key}:${Date.now()}`, kind: "error", request, status: "error", result: { error: msg } });
-    await notify([{ kind: "tt", error: msg, what: kind === "tt_recall" ? "wycofanie" : "plan dnia" }]);
+    if (!msg.includes("niepołączony")) await notify([{ kind: "tt", error: msg, what: kind === "tt_recall" ? "wycofanie" : "plan dnia" }]);
     return { key, error: msg };
   }
 }
