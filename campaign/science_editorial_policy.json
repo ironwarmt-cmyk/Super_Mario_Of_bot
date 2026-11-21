@@ -1,0 +1,87 @@
+{
+  "policy_version": "science_editorial_v1_2026_10_09",
+  "name": "Jem Bezpiecznie — naukowe opracowania autorskie w języku polskim",
+  "mission": "Samodzielna synteza naukowa, nie repost lub clickbait. Edukacja dla konsumentów i branży.",
+  "platforms": [
+    "Instagram",
+    "TikTok"
+  ],
+  "language": "pl-PL",
+  "no_repost": true,
+  "no_clickbait": true,
+  "no_unlicensed_translation_of_full_articles": true,
+  "source_priority": [
+    "pełne oryginalne artykuły recenzowane, dostępne legalnie",
+    "aktualne opinie naukowe i raporty EFSA",
+    "dokumenty GIS oraz Komisji Europejskiej",
+    "przeglądy systematyczne i metaanalizy, jeśli pasują do pytania"
+  ],
+  "discovery_api": "Europe PMC REST (bezpłatne metadane); oficjalne raporty EFSA/GIS i odnośniki DOI",
+  "prohibited": [
+    "kopiowanie pełnych artykułów i ilustracji bez licencji",
+    "dosłowne tłumaczenie i publikacja pełnego chronionego artykułu",
+    "wyciąganie wniosków tylko z nagłówka",
+    "pomijanie ograniczeń badań",
+    "fabrykowanie cytowań i danych liczbowych",
+    "sensacyjne tytuły sprzeczne z materiałem",
+    "automatyczne DM bez inicjatywy odbiorcy"
+  ],
+  "workflow": [
+    "DISCOVERED: prawdziwe źródło i metadane bibliograficzne",
+    "FULL_TEXT_CHECK: dostępny artykuł/raport i licencja",
+    "METHOD_QA: cel, typ badania, próba, metody, wyniki, ograniczenia",
+    "FACT_QA: porównanie wniosków ze źródłem oraz identyfikacja niepewności",
+    "POLISH_ORIGINAL: autorska polska synteza; techniczne słownictwo objaśnione",
+    "PRODUCTION: scenariusz rolki, oryginalne grafiki, opis, napisy i lektor",
+    "CREATIVE_QA: wierność źródłu, estetyka, dostępność, długość i CTA",
+    "PUBLISH_GATE: autoryzacja API, walidacja QA, deduplikacja, limity kosztów"
+  ],
+  "output_schema": {
+    "bibliography": [
+      "title",
+      "author",
+      "journal",
+      "year",
+      "doi",
+      "url",
+      "publication_date"
+    ],
+    "analysis": [
+      "research_question",
+      "study_type",
+      "sample_or_scope",
+      "methods",
+      "main_findings",
+      "effect_sizes_if_present",
+      "limitations",
+      "strength_of_evidence",
+      "what_it_does_not_prove"
+    ],
+    "polish": [
+      "plain_language_explanation",
+      "professional_context",
+      "consumer_implication",
+      "scientific_uncertainties",
+      "source_link"
+    ],
+    "creative": [
+      "reel_script_30_45s",
+      "carousel_5_slides",
+      "caption",
+      "polish_subtitles",
+      "voiceover_pl",
+      "soft_cta_to_application"
+    ]
+  },
+  "cta_policy": "CTA do aplikacji wyłącznie w powiązaniu z rzeczywistą funkcją, bez sugerowania że narzędzia profesjonalne są przeznaczone do każdego zastosowania.",
+  "publish_requires": [
+    "accessible_primary_text_or_full_credible_scientific_report",
+    "evidence_link",
+    "human_or_validated_fact_check",
+    "creative_qa",
+    "approved_realistic_product_claims",
+    "authorized_api",
+    "no_new_paid_service"
+  ],
+  "published": false
+}

@@ -1,0 +1,30 @@
+name: Jem Bezpiecznie - przeglad publikacji naukowych
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 7 * * *'
+      timezone: 'Europe/Warsaw'
+permissions:
+  contents: read
+jobs:
+  open-science-discovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate scientific discovery module
+        run: |
+          python -m compileall -q campaign/science_sources.py campaign/test_science_sources.py
+          PYTHONPATH=campaign python -m unittest campaign/test_science_sources.py
+      - name: Discover full-text primary sources
+        run: python campaign/science_sources.py
+      - name: Store metadata for scientific review, never auto-post
+        uses: actions/upload-artifact@v4
+        with:
+          name: jem-science-metadata-${{ github.run_id }}
+          path: campaign/output/science_candidates.json
+          retention-days: 3
+          if-no-files-found: error

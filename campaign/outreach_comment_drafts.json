@@ -1,0 +1,64 @@
+{
+  "brand": "Jem Bezpiecznie",
+  "instagram_account": "@jem_bezpiecznie",
+  "created_at": "2026-10-09",
+  "status": "DRAFT_ONLY_NO_EXTERNAL_COMMENTS_POSTED",
+  "objective": "Genuine evidence-based engagement on third-party food-science posts, not engagement spam",
+  "controls": {
+    "comment_only_after_reading_specific_post": true,
+    "verify_post_url_and_context": true,
+    "limit_initial_daily_comments": 3,
+    "avoid_repeated_text": true,
+    "avoid_unsolicited_links": true,
+    "avoid_undisclosed_affiliation": true,
+    "skip_irrelevant_posts": true,
+    "manual_posting_until_authorized_api": true
+  },
+  "drafts": [
+    {
+      "target": "@ifstnews",
+      "profile": "https://www.instagram.com/ifstnews/",
+      "topic_condition": "Post explains food safety controls, food technology or HACCP",
+      "language": "en",
+      "comment": "What makes food safety education valuable is connecting the science behind a control with its practical use. Explaining why a step matters can be just as important as explaining how to perform it.",
+      "post_url": null,
+      "status": "AWAITING_RELEVANT_POST"
+    },
+    {
+      "target": "@iftfoodscience",
+      "profile": "https://www.instagram.com/iftfoodscience/",
+      "topic_condition": "Post explains a new study or food-processing technology",
+      "language": "en",
+      "comment": "A fascinating direction for food science communication is showing both the practical application and the limits of the evidence. That context helps readers distinguish promising research from established practice.",
+      "post_url": null,
+      "status": "AWAITING_RELEVANT_POST"
+    },
+    {
+      "target": "@foodgov",
+      "profile": "https://www.instagram.com/foodgov/",
+      "topic_condition": "Post concerns allergens, food labels or food recalls",
+      "language": "en",
+      "comment": "Food safety messages work best when consumers can turn them into clear, practical decisions. Explaining the difference between a precaution, a legal requirement and a verified risk is especially helpful.",
+      "post_url": null,
+      "status": "AWAITING_RELEVANT_POST"
+    },
+    {
+      "target": "@eufic",
+      "profile": "https://www.instagram.com/eufic/",
+      "topic_condition": "Post explains a nutrition or food-science study",
+      "language": "en",
+      "comment": "Making research accessible without losing scientific nuance is so important. Study design and limitations deserve a place in short-form explanations too, not just the headline conclusion.",
+      "post_url": null,
+      "status": "AWAITING_RELEVANT_POST"
+    },
+    {
+      "target": "@quadraminstitute",
+      "profile": "https://www.instagram.com/quadraminstitute/",
+      "topic_condition": "Post discusses food microbiology or foodborne pathogens",
+      "language": "en",
+      "comment": "Food microbiology is a great example of why translating research into clear everyday language matters. A short explanation of the methods and uncertainty can make these findings much easier to interpret responsibly.",
+      "post_url": null,
+      "status": "AWAITING_RELEVANT_POST"
+    }
+  ]
+}
