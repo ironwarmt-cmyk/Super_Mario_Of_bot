@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#100d08">
+  <title>Dokumenty VIP — Quality Assurance Support</title>
+  <script src="/quality/auth.js"></script>
+  <link rel="stylesheet" href="/quality/theme.css?v=20261005-premium">
+  <link rel="manifest" href="/quality/manifest.webmanifest">
+  <style>
+    :root{color-scheme:dark;--bg:#100d08;--panel:#1b1710;--line:#5b4824;--gold:#e8c66a;--text:#fff9e8;--muted:#c5baa0}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% -10%,#72561955,transparent 55%),var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+    a{color:inherit}.wrap{max-width:1080px;margin:auto;padding:24px 18px 80px}.top{display:flex;justify-content:space-between;align-items:center;gap:14px}.brand,.eyebrow{font-size:12px;font-weight:900;letter-spacing:.13em;color:var(--gold)}.nav{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px}.nav a{text-decoration:none}.nav a:hover{color:var(--gold)}
+    .hero{margin:30px 0 24px;padding:clamp(22px,5vw,46px);border:1px solid #a7863d88;border-radius:24px;background:linear-gradient(135deg,#3b2d12dd,#17140f 65%);box-shadow:0 20px 70px #0006}.hero h1{font-size:clamp(32px,6vw,54px);line-height:1.04;margin:10px 0 12px}.hero p{max-width:68ch;color:#e0d6bd;margin:0}.badge{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border:1px solid #e8c66a77;border-radius:999px;color:var(--gold);font-size:12px;font-weight:900;letter-spacing:.08em}
+    .bar{display:flex;justify-content:space-between;align-items:end;gap:12px;flex-wrap:wrap;margin:26px 0 14px}.bar h2{margin:0;font-size:23px}.hint{color:var(--muted);font-size:13px}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}@media(max-width:850px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:580px){.wrap{padding:18px 13px 60px}.grid{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}.hero{margin-top:22px}}
+    .card{display:flex;flex-direction:column;gap:12px;min-height:220px;padding:18px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(155deg,#211b10,#15130f 75%)}.card h3{margin:0;font-size:18px;line-height:1.3}.card p{margin:0;color:#d0c6b0;font-size:14px;flex:1}.meta{display:flex;gap:7px;align-items:center;flex-wrap:wrap}.tag{padding:4px 8px;border:1px solid #75602d;border-radius:999px;color:var(--gold);font-size:11px;font-weight:800}.tag.owned{border-color:#3bd6a2;color:#8ef0c9}.actions{display:flex;gap:8px;flex-wrap:wrap}.btn{display:inline-flex;justify-content:center;align-items:center;min-height:42px;padding:9px 14px;border:1px solid #a7863d;border-radius:11px;background:var(--gold);color:#171208;text-decoration:none;font-size:13px;font-weight:900}.btn.secondary{background:transparent;color:var(--gold)}
+    .message{padding:20px;border:1px solid var(--line);border-radius:16px;color:var(--muted);background:#17140f}.message.error{border-color:#a44;color:#ffc2c2}.foot{margin-top:28px;padding:15px;border-left:3px solid var(--gold);background:#e8c66a12;color:#d4c9ad;font-size:13px}
+  </style>
+  <script defer src="/quality/experience.js?v=20261116-1"></script>
+  <script defer src="/quality/pwa.js"></script>
+</head>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <div class="brand">QUALITY ASSURANCE SUPPORT</div>
+      <nav class="nav" aria-label="Nawigacja"><a href="/quality/">Hub Quality</a><a href="/quality/library/">Cała biblioteka</a><a href="/quality/account/">Moje konto</a></nav>
+    </header>
+    <section class="hero"><span class="badge">💎 STREFA VIP</span><h1>Dokumenty VIP</h1><p>Rozszerzone materiały i narzędzia dla planu VIP — w jednym miejscu. Pobieranie jest dostępne po zalogowaniu i potwierdzeniu uprawnień.</p></section>
+    <div class="bar"><div><div class="eyebrow">BIBLIOTEKA PREMIUM</div><h2>Materiały dostępne w VIP</h2></div><div class="hint" id="count"></div></div>
+    <div id="status" class="message" role="status">Ładuję materiały VIP…</div>
+    <section id="grid" class="grid" aria-label="Materiały VIP"></section>
+    <aside class="foot">Materiały są narzędziami wdrożeniowymi. Dostosuj je do zakładu, produktu, procesu i aktualnych wymagań prawnych. Nie stanowią certyfikacji ani gwarancji wyniku audytu.</aside>
+  </main>
+<script>
+const statusBox=document.getElementById('status'),grid=document.getElementById('grid'),count=document.getElementById('count');
+const kinds={document:'Dokument',instruction:'Instrukcja',framework:'Framework',ebook:'E-book',training:'Szkolenie'};
+function esc(v){const el=document.createElement('span');el.textContent=String(v||'');return el.innerHTML}
+function render(products){
+ const vip=products.filter(p=>Number(p.minimum_tier_rank)>=3);count.textContent=`${vip.length} ${vip.length===1?'materiał':'materiałów'}`;
+ if(!vip.length){statusBox.textContent='W bibliotece nie ma obecnie osobnych materiałów oznaczonych jako VIP.';return}
+ statusBox.hidden=true;grid.innerHTML=vip.map(p=>{const unlocked=Boolean(p.unlocked);const actions=unlocked&&p.download_url?`<a class="btn" href="${esc(p.download_url)}">Pobierz (.docx)</a>${p.slides_url?`<a class="btn" href="${esc(p.slides_url)}">Prezentacja (.pptx)</a>`:''}`:`<a class="btn" href="/quality/checkout/?kind=plan&amp;ref=vip">Sprawdź dostęp VIP</a>`;return `<article class="card"><div class="meta"><span class="tag">${esc(kinds[p.product_type]||'Materiał')}</span><span class="tag ${unlocked?'owned':''}">${unlocked?'Dostęp aktywny':'Wymagany plan VIP'}</span></div><h3>${esc(p.name)}</h3><p>${esc(p.description||'Materiał premium Quality Assurance Support.')}</p><div class="actions">${actions}</div></article>`}).join('');
+}
+(async()=>{try{if(!(await window.QualityAuth.isAuthenticated())){location.href='/quality/login/?next='+encodeURIComponent(location.pathname+location.search);return}const headers=await window.QualityAuth.headers({'content-type':'application/json'});const r=await fetch('/api/quality-account?mode=library&lang=pl',{method:'POST',headers,body:'{}'});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||'Nie udało się wczytać materiałów.');render(d.products||[])}catch(e){statusBox.classList.add('error');statusBox.textContent=e.message||'Nie udało się wczytać materiałów VIP.'}})();
+</script>
+</body>
+</html>
