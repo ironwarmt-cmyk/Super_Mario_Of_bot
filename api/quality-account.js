@@ -267,6 +267,25 @@ export default async function handler(req, res) {
       return res.status(400).json({ ok:false, error:"Unknown Emergency Support action" });
     }
 
+    // Strona administratora „Publikuj na TikToku” – tylko konta właściciela (web i Telegram). Autor: MT
+    if (mode === "tiktok") {
+      const OWNERS = new Set([-1064448415444849, 6690069692, ...String(process.env.QUALITY_UNLIMITED_USERS || "").split(",").map(Number).filter(Boolean)]);
+      if (!OWNERS.has(Number(user.id))) return res.status(403).json({ ok:false, error:"Tylko dla właściciela." });
+      const action = String(req.body?.action || req.query?.action || "creator");
+      if (!["creator","videos","manual","status","connect"].includes(action)) return res.status(400).json({ ok:false, error:"Nieznana akcja" });
+      if (action === "manual" && req.method !== "POST") return res.status(405).json({ ok:false, error:"Method not allowed" });
+      const token = process.env.TELEGRAM_BOT_TOKEN || "";
+      const secret = token ? crypto.createHash("sha256").update(token).digest("hex") : "";
+      const payload = { ...(req.method === "POST" ? req.body || {} : {}), mode: action };
+      delete payload.action;
+      const r = await fetch("https://ixivedtgqgryawxsxnqd.supabase.co/functions/v1/tiktok-autopost", {
+        method: "POST", headers: { "content-type": "application/json", "x-bot-secret": secret },
+        body: JSON.stringify(payload), signal: AbortSignal.timeout(110000)
+      });
+      const d = await r.json().catch(() => ({ ok:false, error:"Błąd odpowiedzi TikToka" }));
+      return res.status(r.status).json(d);
+    }
+
     if (mode === "owner-users") {
       if (req.method !== "GET") return res.status(405).json({ ok:false, error:"Method not allowed" });
       return res.status(200).json({ ok:true, data:await getQualityOwnerUsers(user.id, identity.authUserId) });

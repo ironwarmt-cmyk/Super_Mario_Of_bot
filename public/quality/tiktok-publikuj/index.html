@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Publikuj na TikToku – Jem Bezpiecznie</title>
+<!-- Strona administratora: publikacja filmu na TikToku @jembezpiecznie zgodnie z wytycznymi Content Posting API (Direct Post). Autor: MT -->
+<script src="/quality/auth.js"></script>
+<link rel="stylesheet" href="/quality/theme.css">
+<style>
+main{max-width:760px;margin:auto;padding:28px max(16px,env(safe-area-inset-right)) 80px max(16px,env(safe-area-inset-left));font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+h1{font-size:clamp(26px,5vw,36px);margin:6px 0 4px}.muted{color:var(--muted);font-size:14px}
+.eyebrow{color:var(--accent);font-weight:800;letter-spacing:.14em;font-size:12px;text-transform:uppercase}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px;margin:14px 0}
+.card h2{font-size:17px;margin:0 0 12px}
+.acct{display:flex;align-items:center;gap:12px}.acct img{width:48px;height:48px;border-radius:50%;background:var(--panel2)}
+label{display:block;font-size:13px;color:var(--muted);margin:12px 0 6px}
+select,textarea{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:12px;color:var(--text);padding:12px;font:inherit}
+textarea{min-height:140px;resize:vertical}
+.vids{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.vid{border:2px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;background:var(--panel2)}
+.vid.sel{border-color:var(--accent)}.vid video{width:100%;aspect-ratio:9/16;object-fit:cover;display:block;background:#000}.vid div{padding:6px 8px;font-size:13px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}.row:last-child{border:0}
+.row small{display:block;color:var(--muted)}
+.sw{position:relative;width:46px;height:26px;flex:none}.sw input{opacity:0;width:0;height:0}
+.sw span{position:absolute;inset:0;border-radius:99px;background:#3a3157;transition:.2s;cursor:pointer}
+.sw span:before{content:"";position:absolute;width:20px;height:20px;left:3px;top:3px;border-radius:50%;background:#fff;transition:.2s}
+.sw input:checked+span{background:var(--green)}.sw input:checked+span:before{transform:translateX(20px)}
+.sw input:disabled+span{opacity:.4;cursor:not-allowed}
+.btn{display:block;width:100%;margin-top:16px;padding:15px;border:0;border-radius:14px;font-weight:900;font-size:16px;color:#090713;background:linear-gradient(90deg,var(--accent),var(--violet),var(--blue));cursor:pointer}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
+.msg{margin-top:14px;padding:13px 14px;border-radius:12px;background:#58d9ff14;border:1px solid #58d9ff44}.msg.err{background:#ff6b8a14;border-color:#ff6b8a55}
+.note{font-size:13px;color:var(--muted);margin-top:10px}.note a{color:var(--blue)}
+.hint{font-size:13px;color:var(--warn);margin-top:6px}
+</style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">Panel właściciela</div>
+  <h1>Publikuj na TikToku</h1>
+  <p class="muted">Wybierz film z planu, sprawdź opis i ustawienia, a następnie opublikuj go na koncie TikTok.</p>
+
+  <div class="card" id="acctCard"><h2>Konto TikTok</h2><div id="acct" class="muted">Wczytuję…</div></div>
+
+  <div id="form" hidden>
+    <div class="card"><h2>1. Film</h2><div class="vids" id="vids"></div></div>
+
+    <div class="card"><h2>2. Opis</h2>
+      <textarea id="title" maxlength="2200"></textarea>
+      <div class="muted"><span id="count">0</span> / 2200</div>
+    </div>
+
+    <div class="card"><h2>3. Ustawienia posta</h2>
+      <label for="privacy">Kto może zobaczyć ten film</label>
+      <select id="privacy"><option value="">Wybierz…</option></select>
+      <div class="hint" id="privHint" hidden></div>
+
+      <label>Pozwól użytkownikom</label>
+      <div class="row"><div>Komentarze</div><label class="sw"><input type="checkbox" id="allow_comment"><span></span></label></div>
+      <div class="row"><div>Duety</div><label class="sw"><input type="checkbox" id="allow_duet"><span></span></label></div>
+      <div class="row"><div>Stitch</div><label class="sw"><input type="checkbox" id="allow_stitch"><span></span></label></div>
+
+      <label>Ujawnienie treści komercyjnych</label>
+      <div class="row"><div>Ten film promuje markę, produkt lub usługę<small>Włącz, jeśli film reklamuje Ciebie lub inną firmę.</small></div><label class="sw"><input type="checkbox" id="commercial"><span></span></label></div>
+      <div id="brandBox" hidden>
+        <div class="row"><div>Twoja marka<small>Promujesz siebie lub własną firmę. Film zostanie oznaczony jako „Treść promocyjna”.</small></div><label class="sw"><input type="checkbox" id="brand_organic"><span></span></label></div>
+        <div class="row"><div>Treść marki<small>Promujesz inną markę lub partnera. Film zostanie oznaczony jako „Partnerstwo płatne”.</small></div><label class="sw"><input type="checkbox" id="brand_content"><span></span></label></div>
+        <div class="hint" id="brandHint" hidden>Wybierz co najmniej jedną opcję.</div>
+      </div>
+
+      <p class="note" id="consent">Publikując, akceptujesz <a href="https://www.tiktok.com/legal/page/global/music-usage-confirmation/en" target="_blank" rel="noopener">Potwierdzenie wykorzystania muzyki TikTok</a>.</p>
+      <button class="btn" id="post" disabled>Opublikuj na TikToku</button>
+      <div id="out"></div>
+    </div>
+  </div>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[<>&"]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
+const LABEL={PUBLIC_TO_EVERYONE:"Wszyscy",MUTUAL_FOLLOW_FRIENDS:"Znajomi (obserwujecie się wzajemnie)",FOLLOWER_OF_CREATOR:"Obserwujący",SELF_ONLY:"Tylko ja"};
+let creator=null,videos=[],selected=null;
+async function api(action,body){
+  const headers=await window.QualityAuth.headers({"content-type":"application/json"});
+  const r=await fetch("/api/quality-account?mode=tiktok",{method:"POST",headers,body:JSON.stringify({action,...(body||{})})});
+  const d=await r.json().catch(()=>({ok:false,error:"Błąd odpowiedzi serwera"}));
+  if(!r.ok||d.ok===false) throw new Error(d.error||("Błąd "+r.status));
+  return d;
+}
+function validate(){
+  const priv=$("privacy").value, com=$("commercial").checked, bo=$("brand_organic").checked, bc=$("brand_content").checked;
+  $("brandHint").hidden=!(com&&!bo&&!bc);
+  // Treść marki (partnerstwo) nie może być prywatna – TikTok tego nie pozwala.
+  const privOpt=[...$("privacy").options].find(o=>o.value==="SELF_ONLY");
+  if(privOpt){privOpt.disabled=com&&bc; if(com&&bc&&priv==="SELF_ONLY")$("privacy").value="";}
+  $("privHint").hidden=!(com&&bc); $("privHint").textContent="Widoczność treści marki nie może być ustawiona na „Tylko ja”.";
+  $("consent").innerHTML=com&&bc
+    ? 'Publikując, akceptujesz <a href="https://www.tiktok.com/legal/page/global/bc-policy/en" target="_blank" rel="noopener">Zasady dotyczące treści marki</a> oraz <a href="https://www.tiktok.com/legal/page/global/music-usage-confirmation/en" target="_blank" rel="noopener">Potwierdzenie wykorzystania muzyki TikTok</a>.'
+    : 'Publikując, akceptujesz <a href="https://www.tiktok.com/legal/page/global/music-usage-confirmation/en" target="_blank" rel="noopener">Potwierdzenie wykorzystania muzyki TikTok</a>.';
+  $("post").disabled=!(selected&&$("privacy").value&&(!com||bo||bc)&&$("title").value.trim());
+}
+function renderVideos(){
+  $("vids").innerHTML=videos.map((v,i)=>`<div class="vid${selected===i?" sel":""}" data-i="${i}"><video src="${esc(v.video)}" muted playsinline preload="metadata"${v.cover?` poster="${esc(v.cover)}"`:""}></video><div>${v.offset===0?"Dziś":"Za "+v.offset+" d."} · dzień ${v.day}</div></div>`).join("")||'<div class="muted">Brak filmów w planie.</div>';
+}
+$("vids").addEventListener("click",e=>{
+  const el=e.target.closest(".vid"); if(!el) return;
+  selected=Number(el.dataset.i); $("title").value=videos[selected].caption; $("count").textContent=$("title").value.length;
+  renderVideos(); const v=$("vids").querySelector(".sel video"); if(v){v.controls=true;}
+  validate();
+});
+$("title").addEventListener("input",()=>{$("count").textContent=$("title").value.length;validate()});
+["privacy","allow_comment","allow_duet","allow_stitch","brand_organic","brand_content"].forEach(id=>$(id).addEventListener("change",validate));
+$("commercial").addEventListener("change",()=>{$("brandBox").hidden=!$("commercial").checked; if(!$("commercial").checked){$("brand_organic").checked=false;$("brand_content").checked=false;} validate();});
+$("post").addEventListener("click",async()=>{
+  $("post").disabled=true; $("post").textContent="Publikuję… (do minuty)"; $("out").innerHTML="";
+  try{
+    const com=$("commercial").checked;
+    const d=await api("manual",{offset:videos[selected].offset,title:$("title").value,privacy_level:$("privacy").value,
+      allow_comment:$("allow_comment").checked,allow_duet:$("allow_duet").checked,allow_stitch:$("allow_stitch").checked,
+      brand_organic_toggle:com&&$("brand_organic").checked,brand_content_toggle:com&&$("brand_content").checked});
+    const m=d.manual||{};
+    $("out").innerHTML=`<div class="msg">✅ Wysłano do TikToka. ${m.post?"Film jest przetwarzany i za chwilę pojawi się na profilu":"Film trafił do skrzynki TikToka jako szkic"}. Może minąć kilka minut, zanim będzie widoczny.</div>`;
+  }catch(err){$("out").innerHTML=`<div class="msg err">${esc(err.message)}</div>`}
+  finally{$("post").textContent="Opublikuj na TikToku"; validate();}
+});
+(async()=>{
+  try{
+    if(!(await window.QualityAuth.isAuthenticated())){location.href="/quality/login/?next="+encodeURIComponent(location.pathname);return}
+    const c=await api("creator"); creator=c.creator||{};
+    if(!creator.direct){
+      $("acct").innerHTML='Konto TikTok nie jest połączone z uprawnieniem do publikowania. <button class="btn ghost" id="conn">Zaloguj się przez TikTok</button>';
+      $("conn").onclick=async()=>{try{const d=await api("connect");location.href=d.url}catch(e){alert(e.message)}};
+      return;
+    }
+    $("acct").innerHTML=`<div class="acct">${creator.avatar?`<img src="${esc(creator.avatar)}" alt="">`:""}<div><b>${esc(creator.nickname)}</b><div class="muted">Publikujesz jako @${esc(creator.username)}</div></div></div>`;
+    $("privacy").innerHTML='<option value="">Wybierz…</option>'+(creator.privacy_level_options||[]).map(p=>`<option value="${esc(p)}">${esc(LABEL[p]||p)}</option>`).join("");
+    for(const [k,dis] of [["allow_comment",creator.comment_disabled],["allow_duet",creator.duet_disabled],["allow_stitch",creator.stitch_disabled]]){ $(k).checked=false; $(k).disabled=Boolean(dis); }
+    const v=await api("videos"); videos=v.videos||[]; renderVideos();
+    $("form").hidden=false; validate();
+  }catch(err){$("acct").innerHTML=`<div class="msg err">${esc(err.message)}</div>`}
+})();
+</script>
+</body>
+</html>
