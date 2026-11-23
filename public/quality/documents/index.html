@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Dokumenty dla firmy (VIP) – QA Support</title>
+<script src="/quality/auth.js"></script>
+<style>
+:root{--bg:#07111c;--panel:#0d1b2a;--panel2:#10263a;--line:#203b54;--text:#f5f7fa;--muted:#9eb0c1;--accent:#3bd6a2;--blue:#54a7ff;--pink:#ff4fd8;--danger:#ff6b6b;--gold:#e8c66a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;padding-bottom:120px}
+main{max-width:860px;margin:auto;padding:28px max(16px,env(safe-area-inset-right)) 40px max(16px,env(safe-area-inset-left))}
+.eyebrow{color:var(--gold);font-weight:800;letter-spacing:.14em;font-size:12px;text-transform:uppercase}
+h1{font-size:clamp(28px,6vw,40px);line-height:1.1;margin:8px 0 10px}p.lead{color:var(--muted);margin:0 0 20px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px;margin:14px 0}
+.card h2{font-size:17px;margin:0 0 12px}
+label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+input,select,textarea{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:12px;color:var(--text);padding:12px;font:inherit}
+textarea{min-height:90px;resize:vertical}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:560px){.row{grid-template-columns:1fr}}
+.btn{display:block;width:100%;margin-top:16px;padding:15px;border:0;border-radius:14px;font-weight:900;font-size:16px;color:#07111c;background:linear-gradient(90deg,var(--pink),#9b6bff,#5bd0ff);cursor:pointer;text-align:center;text-decoration:none}
+.btn.small{display:inline-block;width:auto;margin:0;padding:9px 14px;font-size:14px}.btn:disabled{opacity:.55}
+.badge{display:inline-block;padding:4px 10px;border-radius:999px;background:#3bd6a21a;color:var(--accent);font-size:13px;font-weight:700}
+.msg{margin-top:14px;padding:13px 14px;border-radius:12px;background:#54a7ff12;border:1px solid #54a7ff33}.msg.err{background:#ff6b6b14;border-color:#ff6b6b44}
+.msg a{color:var(--accent);font-weight:800}.muted{color:var(--muted);font-size:13px}
+.jobs{list-style:none;margin:0;padding:0}.jobs li{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}.jobs li:last-child{border:0}
+.st{font-size:12px;font-weight:800;padding:3px 9px;border-radius:999px;white-space:nowrap}.st.w{background:#e8c66a22;color:var(--gold)}.st.d{background:#3bd6a222;color:var(--accent)}.st.f{background:#ff6b6b22;color:var(--danger)}
+.lock{border-color:#a7863d88;background:linear-gradient(135deg,#3b2d12aa,#0d1b2a 70%)}
+</style>
+<script defer src="/quality/experience.js?v=20261005-1"></script>
+<script src="/quality/pwa.js" defer></script>
+</head>
+<body>
+<main>
+  <div class="eyebrow">💠 VIP · dokumenty przygotowane pod Twoją firmę</div>
+  <h1>Dokumenty dla Twojej firmy</h1>
+  <p class="lead">Podaj dane zakładu i wybierz dokument. Quality Copilot przygotuje plik Word dopasowany do Twoich produktów, procesów i standardu. Pola, których nie znamy (np. nazwiska), zostaną oznaczone do uzupełnienia.</p>
+  <span class="badge" id="quota">Sprawdzam pakiet…</span>
+
+  <div class="card lock" id="notVip" hidden>
+    <h2>Ta funkcja jest w pakiecie VIP</h2>
+    <p class="muted">W pakietach BASIC i PRO masz gotowe wzory dokumentów (procedury, instrukcje, formularze, analizę zagrożeń), które pobierasz od razu i dostosowujesz do zakładu. W VIP Copilot przygotowuje dokumenty pod Twoją firmę – do 30 miesięcznie.</p>
+    <div class="row"><a class="btn" href="/quality/library/">Gotowe wzory w Bibliotece →</a><a class="btn" href="/quality/checkout/?kind=plan&amp;ref=vip">Przejdź na VIP →</a></div>
+  </div>
+
+  <form id="f" autocomplete="on" hidden>
+    <div class="card"><h2>1. Firma</h2>
+      <div class="row"><div><label for="company_name">Nazwa firmy *</label><input id="company_name" required maxlength="160"></div>
+      <div><label for="size">Wielkość zakładu</label><select id="size"><option value="">—</option><option>do 10 osób</option><option>10–50 osób</option><option>50–250 osób</option><option>powyżej 250 osób</option></select></div></div>
+      <label for="company_address">Adres</label><input id="company_address" maxlength="240">
+      <label for="company_profile">Profil działalności</label><input id="company_profile" maxlength="600" placeholder="np. produkcja wyrobów piekarniczych, dystrybucja chłodnicza">
+      <label for="products">Produkty</label><textarea id="products" maxlength="800" placeholder="np. pieczywo pszenne i żytnie, bułki z sezamem (alergen), ciasta drożdżowe"></textarea>
+      <label for="processes">Procesy, linie, urządzenia</label><textarea id="processes" maxlength="1200" placeholder="np. przyjęcie surowców, magazyn suchy i chłodniczy, mieszanie, fermentacja, wypiek w piecu tunelowym, chłodzenie, krojenie, pakowanie flow-pack, wykrywacz metali"></textarea>
+    </div>
+    <div class="card"><h2>2. Dokument</h2>
+      <div class="row"><div><label for="doc_type">Rodzaj dokumentu *</label><select id="doc_type" required>
+        <option value="procedure">Procedura</option><option value="instruction">Instrukcja stanowiskowa</option><option value="haccp_plan">Plan HACCP</option>
+        <option value="form">Formularz / zapis</option><option value="register">Rejestr</option><option value="policy">Polityka</option>
+        <option value="plan">Plan (szkoleń, audytów, mycia…)</option><option value="risk">Ocena ryzyka</option></select></div>
+      <div><label for="standard">Standard</label><select id="standard"><option>BRCGS Food Safety</option><option>IFS Food</option><option>HACCP / Codex Alimentarius</option><option>ISO 22000 / FSSC 22000</option></select></div></div>
+      <label for="topic">Temat *</label><input id="topic" required maxlength="300" placeholder="np. Zarządzanie alergenami, Kontrola ciał obcych, Wycofanie produktu z rynku">
+      <label for="details">Dodatkowe wymagania</label><textarea id="details" maxlength="2500" placeholder="np. klient sieciowy wymaga testu wycofania co 6 miesięcy; mamy 2 zmiany; numeracja dokumentów PR-xx"></textarea>
+    </div>
+    <button class="btn" id="go" type="submit">Zamów dokument</button>
+    <div id="out"></div>
+  </form>
+
+  <div class="card" id="mine" hidden><h2>Moje dokumenty</h2><ul class="jobs" id="jobs"><li class="muted">Brak</li></ul></div>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[<>&"]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
+const FIELDS=["company_name","company_address","company_profile","products","processes","size"];
+function store(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}
+function load(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}}
+FIELDS.forEach(f=>{const v=load("qa_doc_company",{})[f];if(v)$(f).value=v});
+async function api(body){
+  const headers=await window.QualityAuth.headers({"content-type":"application/json"});
+  const r=await fetch("/api/quality-assistant",{method:"POST",headers,body:JSON.stringify(body)});
+  const d=await r.json().catch(()=>({ok:false,error:"Błąd odpowiedzi serwera"}));
+  return {r,d};
+}
+const mins=s=>Math.max(1,Math.round(Number(s||0)/60));
+let pollTimer=null,known={};
+async function refreshJobs(){
+  const {d}=await api({action:"jobs",kind:"document"}).catch(()=>({d:{}}));
+  const jobs=d.jobs||[];
+  $("jobs").innerHTML=jobs.length?jobs.map(j=>{
+    const st=j.status==="done"?'<span class="st d">Gotowy</span>':j.status==="failed"?'<span class="st f">Nie udało się</span>':'<span class="st w">W przygotowaniu</span>';
+    const act=j.status==="done"?`<button class="btn small" data-dl="${esc(j.id)}">Pobierz Word</button>`:"";
+    return `<li><div><b>${esc(j.title)}</b><div class="muted">${new Date(j.created_at).toLocaleString("pl-PL")} ${st}</div></div>${act}</li>`;
+  }).join(""):'<li class="muted">Brak</li>';
+  jobs.forEach(j=>{ if(known[j.id]&&known[j.id]!=="done"&&j.status==="done") ping(j.title); known[j.id]=j.status; });
+  const pending=jobs.some(j=>j.status==="queued"||j.status==="working");
+  clearTimeout(pollTimer); if(pending) pollTimer=setTimeout(refreshJobs,20000);
+}
+function ping(title){ try{ if("Notification" in window&&Notification.permission==="granted") new Notification("Twój dokument jest gotowy",{body:title}); }catch{} }
+$("jobs").addEventListener("click",async e=>{
+  const id=e.target?.dataset?.dl; if(!id)return;
+  e.target.disabled=true; e.target.textContent="Pobieram…";
+  try{
+    const {r,d}=await api({action:"job_file",job_id:id});
+    if(!r.ok||!d.ok) throw new Error(d.error||("Błąd "+r.status));
+    const bin=Uint8Array.from(atob(d.file_base64),c=>c.charCodeAt(0));
+    const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([bin],{type:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"}));a.download=d.file_name;a.click();
+  }catch(err){alert(err.message||err)}
+  finally{e.target.disabled=false;e.target.textContent="Pobierz Word"}
+});
+(async()=>{
+  try{
+    if(!(await window.QualityAuth.isAuthenticated())){location.href="/quality/login/?next="+encodeURIComponent(location.pathname);return}
+    const {d}=await api({action:"status",specialist:"documents"});
+    const s=d.status||{};const m=s.membership||{};const plan=m.quality_plans||{};
+    const vip=s.unlimited||(m.status==="active"&&Number(plan.tier_rank)===3);
+    if(!vip){$("quota").textContent=`Twój pakiet: ${plan.name_pl||"brak"}`;$("notVip").hidden=false;return}
+    const lim=Number(plan.included_custom_docs||0);
+    $("quota").textContent=s.unlimited?"Dokumenty: bez limitu":`VIP: ${Math.max(0,lim-Number(m.custom_docs_used||0))} z ${lim} dokumentów w tym miesiącu`;
+    $("f").hidden=false;$("mine").hidden=false;refreshJobs();
+  }catch{$("quota").textContent="Zaloguj się, aby korzystać z dokumentów"}
+})();
+$("f").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const body={action:"company_document",doc_type:$("doc_type").value,standard:$("standard").value,topic:$("topic").value,details:$("details").value};
+  FIELDS.forEach(f=>body[f]=$(f).value);
+  store("qa_doc_company",Object.fromEntries(FIELDS.map(f=>[f,$(f).value])));
+  try{ if("Notification" in window&&Notification.permission==="default") Notification.requestPermission(); }catch{}
+  $("go").disabled=true;$("go").textContent="Wysyłam zamówienie…";$("out").innerHTML="";
+  try{
+    const {r,d}=await api(body);
+    if(!r.ok||!d.ok){
+      const up=d.code==="plan"||d.code==="limit";
+      $("out").innerHTML=`<div class="msg err">${esc(d.error||("Błąd "+r.status))}${up?' <a href="/quality/library/">Gotowe wzory</a> · <a href="/quality/checkout/?kind=plan&amp;ref=vip">Pakiet VIP</a>':''}</div>`;return;
+    }
+    $("out").innerHTML=`<div class="msg">⏳ <b>${esc(d.notice)}</b>${d.eta_seconds?`<br><span class="muted">Zwykle trwa to ok. ${mins(d.eta_seconds)} min.</span>`:""}</div>`;
+    $("topic").value="";$("details").value="";
+    refreshJobs();
+  }catch(err){$("out").innerHTML=`<div class="msg err">${esc(err.message||err)}</div>`}
+  finally{$("go").disabled=false;$("go").textContent="Zamów dokument"}
+});
+</script>
+</body>
+</html>

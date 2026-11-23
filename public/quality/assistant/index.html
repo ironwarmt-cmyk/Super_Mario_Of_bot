@@ -137,7 +137,7 @@ function currentClock(){
 function paintTimer(){
   const c=currentClock();
   document.getElementById("used").textContent=fmt(c.used);
-  document.getElementById("remaining").textContent=fmt(c.left);
+  document.getElementById("remaining").textContent=serverState?.unlimited?t("Bez limitu","Unlimited"):fmt(c.left);
   const active=serverState?.session?.status==="active";
   document.getElementById("statusText").innerHTML=
     t("Status: ","Status: ")+
@@ -206,6 +206,7 @@ async function load(){
     const plan=data.status?.membership?.quality_plans;
     document.getElementById("planBadge").textContent=plan?.name_pl||t("Brak aktywnego VIP","No active VIP");
     renderSpecialists(); renderHistory(data.history||[]); paintTimer();
+    api("jobs",{kind:"answer"}).then(d=>(d.jobs||[]).filter(j=>j.status==="queued"||j.status==="working").forEach(j=>{addMessage("assistant","⏳ "+t("Odpowiedź na „","Answer to “")+j.title+t("” jest w przygotowaniu.","” is being prepared."),[]);waitForAnswer(j.id);})).catch(()=>{});
     if(Number(data.status?.included_seconds||0)<=0) showGate(t("Twój aktualny pakiet nie zawiera czasu asystenta.","Your current plan does not include assistant time."));
     else document.getElementById("gate").innerHTML="";
     if(serverState?.session?.status==="active") startHeartbeat();
@@ -244,10 +245,32 @@ async function send(){
   document.getElementById("sendBtn").disabled=true;
   try{
     const data=await api("message",{message});
-    addMessage("assistant",data.answer,data.sources||[]);
     serverState=data.status; syncAt=Date.now(); paintTimer();
+    if(data.queued){ addMessage("assistant","⏳ "+data.notice+(data.eta_seconds?t(" Zwykle trwa to ok. "," It usually takes about ")+Math.max(1,Math.round(data.eta_seconds/60))+" min.":""),[]); waitForAnswer(data.job_id); }
+    else addMessage("assistant",data.answer,data.sources||[]);
   }catch(e){ addMessage("assistant",t("Błąd: ","Error: ")+e.message,[]); }
   finally{ document.getElementById("sendBtn").disabled=serverState?.session?.status!=="active"; }
+}
+// Odpowiedź z kolejki (Bielik): sprawdzamy co 15 s, potem odświeżamy rozmowę i pokazujemy powiadomienie.
+const waiting=new Set();
+function waitForAnswer(jobId){
+  if(!jobId||waiting.has(jobId))return; waiting.add(jobId);
+  try{ if("Notification" in window&&Notification.permission==="default") Notification.requestPermission(); }catch{}
+  const tick=async()=>{
+    try{
+      const d=await api("jobs",{kind:"answer"});
+      const j=(d.jobs||[]).find(x=>x.id===jobId);
+      if(j&&(j.status==="done"||j.status==="failed")){
+        waiting.delete(jobId);
+        const st=await api("status"); renderHistory(st.history||[]);
+        if(j.status==="failed") addMessage("assistant",t("Nie udało się przygotować odpowiedzi. Spróbuj zadać pytanie ponownie.","The answer could not be prepared. Please ask again."),[]);
+        else try{ if(document.hidden&&Notification.permission==="granted") new Notification(t("Quality Copilot odpowiedział","Quality Copilot replied"),{body:j.title||""}); }catch{}
+        return;
+      }
+    }catch{}
+    setTimeout(tick,15000);
+  };
+  setTimeout(tick,15000);
 }
 document.getElementById("sendBtn").onclick=send;
 document.getElementById("input").addEventListener("keydown",e=>{

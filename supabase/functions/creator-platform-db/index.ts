@@ -213,7 +213,7 @@ Deno.serve(async (req) => {
 
     if (action === "get_quality_sales_snapshot") {
       const telegramUserId = Number(body?.telegram_user_id);
-      if (!Number.isFinite(telegramUserId) || telegramUserId <= 0) {
+      if (!Number.isSafeInteger(telegramUserId) || telegramUserId === 0) {
         return json({ ok: false, error: "Invalid user" }, 400);
       }
 
@@ -2169,7 +2169,7 @@ Deno.serve(async (req) => {
       const currency = String(payment.currency || "").toUpperCase();
       const amountPln = Number(payment.amount_pln);
 
-      if (!Number.isFinite(telegramUserId) || telegramUserId <= 0 || !sessionId) {
+      if (!Number.isSafeInteger(telegramUserId) || telegramUserId === 0 || !sessionId) {
         return json({ ok: false, error: "Invalid shipping payment" }, 400);
       }
 
@@ -2339,7 +2339,7 @@ Deno.serve(async (req) => {
       const role = body?.role === "assistant" ? "assistant" : body?.role === "user" ? "user" : "";
       const content = String(body?.content || "").trim();
 
-      if (!Number.isFinite(telegramUserId) || telegramUserId <= 0) {
+      if (!Number.isSafeInteger(telegramUserId) || telegramUserId === 0) {
         return json({ ok: false, error: "Invalid user" }, 400);
       }
       if (!QUALITY_SPECIALISTS.has(specialist)) {

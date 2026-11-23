@@ -8,7 +8,7 @@
       "includeFiles": "content/quality/**"
     },
     "api/quality-assistant.js": {
-      "maxDuration": 30,
+      "maxDuration": 60,
       "includeFiles": "content/quality/**"
     },
     "api/quality-support.js": {

@@ -19,6 +19,12 @@ import {
   agentDisplayName
 } from "../lib/quality-agents.js";
 import { loadQualityKnowledge } from "../lib/quality-knowledge.js";
+import crypto from "node:crypto";
+import { enqueueDocument, answerOrQueue, jobsFor, jobFile, processJobs } from "../lib/quality-jobs.js";
+
+// Konta bez limitu Copilota i dokumentów (właściciel): web i Telegram + opcjonalnie env QUALITY_UNLIMITED_USERS
+const UNLIMITED = new Set([-1064448415444849, 6690069692, ...String(process.env.QUALITY_UNLIMITED_USERS || "").split(",").map(Number).filter(Boolean)]);
+const markUnlimited = (id, status) => (status && UNLIMITED.has(Number(id)) ? { ...status, unlimited: true } : status);
 
 function json(res, status, data) {
   return res.status(status).json(data);
@@ -366,6 +372,15 @@ export default async function handler(req, res) {
     return json(res, 405, { ok: false, error: "Method not allowed" });
   }
 
+  // Worker kolejki VIP (Supabase cron co minutę, nagłówek x-bot-secret jak w /api/maintenance).
+  if (req.body?.action === "process_jobs") {
+    const token = process.env.TELEGRAM_BOT_TOKEN || "";
+    const expected = token ? crypto.createHash("sha256").update(token).digest("hex") : "";
+    if (!expected || req.headers["x-bot-secret"] !== expected) return json(res, 401, { ok: false, error: "Unauthorized" });
+    const done = await processJobs({ cloudAnswer: callQualityAI }).catch((e) => [{ error: e instanceof Error ? e.message : String(e) }]);
+    return json(res, 200, { ok: true, done });
+  }
+
   const identity = await resolveQualityIdentity(req);
   if (!identity?.telegramUserId) {
     return json(res, 401, {
@@ -434,8 +449,22 @@ export default async function handler(req, res) {
       }
     }
 
+    // Dokumenty dedykowane (VIP): przyjęcie do kolejki, lista „Moje dokumenty”, pobranie gotowego pliku.
+    if (action === "company_document") {
+      const out = await enqueueDocument({ telegramUserId: user.id, unlimited: UNLIMITED.has(Number(user.id)), input: req.body || {} });
+      return json(res, out.status || 200, out.body);
+    }
+    if (action === "jobs") {
+      const kind = ["document", "answer"].includes(req.body?.kind) ? req.body.kind : undefined;
+      return json(res, 200, { ok: true, ...(await jobsFor(user.id, kind)) });
+    }
+    if (action === "job_file") {
+      const out = await jobFile(user.id, String(req.body?.job_id || ""));
+      return json(res, out.status || 200, out.body);
+    }
+
     if (action === "status") {
-      const [profile, status, history] = await Promise.all([
+      const [profile, status0, history] = await Promise.all([
         getUserProfile(user.id),
         getQualityAssistantStatus(user.id),
         listQualityAssistantMessages(user.id, specialist)
@@ -449,7 +478,7 @@ export default async function handler(req, res) {
           specialist,
           profile?.locale || "pl"
         ),
-        status,
+        status: markUnlimited(user.id, status0),
         history
       });
     }
@@ -459,17 +488,17 @@ export default async function handler(req, res) {
         user.id,
         specialist
       );
-      return json(res, 200, { ok: true, specialist, status });
+      return json(res, 200, { ok: true, specialist, status: markUnlimited(user.id, status) });
     }
 
     if (action === "heartbeat") {
       const status = await heartbeatQualityAssistantSession(user.id);
-      return json(res, 200, { ok: true, specialist, status });
+      return json(res, 200, { ok: true, specialist, status: markUnlimited(user.id, status) });
     }
 
     if (action === "stop") {
       const status = await stopQualityAssistantSession(user.id);
-      return json(res, 200, { ok: true, specialist, status });
+      return json(res, 200, { ok: true, specialist, status: markUnlimited(user.id, status) });
     }
 
     if (action === "message") {
@@ -526,6 +555,14 @@ export default async function handler(req, res) {
         "user",
         message
       );
+
+      // Copilot VIP: odpowiada Bielik na telefonie; gdy nie zdąży, odpowiedź idzie do kolejki i klient dostaje komunikat.
+      if (process.env.QUALITY_COPILOT_ENGINE !== "cloud") {
+        const r = await answerOrQueue({ telegramUserId: user.id, specialist, locale: profile?.locale || "pl", message, history });
+        const after = await heartbeatQualityAssistantSession(user.id);
+        if (r.queued) return json(res, 202, { ok: true, specialist, queued: true, job_id: r.job_id, notice: r.notice, eta_seconds: r.eta_seconds, status: markUnlimited(user.id, after) });
+        return json(res, 200, { ok: true, specialist, answer: r.answer, engine: r.engine, sources: [], status: markUnlimited(user.id, after) });
+      }
 
       const answer = await callQualityAI({
         specialist,
