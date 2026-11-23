@@ -80,7 +80,7 @@ function renderFinal(){
   finalOut.innerHTML='<div class="finish"><div class="eyebrow">'+(pass?'KURS ZALICZONY':'SPRÓBUJ PONOWNIE')+'</div><h2>Wynik: '+ok+' / '+F.length+' ('+pct+'%)</h2><p>'+(pass?'Gratulacje. Wynik zapisano na tym urządzeniu – wpisz ukończenie kursu do matrycy kompetencji.':'Przejrzyj wyjaśnienia pod pytaniami, wróć do modułów i rozwiąż test jeszcze raz.')+'</p><a class="qa-btn" href="/quality/training/">Wróć do Akademii</a></div>';finalOut.scrollIntoView({behavior:'smooth'})};
 }
 async function start(){
- try{await window.QAExperience?.ready}catch(e){}
+ if(!window.QAExperience&&document.readyState==="loading")await new Promise(r=>document.addEventListener("DOMContentLoaded",r,{once:true}));try{await window.QAExperience?.ready}catch(e){}
  const userRank=window.QAExperience?.planRank?.()??0,needed=rank[course.tier]??0;
  const cid=new URLSearchParams(location.search).get("id")||"",slug=cid==="brcgs"?"training-brc-overview":cid==="ifs"?"training-ifs-overview":"training-"+cid;
  let bought=false;
