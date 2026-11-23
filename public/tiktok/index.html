@@ -1,8 +1,9 @@
 <!doctype html><html lang="pl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>TikTok – JemBezpiecznie</title>
-<style>:root{color-scheme:dark}body{margin:0;min-height:100vh;display:grid;place-items:center;background:#05071a;color:#f2f4ff;font:17px/1.6 system-ui,sans-serif}main{max-width:520px;padding:32px max(16px,env(safe-area-inset-left,0px));text-align:center}h1{font-weight:600}</style>
-<main><h1 id="t">TikTok</h1><p id="m"></p></main>
+<style>:root{color-scheme:dark}body{margin:0;min-height:100vh;display:grid;place-items:center;background:#05071a;color:#f2f4ff;font:17px/1.6 system-ui,sans-serif}main{max-width:520px;padding:32px max(16px,env(safe-area-inset-left,0px));text-align:center}h1{font-weight:600}a.b{display:inline-block;margin-top:18px;padding:14px 22px;border-radius:14px;font-weight:800;color:#090713;background:linear-gradient(90deg,#ff4fd8,#8f6bff,#58d9ff);text-decoration:none}</style>
+<main><h1 id="t">TikTok</h1><p id="m"></p><a class="b" id="back" href="/quality/tiktok-publikuj/" hidden>Przejdź do publikowania →</a></main>
 <script>
 const q=new URLSearchParams(location.search),ok=q.get('s')==='ok';
 document.getElementById('t').textContent=ok?'TikTok połączony ✅':'Nie połączono';
-document.getElementById('m').textContent=ok?'Gotowe. Bot będzie codziennie sam publikował filmy z polskim lektorem na TikToku. Możesz zamknąć tę stronę.':(q.get('m')||'Spróbuj ponownie: wpisz /tt_polacz w bocie.');
+document.getElementById('m').textContent=ok?'Gotowe. Bot będzie codziennie sam publikował filmy z polskim lektorem na TikToku. Możesz też opublikować film od razu.':(q.get('m')||'Spróbuj ponownie: wpisz /tt_polacz w bocie.');
+document.getElementById('back').hidden=!ok;
 </script></html>

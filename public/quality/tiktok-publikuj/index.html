@@ -130,7 +130,7 @@ $("post").addEventListener("click",async()=>{
     const c=await api("creator"); creator=c.creator||{};
     if(!creator.direct){
       $("acct").innerHTML='Konto TikTok nie jest połączone z uprawnieniem do publikowania. <button class="btn ghost" id="conn">Zaloguj się przez TikTok</button>';
-      $("conn").onclick=async()=>{try{const d=await api("connect");location.href=d.url}catch(e){alert(e.message)}};
+      $("conn").onclick=async()=>{$("conn").disabled=true;$("conn").textContent="Łączę z TikTokiem…";for(let i=0;i<3;i++){try{const d=await api("connect");location.href=d.url;return}catch(e){if(i===2){$("acct").insertAdjacentHTML("beforeend",`<div class="msg err">${esc(e.message)}</div>`)}else await new Promise(r=>setTimeout(r,1500))}}$("conn").disabled=false;$("conn").textContent="Zaloguj się przez TikTok"};
       return;
     }
     $("acct").innerHTML=`<div class="acct">${creator.avatar?`<img src="${esc(creator.avatar)}" alt="">`:""}<div><b>${esc(creator.nickname)}</b><div class="muted">Publikujesz jako @${esc(creator.username)}</div></div></div>`;
