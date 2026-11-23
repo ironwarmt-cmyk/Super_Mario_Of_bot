@@ -98,7 +98,7 @@ function validate(){
   $("consent").innerHTML=com&&bc
     ? 'Publikując, akceptujesz <a href="https://www.tiktok.com/legal/page/global/bc-policy/en" target="_blank" rel="noopener">Zasady dotyczące treści marki</a> oraz <a href="https://www.tiktok.com/legal/page/global/music-usage-confirmation/en" target="_blank" rel="noopener">Potwierdzenie wykorzystania muzyki TikTok</a>.'
     : 'Publikując, akceptujesz <a href="https://www.tiktok.com/legal/page/global/music-usage-confirmation/en" target="_blank" rel="noopener">Potwierdzenie wykorzystania muzyki TikTok</a>.';
-  $("post").disabled=!(selected&&$("privacy").value&&(!com||bo||bc)&&$("title").value.trim());
+  $("post").disabled=!(selected!==null&&$("privacy").value&&(!com||bo||bc)&&$("title").value.trim());
 }
 function renderVideos(){
   $("vids").innerHTML=videos.map((v,i)=>`<div class="vid${selected===i?" sel":""}" data-i="${i}"><video src="${esc(v.video)}" muted playsinline preload="metadata"${v.cover?` poster="${esc(v.cover)}"`:""}></video><div>${v.offset===0?"Dziś":"Za "+v.offset+" d."} · dzień ${v.day}</div></div>`).join("")||'<div class="muted">Brak filmów w planie.</div>';
