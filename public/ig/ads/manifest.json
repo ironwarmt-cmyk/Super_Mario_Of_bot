@@ -1,0 +1,86 @@
+{
+ "start_kinds": [
+  "ig_reel",
+  "fb_video",
+  "tt_video",
+  "ig_carousel",
+  "fb_album",
+  "tt_photo"
+ ],
+ "daily_kinds": [
+  "ig_carousel",
+  "fb_album",
+  "tt_photo"
+ ],
+ "daily_from": "2026-11-25",
+ "ads": [
+  {
+   "id": "basic",
+   "name": "Basic",
+   "title": "Jem Bezpiecznie Basic – za darmo",
+   "video": "https://qasupport.jembezpiecznie.com/ig/ads/basic.mp4?v=20261124",
+   "cover": "https://qasupport.jembezpiecznie.com/ig/ads/basic-cover.jpg?v=20261124",
+   "slides": [
+    "https://qasupport.jembezpiecznie.com/ig/ads/basic-1.jpg?v=20261124",
+    "https://qasupport.jembezpiecznie.com/ig/ads/basic-2.jpg?v=20261124",
+    "https://qasupport.jembezpiecznie.com/ig/ads/basic-3.jpg?v=20261124",
+    "https://qasupport.jembezpiecznie.com/ig/ads/basic-4.jpg?v=20261124",
+    "https://qasupport.jembezpiecznie.com/ig/ads/basic-5.jpg?v=20261124"
+   ],
+   "caption_video": "Wiesz, co jesz? 🥗 Sprawdź to w kilka sekund – za darmo.\n\n✅ Plan posiłków w budżecie do 7 dni (kcal i makro w każdym przepisie)\n✅ Skład i alergeny ze zdjęcia etykiety\n✅ Ostrzeżenia GIS i wycofania produktów\n✅ Ceny i sklepy w okolicy\n✅ Asystent: 10 wiadomości w miesiącu\n\nPlan Basic: 0 zł, bez karty.\n\n👉 Załóż konto: jembezpiecznie.com (link w bio)\n💾 Zapisz i wyślij komuś, kto robi zakupy w Twoim domu\n\n#jembezpiecznie #planposilkow #alergie #bezpieczenstwozywnosci #aplikacja",
+   "caption_carousel": "Wiesz, co jesz? 🥗 Sprawdź to w kilka sekund – za darmo. Przesuń 👉\n\n✅ Plan posiłków w budżecie do 7 dni (kcal i makro w każdym przepisie)\n✅ Skład i alergeny ze zdjęcia etykiety\n✅ Ostrzeżenia GIS i wycofania produktów\n✅ Ceny i sklepy w okolicy\n✅ Asystent: 10 wiadomości w miesiącu\n\nPlan Basic: 0 zł, bez karty.\n\n👉 Załóż konto: jembezpiecznie.com (link w bio)\n💬 Napisz w komentarzu, o co chcesz zapytać 👇\n\n#jembezpiecznie #planposilkow #alergie #bezpieczenstwozywnosci #aplikacja",
+   "caption_tt": "Wiesz, co jesz? 🥗 Sprawdź to w kilka sekund – za darmo.\n\n✅ Plan posiłków w budżecie do 7 dni (kcal i makro w każdym przepisie)\n✅ Skład i alergeny ze zdjęcia etykiety\n✅ Ostrzeżenia GIS i wycofania produktów\n✅ Ceny i sklepy w okolicy\n✅ Asystent: 10 wiadomości w miesiącu\n\nPlan Basic: 0 zł, bez karty.\n\n👉 Załóż konto: jembezpiecznie.com (link w bio)\n\n#jembezpiecznie #planposilkow #alergie #bezpieczenstwozywnosci #aplikacja"
+  },
+  {
+   "id": "pro",
+   "name": "PRO",
+   "title": "Jem Bezpiecznie PRO – 24,99 zł/mies.",
+   "video": "https://qasupport.jembezpiecznie.com/ig/ads/pro.mp4?v=20261124",
+   "cover": "https://qasupport.jembezpiecznie.com/ig/ads/pro-cover.jpg?v=20261124",
+   "slides": [
+    "https://qasupport.jembezpiecznie.com/ig/ads/pro-1.jpg?v=20261124",
+    "https://qasupport.jembezpiecznie.com/ig/ads/pro-2.jpg?v=20261124",
+    "https://qasupport.jembezpiecznie.com/ig/ads/pro-3.jpg?v=20261124",
+    "https://qasupport.jembezpiecznie.com/ig/ads/pro-4.jpg?v=20261124",
+    "https://qasupport.jembezpiecznie.com/ig/ads/pro-5.jpg?v=20261124"
+   ],
+   "caption_video": "Dom, który liczy każdą złotówkę? 💸 Poznaj plan PRO.\n\n✅ Plany posiłków do 14 dni + lista zakupów co do grama\n✅ Zdjęcie paragonu → produkty same trafiają do Lodówki\n✅ To, co masz w domu, znika z listy zakupów\n✅ Alarm kończących się terminów\n✅ Koszyk w sklepach w okolicy z kosztem dojazdu\n✅ Asystent: 300 wiadomości w miesiącu\n\nPRO: 24,99 zł miesięcznie albo 199 zł rocznie.\n\n👉 Załóż konto: jembezpiecznie.com (link w bio)\n💾 Zapisz i wyślij komuś, kto robi zakupy w Twoim domu\n\n#jembezpiecznie #oszczedzanie #niemarnujjedzenia #zakupyspozywcze #aplikacja",
+   "caption_carousel": "Dom, który liczy każdą złotówkę? 💸 Poznaj plan PRO. Przesuń 👉\n\n✅ Plany posiłków do 14 dni + lista zakupów co do grama\n✅ Zdjęcie paragonu → produkty same trafiają do Lodówki\n✅ To, co masz w domu, znika z listy zakupów\n✅ Alarm kończących się terminów\n✅ Koszyk w sklepach w okolicy z kosztem dojazdu\n✅ Asystent: 300 wiadomości w miesiącu\n\nPRO: 24,99 zł miesięcznie albo 199 zł rocznie.\n\n👉 Załóż konto: jembezpiecznie.com (link w bio)\n💬 Napisz w komentarzu, o co chcesz zapytać 👇\n\n#jembezpiecznie #oszczedzanie #niemarnujjedzenia #zakupyspozywcze #aplikacja",
+   "caption_tt": "Dom, który liczy każdą złotówkę? 💸 Poznaj plan PRO.\n\n✅ Plany posiłków do 14 dni + lista zakupów co do grama\n✅ Zdjęcie paragonu → produkty same trafiają do Lodówki\n✅ To, co masz w domu, znika z listy zakupów\n✅ Alarm kończących się terminów\n✅ Koszyk w sklepach w okolicy z kosztem dojazdu\n✅ Asystent: 300 wiadomości w miesiącu\n\nPRO: 24,99 zł miesięcznie albo 199 zł rocznie.\n\n👉 Załóż konto: jembezpiecznie.com (link w bio)\n\n#jembezpiecznie #oszczedzanie #niemarnujjedzenia #zakupyspozywcze #aplikacja"
+  },
+  {
+   "id": "premium",
+   "name": "Premium",
+   "title": "Jem Bezpiecznie Premium – 44,99 zł/mies.",
+   "video": "https://qasupport.jembezpiecznie.com/ig/ads/premium.mp4?v=20261124",
+   "cover": "https://qasupport.jembezpiecznie.com/ig/ads/premium-cover.jpg?v=20261124",
+   "slides": [
+    "https://qasupport.jembezpiecznie.com/ig/ads/premium-1.jpg?v=20261124",
+    "https://qasupport.jembezpiecznie.com/ig/ads/premium-2.jpg?v=20261124",
+    "https://qasupport.jembezpiecznie.com/ig/ads/premium-3.jpg?v=20261124",
+    "https://qasupport.jembezpiecznie.com/ig/ads/premium-4.jpg?v=20261124",
+    "https://qasupport.jembezpiecznie.com/ig/ads/premium-5.jpg?v=20261124"
+   ],
+   "caption_video": "Cały miesiąc posiłków w jednym planie 📅 Poznaj Premium.\n\n✅ Plany do 31 dni\n✅ Skany paragonów i zdjęcia produktów bez limitu\n✅ Archiwum 10 ulubionych planów\n✅ Porównanie koszyka w dwóch wybranych sklepach\n✅ Asystent: 600 wiadomości w miesiącu\n\nPremium: 44,99 zł miesięcznie albo 359 zł rocznie.\n\n👉 Załóż konto: jembezpiecznie.com (link w bio)\n💾 Zapisz i wyślij komuś, kto robi zakupy w Twoim domu\n\n#jembezpiecznie #planposilkow #zdroweodzywianie #oszczedzanie #aplikacja",
+   "caption_carousel": "Cały miesiąc posiłków w jednym planie 📅 Poznaj Premium. Przesuń 👉\n\n✅ Plany do 31 dni\n✅ Skany paragonów i zdjęcia produktów bez limitu\n✅ Archiwum 10 ulubionych planów\n✅ Porównanie koszyka w dwóch wybranych sklepach\n✅ Asystent: 600 wiadomości w miesiącu\n\nPremium: 44,99 zł miesięcznie albo 359 zł rocznie.\n\n👉 Załóż konto: jembezpiecznie.com (link w bio)\n💬 Napisz w komentarzu, o co chcesz zapytać 👇\n\n#jembezpiecznie #planposilkow #zdroweodzywianie #oszczedzanie #aplikacja",
+   "caption_tt": "Cały miesiąc posiłków w jednym planie 📅 Poznaj Premium.\n\n✅ Plany do 31 dni\n✅ Skany paragonów i zdjęcia produktów bez limitu\n✅ Archiwum 10 ulubionych planów\n✅ Porównanie koszyka w dwóch wybranych sklepach\n✅ Asystent: 600 wiadomości w miesiącu\n\nPremium: 44,99 zł miesięcznie albo 359 zł rocznie.\n\n👉 Załóż konto: jembezpiecznie.com (link w bio)\n\n#jembezpiecznie #planposilkow #zdroweodzywianie #oszczedzanie #aplikacja"
+  },
+  {
+   "id": "firma",
+   "name": "Firma",
+   "title": "Jem Bezpiecznie Firma – 99 zł/mies.",
+   "video": "https://qasupport.jembezpiecznie.com/ig/ads/firma.mp4?v=20261124",
+   "cover": "https://qasupport.jembezpiecznie.com/ig/ads/firma-cover.jpg?v=20261124",
+   "slides": [
+    "https://qasupport.jembezpiecznie.com/ig/ads/firma-1.jpg?v=20261124",
+    "https://qasupport.jembezpiecznie.com/ig/ads/firma-2.jpg?v=20261124",
+    "https://qasupport.jembezpiecznie.com/ig/ads/firma-3.jpg?v=20261124",
+    "https://qasupport.jembezpiecznie.com/ig/ads/firma-4.jpg?v=20261124",
+    "https://qasupport.jembezpiecznie.com/ig/ads/firma-5.jpg?v=20261124"
+   ],
+   "caption_video": "Ile naprawdę zarabiasz na każdym daniu? 🍽️ Plan Firma dla gastronomii, cateringu i sklepów.\n\n✅ Wszystko z Premium\n✅ Kalkulator kosztu porcji: food cost, marża, narzut i VAT\n✅ Cena z karty menu i zysk na porcji\n✅ Eksport receptur do CSV (Excel)\n✅ Faktura na NIP\n✅ Asystent: 1000 wiadomości w miesiącu\n\nFirma: 99 zł miesięcznie albo 990 zł rocznie.\n\n👉 Załóż konto: jembezpiecznie.com (link w bio)\n💾 Zapisz i wyślij komuś, kto robi zakupy w Twoim domu\n\n#jembezpiecznie #gastronomia #foodcost #haccp #restauracja",
+   "caption_carousel": "Ile naprawdę zarabiasz na każdym daniu? 🍽️ Plan Firma dla gastronomii, cateringu i sklepów. Przesuń 👉\n\n✅ Wszystko z Premium\n✅ Kalkulator kosztu porcji: food cost, marża, narzut i VAT\n✅ Cena z karty menu i zysk na porcji\n✅ Eksport receptur do CSV (Excel)\n✅ Faktura na NIP\n✅ Asystent: 1000 wiadomości w miesiącu\n\nFirma: 99 zł miesięcznie albo 990 zł rocznie.\n\n👉 Załóż konto: jembezpiecznie.com (link w bio)\n💬 Napisz w komentarzu, o co chcesz zapytać 👇\n\n#jembezpiecznie #gastronomia #foodcost #haccp #restauracja",
+   "caption_tt": "Ile naprawdę zarabiasz na każdym daniu? 🍽️ Plan Firma dla gastronomii, cateringu i sklepów.\n\n✅ Wszystko z Premium\n✅ Kalkulator kosztu porcji: food cost, marża, narzut i VAT\n✅ Cena z karty menu i zysk na porcji\n✅ Eksport receptur do CSV (Excel)\n✅ Faktura na NIP\n✅ Asystent: 1000 wiadomości w miesiącu\n\nFirma: 99 zł miesięcznie albo 990 zł rocznie.\n\n👉 Załóż konto: jembezpiecznie.com (link w bio)\n\n#jembezpiecznie #gastronomia #foodcost #haccp #restauracja"
+  }
+ ]
+}
