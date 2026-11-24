@@ -21,6 +21,10 @@ import {
 import { loadQualityKnowledge } from "../lib/quality-knowledge.js";
 import crypto from "node:crypto";
 import { enqueueDocument, answerOrQueue, jobsFor, jobFile, processJobs } from "../lib/quality-jobs.js";
+import { aiText } from "../lib/ai-call.js";
+
+// Zdjęcie etykiety w Quality Copilocie: ocena przez model z obsługą obrazów. Autor: MT
+const LABEL_GUIDE = `\n\nUŻYTKOWNIK PRZESŁAŁ ZDJĘCIE (najczęściej etykiety produktu spożywczego). Odczytaj z niego wszystkie widoczne informacje i oceń zgodność z rozporządzeniem (UE) nr 1169/2011 oraz polskimi przepisami: nazwa, wykaz składników i ich kolejność, wyróżnienie 14 alergenów, ilość netto, data minimalnej trwałości / termin przydatności, warunki przechowywania, dane podmiotu, kraj pochodzenia (gdy wymagany), wartość odżywcza, czytelność (min. wysokość x), oświadczenia żywieniowe i zdrowotne. Wypisz konkretnie: co jest w porządku, czego brakuje lub jest błędne, i jak to poprawić. Jeśli czegoś nie widać na zdjęciu, napisz to wprost zamiast zgadywać. Odpowiadaj po polsku, chyba że użytkownik pisze w innym języku.`;
 
 // Konta bez limitu Copilota i dokumentów (właściciel): web i Telegram + opcjonalnie env QUALITY_UNLIMITED_USERS
 const UNLIMITED = new Set([-1064448415444849, 6690069692, ...String(process.env.QUALITY_UNLIMITED_USERS || "").split(",").map(Number).filter(Boolean)]);
@@ -502,7 +506,11 @@ export default async function handler(req, res) {
     }
 
     if (action === "message") {
-      const message = String(req.body?.message || "").trim();
+      const image = typeof req.body?.image === "string" ? req.body.image : "";
+      if (image && (!/^data:image\/(jpeg|png|webp|heic);base64,/.test(image) || image.length > 4_000_000)) {
+        return json(res, 400, { ok: false, error: "Wyślij zdjęcie JPG lub PNG (do ok. 3 MB)." });
+      }
+      const message = String(req.body?.message || "").trim() || (image ? "Oceń tę etykietę." : "");
       if (!message) {
         return json(res, 400, { ok: false, error: "Message is required" });
       }
@@ -553,8 +561,27 @@ export default async function handler(req, res) {
         user.id,
         specialist,
         "user",
-        message
+        image ? `📷 [zdjęcie etykiety] ${message}` : message
       );
+
+      // Zdjęcie: odpowiada model z obsługą obrazów (Bielik na telefonie czyta tylko tekst).
+      if (image) {
+        try {
+          const locale = profile?.locale || "pl";
+          const past = (history || []).slice(-6).map((m) => `${m.role === "assistant" ? "Copilot" : "Klient"}: ${String(m.content || "").slice(0, 1200)}`).join("\n");
+          const out = await aiText({
+            instructions: buildQualityAgentInstructions(specialist, locale) + LABEL_GUIDE,
+            input: (past ? `Dotychczasowa rozmowa:\n${past}\n\n` : "") + `Pytanie klienta: ${message}`,
+            images: [image], timeoutMs: 55000
+          });
+          await saveQualityAssistantMessage(user.id, specialist, "assistant", out.text, { engine: "vision", model: out.model });
+          const after = await heartbeatQualityAssistantSession(user.id);
+          return json(res, 200, { ok: true, specialist, answer: out.text, engine: "vision", sources: [], status: markUnlimited(user.id, after) });
+        } catch (e) {
+          console.error("quality_label_vision_failed", e instanceof Error ? e.message : e);
+          return json(res, 503, { ok: false, error: "Nie udało się teraz przeanalizować zdjęcia. Spróbuj ponownie za chwilę albo zrób wyraźniejsze zdjęcie etykiety." });
+        }
+      }
 
       // Copilot VIP: odpowiada Bielik na telefonie; gdy nie zdąży, odpowiedź idzie do kolejki i klient dostaje komunikat.
       if (process.env.QUALITY_COPILOT_ENGINE !== "cloud") {

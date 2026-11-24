@@ -17,7 +17,7 @@
 .timer{position:sticky;top:0;z-index:10;margin:12px 0 16px;padding:16px;border:1px solid var(--line);border-radius:20px;background:#08131df2;backdrop-filter:blur(12px);box-shadow:0 14px 50px #0007}.timer-grid{display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:center}.metric small{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em}.metric b{font-size:22px}.controls{display:flex;gap:8px}.btn{border:0;border-radius:13px;padding:12px 16px;font-weight:900}.btn.start{background:var(--accent);color:#04110c}.btn.stop{background:#442329;color:#ffd9df}.btn:disabled{opacity:.4}.status{margin-top:10px;font-size:13px;color:var(--muted)}.status strong.on{color:var(--accent)}.status strong.off{color:var(--warn)}
 .notice{margin:14px 0;padding:13px 14px;border:1px solid #54a7ff33;border-left:3px solid var(--blue);border-radius:12px;background:#54a7ff0c;color:#cbd9e6;font-size:13px;line-height:1.45}
 .chat{display:flex;flex-direction:column;gap:11px;min-height:260px}.msg{max-width:88%;padding:13px 14px;border-radius:17px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}.msg.user{align-self:flex-end;background:#1c4f78}.msg.ai{align-self:flex-start;background:var(--panel);border:1px solid var(--line)}.msg .who{font-size:11px;color:var(--muted);font-weight:800;margin-bottom:6px}.sources{margin-top:9px;padding-top:8px;border-top:1px solid #ffffff16;font-size:12px}.sources a{color:#8bc7ff;text-decoration:none;display:block;margin-top:5px}
-.composer{position:fixed;left:0;right:0;bottom:0;background:#07111cf2;backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:10px max(14px,env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left))}.composer-inner{max-width:980px;margin:auto;display:flex;gap:8px}.composer textarea{flex:1;min-height:48px;max-height:130px;resize:none;border:1px solid var(--line);border-radius:15px;background:var(--panel);color:var(--text);padding:13px;font:inherit}.send{width:58px;border:0;border-radius:15px;background:var(--blue);font-weight:900;color:#07111c}.locked{padding:24px;border:1px solid var(--line);border-radius:18px;background:var(--panel);text-align:center}.upgrade{display:inline-block;margin-top:12px;padding:12px 15px;border-radius:13px;background:var(--accent);color:#04110c;font-weight:900;text-decoration:none}
+.composer{position:fixed;left:0;right:0;bottom:0;background:#07111cf2;backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:10px max(14px,env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left))}.composer-inner{max-width:980px;margin:auto;display:flex;gap:8px}.composer textarea{flex:1;min-height:48px;max-height:130px;resize:none;border:1px solid var(--line);border-radius:15px;background:var(--panel);color:var(--text);padding:13px;font:inherit}.photo{width:52px;border:1px solid var(--line);border-radius:15px;background:var(--panel);font-size:22px;color:var(--text)}.photo:disabled{opacity:.5}.shot{max-width:980px;margin:0 auto 8px;display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}.shot img{width:52px;height:52px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}.shot button{border:0;background:none;color:var(--muted);font-size:18px}.msg img.att{display:block;max-width:220px;border-radius:12px;margin-bottom:8px}.send{width:58px;border:0;border-radius:15px;background:var(--blue);font-weight:900;color:#07111c}.locked{padding:24px;border:1px solid var(--line);border-radius:18px;background:var(--panel);text-align:center}.upgrade{display:inline-block;margin-top:12px;padding:12px 15px;border-radius:13px;background:var(--accent);color:#04110c;font-weight:900;text-decoration:none}
 @media(max-width:650px){.timer-grid{grid-template-columns:1fr 1fr}.controls{grid-column:1/-1}.controls .btn{flex:1}.msg{max-width:94%}}
 </style>
 <link rel="stylesheet" href="/quality/theme.css?v=20261004-vibrant">
@@ -66,7 +66,9 @@
 </div>
 
 <div class="composer">
+  <div class="shot" id="shot" hidden><img id="shotImg" alt=""><span id="shotTxt">Zdjęcie etykiety dołączone</span><button type="button" id="shotDel" aria-label="Usuń zdjęcie">✕</button></div>
   <div class="composer-inner">
+    <button class="photo" id="photoBtn" type="button" title="Zdjęcie etykiety" aria-label="Dodaj zdjęcie etykiety" disabled>📷</button>
     <textarea id="input" placeholder="Opisz problem, niezgodność, proces albo pytanie…" disabled></textarea>
     <button class="send" id="sendBtn" disabled>➤</button>
   </div>
@@ -145,7 +147,7 @@ function paintTimer(){
   document.getElementById("startBtn").disabled=active||c.left<=0;
   document.getElementById("stopBtn").disabled=!active;
   document.getElementById("input").disabled=!active;
-  document.getElementById("sendBtn").disabled=!active;
+  document.getElementById("sendBtn").disabled=!active; document.getElementById("photoBtn").disabled=!active;
 }
 function renderSpecialists(){
   const box=document.getElementById("specialists"); box.innerHTML="";
@@ -166,11 +168,12 @@ function renderHistory(history=[]){
   const chat=document.getElementById("chat"); chat.innerHTML="";
   history.forEach(m=>addMessage(m.role,m.content,m.source_meta?.sources||[]));
 }
-function addMessage(role,text,sources=[]){
+function addMessage(role,text,sources=[],image=null){
   const chat=document.getElementById("chat");
   const div=document.createElement("div");
   div.className="msg "+(role==="assistant"?"ai":"user");
-  div.innerHTML='<div class="who">'+(role==="assistant"?escapeHtml(names[specialist][locale]):t("TY","YOU"))+'</div><div>'+escapeHtml(text)+'</div>';
+  div.innerHTML='<div class="who">'+(role==="assistant"?escapeHtml(names[specialist][locale]):t("TY","YOU"))+'</div>'+(image?'<img class="att" alt="">':'')+'<div>'+escapeHtml(text)+'</div>';
+  if(image) div.querySelector("img.att").src=image;
   if(Array.isArray(sources)&&sources.length){
     const s=document.createElement("div"); s.className="sources";
     s.innerHTML="<b>"+t("Źródła","Sources")+"</b>";
@@ -238,18 +241,40 @@ document.getElementById("stopBtn").onclick=async()=>{
     serverState=data.status; syncAt=Date.now(); paintTimer(); clearInterval(heartbeatTimer);
   }catch(e){alert(e.message);}
 };
+// Zdjęcie etykiety (aparat lub galeria): zmniejszenie do 1600 px, JPEG. Autor: MT
+let shot=null;
+function pickPhoto(){
+  const inp=document.createElement("input"); inp.type="file"; inp.accept="image/*";
+  inp.style.cssText="position:fixed;left:-9999px;opacity:0"; document.body.appendChild(inp);
+  inp.onchange=()=>{
+    const f=inp.files&&inp.files[0]; inp.remove(); if(!f)return;
+    const rd=new FileReader();
+    rd.onload=()=>{ const img=new Image(); img.onload=()=>{
+      const k=Math.min(1,1600/Math.max(img.width,img.height)); const c=document.createElement("canvas");
+      c.width=Math.round(img.width*k); c.height=Math.round(img.height*k); c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+      shot=c.toDataURL("image/jpeg",0.82); document.getElementById("shotImg").src=shot; document.getElementById("shot").hidden=false;
+    }; img.onerror=()=>alert(t("Nie udało się wczytać zdjęcia. Spróbuj JPG lub PNG.","Could not load the photo.")); img.src=String(rd.result); };
+    rd.readAsDataURL(f);
+  };
+  inp.click();
+}
+document.getElementById("photoBtn").onclick=pickPhoto;
+document.getElementById("shotDel").onclick=()=>{shot=null;document.getElementById("shot").hidden=true;};
 async function send(){
   const input=document.getElementById("input");
-  const message=input.value.trim(); if(!message)return;
-  input.value=""; addMessage("user",message,[]);
-  document.getElementById("sendBtn").disabled=true;
+  let message=input.value.trim(); const image=shot;
+  if(!message&&!image)return;
+  if(!message&&image) message=t("Oceń tę etykietę: zgodność z przepisami (UE 1169/2011 i polskie), alergeny, składniki, wartość odżywczą, oznaczenia i co trzeba poprawić.","Review this label for compliance.");
+  input.value=""; addMessage("user",message,[],image);
+  shot=null; document.getElementById("shot").hidden=true;
+  document.getElementById("sendBtn").disabled=true; document.getElementById("photoBtn").disabled=true;
   try{
-    const data=await api("message",{message});
+    const data=await api("message",image?{message,image}:{message});
     serverState=data.status; syncAt=Date.now(); paintTimer();
     if(data.queued){ addMessage("assistant","⏳ "+data.notice+(data.eta_seconds?t(" Zwykle trwa to ok. "," It usually takes about ")+Math.max(1,Math.round(data.eta_seconds/60))+" min.":""),[]); waitForAnswer(data.job_id); }
     else addMessage("assistant",data.answer,data.sources||[]);
   }catch(e){ addMessage("assistant",t("Błąd: ","Error: ")+e.message,[]); }
-  finally{ document.getElementById("sendBtn").disabled=serverState?.session?.status!=="active"; }
+  finally{ const on=serverState?.session?.status==="active"; document.getElementById("sendBtn").disabled=!on; document.getElementById("photoBtn").disabled=!on; }
 }
 // Odpowiedź z kolejki (Bielik): sprawdzamy co 15 s, potem odświeżamy rozmowę i pokazujemy powiadomienie.
 const waiting=new Set();
