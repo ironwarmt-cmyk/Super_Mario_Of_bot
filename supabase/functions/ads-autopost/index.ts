@@ -138,10 +138,10 @@ async function ttPrivacy(tok: string, scope: string) {
   const o: string[] = info.privacy_level_options || [];
   return PRIVACY_ORDER.find((p) => o.includes(p)) || "SELF_ONLY";
 }
-async function ttVideo(ad: any) {
+async function ttVideo(ad: any, url = ad.video, what = "film") {
   const { tok, scope } = await ttToken();
   let privacy = await ttPrivacy(tok, scope);
-  const bytes = new Uint8Array(await (await fetch(ad.video, { signal: AbortSignal.timeout(60000) })).arrayBuffer());
+  const bytes = new Uint8Array(await (await fetch(url, { signal: AbortSignal.timeout(60000) })).arrayBuffer());
   const source_info = { source: "FILE_UPLOAD", video_size: bytes.length, chunk_size: bytes.length, total_chunk_count: 1 };
   let init: any = null;
   if (privacy) {
@@ -152,7 +152,7 @@ async function ttVideo(ad: any) {
   if (!init) init = await tt("/post/publish/inbox/video/init/", tok, { source_info });
   const up = await fetch(init.upload_url, { method: "PUT", headers: { "content-type": "video/mp4", "content-range": `bytes 0-${bytes.length - 1}/${bytes.length}` }, body: bytes });
   if (!up.ok) throw new Error("TikTok upload: " + up.status);
-  return `TikTok ${privacy ? "film " + privacy : "szkic filmu w skrzynce"} ${init.publish_id}`;
+  return `TikTok ${privacy ? what + " " + privacy : "szkic (" + what + ") w skrzynce"} ${init.publish_id}`;
 }
 async function ttPhoto(ad: any) {
   const { tok, scope } = await ttToken();
@@ -163,8 +163,14 @@ async function ttPhoto(ad: any) {
     post_mode: d ? "DIRECT_POST" : "MEDIA_UPLOAD", media_type: "PHOTO",
   });
   let init: any;
-  try { init = await tt("/post/publish/content/init/", tok, body(Boolean(privacy))); }
-  catch (e) { if (!privacy || !UNAUDITED.test(String((e as Error).message))) throw e; privacy = ""; init = await tt("/post/publish/content/init/", tok, body(false)); }
+  try {
+    try { init = await tt("/post/publish/content/init/", tok, body(Boolean(privacy))); }
+    catch (e) { if (!privacy || !UNAUDITED.test(String((e as Error).message))) throw e; privacy = ""; init = await tt("/post/publish/content/init/", tok, body(false)); }
+  } catch (e) {
+    // Bez weryfikacji domeny w TikToku posty zdjęciowe nie przechodzą – wtedy karuzela jako film-pokaz slajdów.
+    if (/url_ownership_unverified/i.test(String((e as Error).message)) && ad.slideshow) return ttVideo(ad, ad.slideshow, "karuzela (pokaz slajdów)");
+    throw e;
+  }
   return `TikTok ${privacy ? "karuzela " + privacy : "szkic karuzeli w skrzynce"} ${init.publish_id}`;
 }
 
@@ -199,8 +205,10 @@ async function queue(dry: boolean) {
   const { data: errs } = await db.from("ig_autopost_log").select("key").like("key", "error:ads:start:%");
   const fails: Record<string, number> = {};
   for (const e of errs || []) { const k = String(e.key).replace(/^error:/, "").replace(/:\d+$/, ""); fails[k] = (fails[k] || 0) + 1; }
-  const next = items.find((i) => !have.has(i.key) && (fails[i.key] || 0) < 3);
-  if (dry) return { left: items.filter((i) => !have.has(i.key)).map((i) => i.key), next: next?.key || null };
+  // Facebook: dopóki token nie ma dostępu do strony, pozycje FB czekają (dogonią, gdy dostęp się pojawi).
+  const fbOk = await fbPage().then(() => true).catch(() => false);
+  const next = items.find((i) => !have.has(i.key) && (fails[i.key] || 0) < 3 && (fbOk || !i.kind.startsWith("fb_")));
+  if (dry) return { fb: fbOk, left: items.filter((i) => !have.has(i.key)).map((i) => i.key), next: next?.key || null };
   if (!next) return { done: true };
   return once(next.key, next.kind, next.ad);
 }
@@ -214,6 +222,7 @@ async function daily(dry: boolean, only?: string) {
   const ad = m.ads[((n % m.ads.length) + m.ads.length) % m.ads.length];
   const kinds = (m.daily_kinds as string[]).filter((k) => !only || k === only);
   if (dry) return { ad: ad.id, kinds };
+  if (kinds.some((k) => k.startsWith("fb_")) && !(await fbPage().then(() => true).catch(() => false))) return { ad: ad.id, skipped: "Facebook: brak dostępu do strony" };
   const out = [];
   for (const k of kinds) out.push(await once(`ads:daily:${today}:${k}`, k, ad));
   return { ad: ad.id, out };
