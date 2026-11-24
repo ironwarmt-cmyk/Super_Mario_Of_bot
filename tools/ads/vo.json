@@ -1,0 +1,40 @@
+{
+  "style": "Ciepła, przyjazna i energiczna lektorka reklamy po polsku. Naturalne tempo, wyraźna dykcja, wyraźna pauza (ok. 0,7 s) po każdym zdaniu.",
+  "ads": [
+    {"id": "basic", "voice": "Kore", "lines": [
+      "Wiesz, co jesz? Z Jem Bezpiecznie sprawdzisz to w kilka sekund. Za darmo.",
+      "Podaj budżet, liczbę osób i alergie, a kreator ułoży plan posiłków nawet na siedem dni.",
+      "Każdy przepis ma gramaturę, kalorie i makroskładniki. Danie nie pasuje? Zamień je jednym kliknięciem.",
+      "Zrób zdjęcie etykiety, a aplikacja odczyta skład i pokaże alergeny dla każdego domownika.",
+      "Na starcie widzisz ostrzeżenia GIS i produkty wycofane z rynku.",
+      "A asystent podpowie, co ugotować i jak bezpiecznie przechowywać jedzenie.",
+      "Plan Basic jest bezpłatny. Załóż konto na jembezpiecznie kropka com."
+    ]},
+    {"id": "pro", "voice": "Kore", "lines": [
+      "Plan PRO. Dla domu, który liczy każdą złotówkę.",
+      "Plany posiłków do czternastu dni i lista zakupów policzona co do grama.",
+      "Po zakupach zrób zdjęcie paragonu. Produkty same trafią do Lodówki, z ilością i terminem.",
+      "To, co już masz w domu, znika z listy zakupów.",
+      "Codzienny alarm przypomni o produktach, którym kończy się termin.",
+      "Porównasz koszyk w sklepach w okolicy, razem z kosztem dojazdu. A asystent odpowie nawet na trzysta pytań w miesiącu.",
+      "PRO za dwadzieścia cztery dziewięćdziesiąt dziewięć miesięcznie albo sto dziewięćdziesiąt dziewięć złotych rocznie. Jem Bezpiecznie kropka com."
+    ]},
+    {"id": "premium", "voice": "Kore", "lines": [
+      "Premium. Pełna swoboda planowania.",
+      "Plan posiłków na cały miesiąc, nawet na trzydzieści jeden dni.",
+      "Skanuj paragony i zdjęcia produktów bez żadnego limitu.",
+      "Zapisz do dziesięciu ulubionych planów w archiwum i wracaj do nich jednym kliknięciem.",
+      "Porównaj koszyk w dwóch wybranych sklepach i zobacz, gdzie zapłacisz mniej.",
+      "Do tego asystent: aż sześćset wiadomości w miesiącu.",
+      "Premium za czterdzieści cztery dziewięćdziesiąt dziewięć miesięcznie albo trzysta pięćdziesiąt dziewięć złotych rocznie. Jem Bezpiecznie kropka com."
+    ]},
+    {"id": "firma", "voice": "Charon", "lines": [
+      "Prowadzisz restaurację, catering albo sklep? Poznaj plan Firma.",
+      "Masz wszystko z Premium, a do tego kalkulator kosztu porcji.",
+      "Wpisz recepturę, ilości, odpad i ceny zakupu. Aplikacja policzy koszt porcji, food cost, marżę i cenę z VAT.",
+      "Od razu widzisz, ile zarabiasz na każdym daniu z karty. Recepturę wyeksportujesz do Excela.",
+      "Faktura na NIP i asystent do tysiąca wiadomości w miesiącu.",
+      "Plan Firma: dziewięćdziesiąt dziewięć złotych miesięcznie albo dziewięćset dziewięćdziesiąt rocznie. Jem Bezpiecznie kropka com."
+    ]}
+  ]
+}

@@ -1,0 +1,26 @@
+name: Reklamy – polski lektor
+
+on:
+  push:
+    branches: [main]
+    paths: ["tools/ads/vo.json"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  voiceover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lektor
+        run: python3 tools/ads/vo.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ad-voiceover
+          path: tools/ads/out/
+          retention-days: 7
