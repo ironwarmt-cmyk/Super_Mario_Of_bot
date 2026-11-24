@@ -1,0 +1,61 @@
+{
+ "style": "Doświadczony polski lektor reklamowy, mężczyzna. Ciepły, pewny siebie, z energią i uśmiechem w głosie, jak w dobrej reklamie na Instagramie. Wyraźna dykcja, dynamiczne tempo, krótka pauza (ok. 0,4 s) po każdym zdaniu.",
+ "ads": [
+  {
+   "id": "s1",
+   "voice": "Charon",
+   "lines": [
+    "Wiesz, co naprawdę jesz? Ja wiem. Bo przez lata zawodowo to sprawdzałem."
+   ]
+  },
+  {
+   "id": "s2",
+   "voice": "Charon",
+   "lines": [
+    "Pracowałem w bezpieczeństwie i jakości żywności dla wielu renomowanych firm. Byłem kierownikiem jakości i dyrektorem operacyjnym. Audyty, receptury, etykiety, produkcja. Znam tę branżę od środka."
+   ]
+  },
+  {
+   "id": "s3",
+   "voice": "Charon",
+   "lines": [
+    "Całą tę wiedzę zamknąłem w aplikacji Jem Bezpiecznie."
+   ]
+  },
+  {
+   "id": "s4",
+   "voice": "Charon",
+   "lines": [
+    "Plan posiłków w twoim budżecie, z kaloriami i makro. Lista zakupów i porównanie cen w sklepach. Skan paragonu, który sam uzupełnia lodówkę. Robisz zdjęcie składu, i od razu widzisz alergeny. Do tego alerty o produktach wycofanych z rynku."
+   ]
+  },
+  {
+   "id": "s5",
+   "voice": "Charon",
+   "lines": [
+    "Teraz szukam twórców, którzy przetestują ją razem ze mną."
+   ]
+  },
+  {
+   "id": "s6",
+   "voice": "Charon",
+   "lines": [
+    "Krok pierwszy. Wejdź na jem bezpiecznie kropka kom i załóż konto. Krok drugi. Wyślij mi adres imejl podany przy rejestracji. Krok trzeci. Odblokuję ci pełną aplikację na cały miesiąc. Za darmo."
+   ]
+  },
+  {
+   "id": "s7",
+   "voice": "Charon",
+   "lines": [
+    "W zamian proszę tylko o szczerą opinię. Co działa, co poprawić, czego brakuje. Napisz do mnie wiadomość."
+   ]
+  },
+  {
+   "id": "s8",
+   "voice": "Charon",
+   "lines": [
+    "Jem Bezpiecznie. Wiesz, co jesz."
+   ]
+  }
+ ]
+}

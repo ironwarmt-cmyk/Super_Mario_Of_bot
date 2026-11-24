@@ -1,0 +1,29 @@
+name: Film testerzy – polski lektor
+
+on:
+  push:
+    branches: [main]
+    paths: ["tools/film/vo.json"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  voiceover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lektor
+        run: python3 tools/film/vo.py
+      - name: Wynik na gałąź vo/film
+        if: always()
+        run: |
+          cd tools/film/out
+          git init -q -b vo/film
+          git config user.name "MT"
+          git config user.email "mtrebuniak@gmail.com"
+          git add -A && git commit -qm "Lektor filmu dla testerów"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" vo/film
