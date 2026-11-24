@@ -174,7 +174,7 @@ async function ttPhoto(ad: any) {
   return `TikTok ${privacy ? "karuzela " + privacy : "szkic karuzeli w skrzynce"} ${init.publish_id}`;
 }
 
-const RUN: Record<string, (ad: any) => Promise<string>> = { ig_reel: igReel, ig_carousel: igCarousel, fb_video: fbVideo, fb_album: fbAlbum, tt_video: ttVideo, tt_photo: ttPhoto };
+const RUN: Record<string, (ad: any) => Promise<string>> = { ig_reel: igReel, ig_carousel: igCarousel, fb_video: fbVideo, fb_album: fbAlbum, tt_video: (ad: any) => ttVideo(ad), tt_photo: ttPhoto };
 const LABEL: Record<string, string> = { ig_reel: "Instagram – rolka", ig_carousel: "Instagram – karuzela", fb_video: "Facebook – film", fb_album: "Facebook – karuzela zdjęć", tt_video: "TikTok – film", tt_photo: "TikTok – karuzela zdjęć" };
 
 async function once(key: string, kind: string, ad: any) {
