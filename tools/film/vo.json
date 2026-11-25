@@ -1,11 +1,46 @@
 {
- "style": "Doświadczony polski lektor reklamowy, mężczyzna. Ciepły, pewny siebie, z energią i uśmiechem w głosie, jak w dobrej reklamie na Instagramie. Wyraźna dykcja, dynamiczne tempo, krótka pauza (ok. 0,4 s) po każdym zdaniu.",
+ "style": "Doświadczony polski lektor reklamowy, mężczyzna, ekspert branży spożywczej. Pewny siebie, ciepły, wiarygodny, z energią jak w dobrej reklamie B2B na Instagramie. Wyraźna dykcja, dynamiczne tempo, krótka pauza (ok. 0,4 s) po każdym zdaniu.",
  "ads": [
   {
-   "id": "portfolio2-s2",
+   "id": "qa-s1",
    "voice": "Charon",
    "lines": [
-    "Ponad siedemnaście lat doświadczenia. Od zarządzania zakładami produkcyjnymi po zarządzanie jakością i bezpieczeństwem żywności. Wołowina, drób, wege i przekąski. Sosy, przyprawy, toppery. I wiele renomowanych marek."
+    "Audyt za tydzień, a dokumentacja nie jest gotowa? Znam to z obu stron. Jako kierownik jakości i jako audytor."
+   ]
+  },
+  {
+   "id": "qa-s2",
+   "voice": "Charon",
+   "lines": [
+    "Ponad siedemnaście lat w produkcji żywności, w Polsce i w Wielkiej Brytanii. Zacząłem od linii produkcyjnej, a doszedłem do dyrektora operacyjnego pięciu zakładów, z produkcją ponad tysiąca ton miesięcznie. Kierowałem jakością w kilku lokalizacjach z laboratorium i organizowałem pracę zespołów do stu czterdziestu osób. Byłem pełnomocnikiem zarządu do spraw jakości, bezpieczeństwa żywności i dobrostanu zwierząt. Jestem audytorem wiodącym BRCGS, audytorem wewnętrznym ISO czternaście tysięcy jeden i inżynierem zarządzania jakością."
+   ]
+  },
+  {
+   "id": "qa-s3",
+   "voice": "Charon",
+   "lines": [
+    "Zakłady, w których odpowiadałem za jakość, zdobyły A plus w BRC, najwyższą ocenę w niezapowiedzianym audycie IFS i dziewięćdziesiąt osiem procent w audycie HALAL. Wołowina, drób, wege, przekąski, sosy, przyprawy, toppery i opakowania. Całe to doświadczenie zamknąłem w aplikacji kju ej saport."
+   ]
+  },
+  {
+   "id": "qa-s4",
+   "voice": "Charon",
+   "lines": [
+    "Gotowe dokumenty systemu jakości, do wdrożenia od razu. Quality Copilot, czyli wsparcie przy HACCP, BRCGS, IFS, CAPA, reklamacjach i etykietach. Plan przygotowania do audytu w siedem dni. Akademia Jakości z certyfikatami i gra Myszka Audytorka dla całego zespołu."
+   ]
+  },
+  {
+   "id": "qa-s5",
+   "voice": "Charon",
+   "lines": [
+    "Teraz szukam dziesięciu firm spożywczych, które przetestują aplikację razem ze mną. Krok pierwszy. Załóż konto na jem bezpiecznie kropka kom i napisz do mnie, jaką firmę reprezentujesz. Krok drugi. Przez cały miesiąc korzystasz z pełnej wersji VIP. Za darmo. Krok trzeci. Nagrywasz krótkie filmy i zrzuty ekranu, wypełniasz kwestionariusz i dodajesz opinię o aplikacji na profilu swojej firmy."
+   ]
+  },
+  {
+   "id": "qa-s6",
+   "voice": "Charon",
+   "lines": [
+    "Tylko dziesięć miejsc. Kto pierwszy, ten wchodzi. Napisz do mnie. Kju ej saport. Jakość, na której możesz polegać."
    ]
   }
  ]
