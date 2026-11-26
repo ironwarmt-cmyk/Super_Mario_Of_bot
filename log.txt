@@ -1,0 +1,6 @@
+jbs-p-1 gemini-3.8-flash-tts 377308
+jbs-1-1 gemini-3.8-flash-tts 255388
+jbs-2-1 gemini-3.8-flash-tts 694588
+jbs-3-1 gemini-3.8-flash-lite-tts 255388
+jbs-4-1 gemini-3.8-flash-tts 709948
+jbs-f-1 gemini-3.8-flash-tts 196348
