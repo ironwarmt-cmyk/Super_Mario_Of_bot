@@ -1,32 +1,46 @@
 {
- "style": "Doświadczony polski lektor reklamowy, mężczyzna, ekspert branży spożywczej. Pewny siebie, ciepły, wiarygodny, z energią jak w dobrej reklamie na Instagramie. Wyraźna dykcja, dynamiczne tempo, krótka pauza po każdym zdaniu.",
+ "style": "Doświadczony polski lektor reklamowy, mężczyzna, ekspert branży spożywczej. Pewny siebie, ciepły, wiarygodny, wyjaśnia spokojnie i wyraźnie krok po kroku, jak w dobrym poradniku na Instagramie. Krótka pauza po każdym zdaniu.",
  "ads": [
   {
-   "id": "jbc-b",
+   "id": "jbs-p",
    "voice": "Charon",
    "lines": [
-    "Stoisz w sklepie przed lodówką? Zrób zdjęcie półki."
+    "Akcja na start! Pięć pierwszych osób dostaje miesiąc Premium, a kolejne pięć miesiąc Pro. Zobacz, co zrobić."
    ]
   },
   {
-   "id": "jbc-c",
+   "id": "jbs-1",
    "voice": "Charon",
    "lines": [
-    "Zapytaj po swojemu. Na przykład: co tu będzie dobre po siłowni?"
+    "Krok pierwszy. Obserwuj Jem Bezpiecznie na Instagramie i na TikToku."
    ]
   },
   {
-   "id": "jbc-d",
+   "id": "jbs-2",
    "voice": "Charon",
    "lines": [
-    "Asystent odpowiada w kilka sekund i podpowiada, na co uważać w składzie."
+    "Krok drugi. Opublikuj na Instagramie post albo rolkę, nie relację. W opisie odpowiedz własnymi słowami na pytanie: czy wędzony ser zawsze widział dym? Najlepiej dodaj zdjęcie wędzonego produktu z twojej lodówki."
    ]
   },
   {
-   "id": "jbc-e",
+   "id": "jbs-3",
    "voice": "Charon",
    "lines": [
-    "Akcja na start! Pięć pierwszych osób dostaje miesiąc Premium, a kolejne pięć miesiąc Pro. Pełne zasady znajdziesz w linku w bio."
+    "Krok trzeci. Oznacz w tym poście nasze konto, Jem Bezpiecznie."
+   ]
+  },
+  {
+   "id": "jbs-4",
+   "voice": "Charon",
+   "lines": [
+    "Krok czwarty. Jeśli jesteś w pierwszej dziesiątce, napiszemy do ciebie na Instagramie. Odpisz adresem e-mail z aplikacji. Nie masz konta? Załóż je za darmo. W ciągu czterdziestu ośmiu godzin włączymy ci plan na miesiąc."
+   ]
+  },
+  {
+   "id": "jbs-f",
+   "voice": "Charon",
+   "lines": [
+    "Liczy się kolejność. Pełne zasady znajdziesz w linku w bio."
    ]
   }
  ]
