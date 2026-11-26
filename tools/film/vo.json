@@ -1,25 +1,32 @@
 {
- "style": "Doświadczony polski lektor reklamowy, mężczyzna, ekspert branży spożywczej. Pewny siebie, ciepły, wiarygodny, z energią jak w dobrej reklamie B2B. Wyraźna dykcja, dynamiczne tempo, krótka pauza po każdym zdaniu.",
+ "style": "Doświadczony polski lektor reklamowy, mężczyzna, ekspert branży spożywczej. Pewny siebie, ciepły, wiarygodny, z energią jak w dobrej reklamie na Instagramie. Wyraźna dykcja, dynamiczne tempo, krótka pauza po każdym zdaniu.",
  "ads": [
   {
-   "id": "qa-o1",
+   "id": "jbc-b",
    "voice": "Charon",
    "lines": [
-    "Akcja dla firm z branży spożywczej. Dziesięć firm dostaje miesiąc pakietu VIP za darmo."
+    "Stoisz w sklepie przed lodówką? Zrób zdjęcie półki."
    ]
   },
   {
-   "id": "qa-o2",
+   "id": "jbc-c",
    "voice": "Charon",
    "lines": [
-    "Pierwsze trzy firmy dostają też bezpłatny przegląd trzech etykiet w czterdzieści osiem godzin."
+    "Zapytaj po swojemu. Na przykład: co tu będzie dobre po siłowni?"
    ]
   },
   {
-   "id": "qa-o3",
+   "id": "jbc-d",
    "voice": "Charon",
    "lines": [
-    "Pełne zasady znajdziesz na stronie Kju Ej Saport, w zakładce akcja dla firm."
+    "Asystent odpowiada w kilka sekund i podpowiada, na co uważać w składzie."
+   ]
+  },
+  {
+   "id": "jbc-e",
+   "voice": "Charon",
+   "lines": [
+    "Akcja na start! Pięć pierwszych osób dostaje miesiąc Premium, a kolejne pięć miesiąc Pro. Pełne zasady znajdziesz w linku w bio."
    ]
   }
  ]
