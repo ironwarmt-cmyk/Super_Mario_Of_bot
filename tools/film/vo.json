@@ -1,39 +1,25 @@
 {
- "style": "Polska lektorka reklamowa, ciepła, uśmiechnięta i naturalna, jak koleżanka, która poleca coś przydatnego. Lekka, pozytywna energia, wyraźna dykcja, średnio dynamiczne tempo, bez przesadnej teatralności, krótka pauza po każdym zdaniu.",
+ "style": "Doświadczony polski lektor reklamowy, mężczyzna, ekspert branży spożywczej. Pewny siebie, ciepły, wiarygodny, z energią jak w dobrej reklamie B2B. Wyraźna dykcja, dynamiczne tempo, krótka pauza po każdym zdaniu.",
  "ads": [
   {
-   "id": "jb-a",
-   "voice": "Aoede",
+   "id": "qa-o1",
+   "voice": "Charon",
    "lines": [
-    "Stoisz przed lodówką w sklepie i nie wiesz, co wybrać?"
+    "Akcja dla firm z branży spożywczej. Dziesięć firm dostaje miesiąc pakietu VIP za darmo."
    ]
   },
   {
-   "id": "jb-b",
-   "voice": "Aoede",
+   "id": "qa-o2",
+   "voice": "Charon",
    "lines": [
-    "Zrób zdjęcie półki."
+    "Pierwsze trzy firmy dostają też bezpłatny przegląd trzech etykiet w czterdzieści osiem godzin."
    ]
   },
   {
-   "id": "jb-c",
-   "voice": "Aoede",
+   "id": "qa-o3",
+   "voice": "Charon",
    "lines": [
-    "Zapytaj po swojemu. Na przykład: co tu będzie dobre po siłowni?"
-   ]
-  },
-  {
-   "id": "jb-d",
-   "voice": "Aoede",
-   "lines": [
-    "Asystent Jem Bezpiecznie odpowiada w kilka sekund i podpowiada, na co uważać w składzie."
-   ]
-  },
-  {
-   "id": "jb-e",
-   "voice": "Aoede",
-   "lines": [
-    "Akcja na start! Pięć pierwszych osób dostaje miesiąc Premium, a kolejne pięć miesiąc Pro. Szczegóły w linku w bio."
+    "Pełne zasady znajdziesz na stronie Kju Ej Saport, w zakładce akcja dla firm."
    ]
   }
  ]
