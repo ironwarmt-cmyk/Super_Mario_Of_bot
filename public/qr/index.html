@@ -22,16 +22,44 @@ a.ch .g{display:inline-block;margin-top:12px;font-weight:800;font-size:14px;padd
 a.ch.f .g{background:#a66bff;color:#fff}
 a.ch:after{content:"→";position:absolute;right:20px;top:22px;font:800 26px Manrope}
 .foot{font-size:12px;color:#6d76a8;text-align:center;margin-top:24px;line-height:1.5}.foot a{color:#9aa3cf}
+#ov{position:fixed;inset:0;background:#000;z-index:50;display:none;flex-direction:column}
+#ov.on{display:flex}#ov video{flex:1;width:100%;height:100%;object-fit:contain;background:#000}
+#ov .bar{position:absolute;left:0;right:0;top:0;display:flex;justify-content:space-between;padding:max(12px,env(safe-area-inset-top)) 12px 12px;gap:8px}
+#ov button,#ov a.b{font:700 14px Manrope;border:0;border-radius:999px;padding:10px 14px;background:rgba(5,7,26,.72);color:#f2f4ff;text-decoration:none}
+#end{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;align-items:stretch;padding:28px;background:rgba(5,7,26,.92)}
+#end.on{display:flex}#end h2{font:600 34px/1.1 "Cormorant Garamond",serif;margin:0 0 18px;text-align:center}
+#end a{display:block;text-align:center;text-decoration:none;font-weight:800;padding:16px;border-radius:14px;margin:0 0 12px;font-size:17px}
+#end .p{background:linear-gradient(120deg,#4ff0e0,#a66bff);color:#05071a}#end .s{border:1px solid rgba(255,255,255,.25);color:#f2f4ff}
+.hint{font-size:13px;color:#9aa3cf;text-align:center;margin:-6px 0 18px}
 </style></head><body><main>
 <div class="tag">🚐 Złap nas na mieście · Warszawa</div>
 <h1>Co ukrywa etykieta?<br><em>Wybierz, kim jesteś.</em></h1>
 <p class="lead">Jedna marka, dwie drogi: sprawdzanie jedzenia dla Ciebie albo system jakości dla Twojej firmy. Na start mamy nagrody dla pierwszych 10 osób i 10 firm.</p>
+<p class="hint">▶ Po wyborze od razu włączy się krótki film</p>
 <a class="ch" id="ty" href="/qr/ty/"><span class="k">JEM BEZPIECZNIE</span><span class="t">Klient indywidualny</span><span class="d">Sprawdzaj skład, alergeny i wycofane produkty. Zrób zdjęcie półki – asystent podpowie, co wybrać.</span><span class="g">🎁 10 miejsc: miesiąc Premium lub Pro gratis</span></a>
 <a class="ch f" id="fi" href="/qr/firmy/"><span class="k">QA SUPPORT</span><span class="t">Firma spożywcza</span><span class="d">Dokumenty systemu jakości, Quality Copilot i plan przygotowania do audytu w 7 dni.</span><span class="g">🏭 10 firm: miesiąc VIP gratis</span></a>
 <p class="foot">Jem Bezpiecznie · <a href="https://jembezpiecznie.com/">jembezpiecznie.com</a> · <a href="/prywatnosc/">Prywatność</a></p>
 </main>
+<div id="ov"><video id="v" playsinline preload="auto"></video>
+<div class="bar"><button id="snd" type="button">🔇 Wycisz</button><a class="b" id="skip" href="#">Pomiń film →</a></div>
+<div id="end"><h2 id="eh">Akcja na start</h2><a class="p" id="go" href="#">Zobacz akcję i odbierz nagrodę</a><a class="s" id="again" href="#">↺ Obejrzyj jeszcze raz</a><a class="s" href="/qr/">← Wróć do wyboru</a></div></div>
 <script>
 var s=new URLSearchParams(location.search).get('s')||'';
 if(s){['ty','fi'].forEach(function(id){var a=document.getElementById(id);a.href=a.getAttribute('href')+'?s='+encodeURIComponent(s+'-'+id);});}
+
+var FILMS={ty:{src:'/ig/film-klienci.mp4',page:'/qr/ty/',akcja:'/akcja/',h:'10 miejsc: miesiąc Premium lub Pro gratis'},fi:{src:'/ig/film-firmy.mp4',page:'/qr/firmy/',akcja:'/akcja-firmy/',h:'10 firm: miesiąc VIP gratis'}};
+var ov=document.getElementById('ov'),v=document.getElementById('v'),end=document.getElementById('end'),cur=null;
+function q(id){return s?'?s='+encodeURIComponent(s+'-'+id):'';}
+function beacon(path){try{var K='sb_publishable_4pWh6yauXpFbcTquaEvcsw_BAsUTu1Q';fetch('https://ixivedtgqgryawxsxnqd.supabase.co/rest/v1/jb_pageviews',{method:'POST',keepalive:true,headers:{apikey:K,Authorization:'Bearer '+K,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({site:'qasupport',path:path,utm_source:(s||'').slice(0,60)||null})}).catch(function(){});}catch(e){}}
+function open(id,e){var f=FILMS[id];if(!f)return;e.preventDefault();cur=id;
+ document.getElementById('go').href=f.page+q(id);document.getElementById('skip').href=f.page+q(id);document.getElementById('eh').textContent=f.h;
+ end.classList.remove('on');ov.classList.add('on');v.src=f.src;v.muted=false;v.currentTime=0;
+ var pr=v.play();if(pr&&pr.catch)pr.catch(function(){v.muted=true;v.play();document.getElementById('snd').textContent='🔊 Włącz dźwięk';});
+ document.getElementById('snd').textContent=v.muted?'🔊 Włącz dźwięk':'🔇 Wycisz';beacon('/qr/film-'+id);}
+document.getElementById('ty').addEventListener('click',function(e){open('ty',e);});
+document.getElementById('fi').addEventListener('click',function(e){open('fi',e);});
+document.getElementById('snd').onclick=function(){v.muted=!v.muted;this.textContent=v.muted?'🔊 Włącz dźwięk':'🔇 Wycisz';};
+v.addEventListener('ended',function(){end.classList.add('on');beacon('/qr/film-'+cur+'-koniec');});
+document.getElementById('again').onclick=function(e){e.preventDefault();end.classList.remove('on');v.currentTime=0;v.play();};
 try{var K='sb_publishable_4pWh6yauXpFbcTquaEvcsw_BAsUTu1Q';fetch('https://ixivedtgqgryawxsxnqd.supabase.co/rest/v1/jb_pageviews',{method:'POST',keepalive:true,headers:{apikey:K,Authorization:'Bearer '+K,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({site:'qasupport',path:'/qr/',utm_source:(s||'').slice(0,60)||null})}).catch(function(){});}catch(e){}
 </script></body></html>
