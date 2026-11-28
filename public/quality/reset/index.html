@@ -31,7 +31,7 @@ label{display:block;margin:13px 0 7px;font-weight:800;font-size:13px}input{width
 <div class="brand" id="brand">QUALITY ASSURANCE SUPPORT</div>
 <h1>Ustaw nowe hasło</h1>
 <script>if(new URLSearchParams(location.search).get("app")==="jb")document.getElementById("brand").textContent="JEM BEZPIECZNIE · WSPÓLNE KONTO";</script>
-<div class="lead">Wpisz nowe hasło do swojego konta. Musi mieć co najmniej 12 znaków, małą i wielką literę, cyfrę oraz znak specjalny.</div>
+<div class="lead">Wpisz nowe hasło do swojego konta. Musi mieć co najmniej 10 znaków, w tym literę i cyfrę.</div>
 <div class="panel" id="formPanel">
 <label for="pw">Nowe hasło</label><input id="pw" type="password" autocomplete="new-password" minlength="12">
 <label for="pw2">Powtórz hasło</label><input id="pw2" type="password" autocomplete="new-password" minlength="12">
@@ -49,7 +49,7 @@ function show(msg,ok=false){statusEl.innerHTML='<span class="'+(ok?'ok':'err')+'
 })();
 saveBtn.onclick=async()=>{
   const a=pwEl.value,b=pw2El.value;
-  if(a.length<12){show("Hasło musi mieć co najmniej 12 znaków.");return}
+  if(a.length<10||!/[0-9]/.test(a)||!/[A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż]/.test(a)){show("Hasło musi mieć co najmniej 10 znaków, w tym literę i cyfrę.");return}
   if(a!==b){show("Hasła nie są takie same.");return}
   saveBtn.disabled=true;statusEl.textContent="Zapisuję…";
   const {error}=await qa.auth.updatePassword(a);

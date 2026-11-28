@@ -66,15 +66,13 @@ async function webAuthProxy(req, res) {
       return res.status(400).json({ ok:false, error:"Podaj prawidłowy adres e-mail." });
     }
     if (
-      password.length < 12 ||
-      !/[a-z]/.test(password) ||
-      !/[A-Z]/.test(password) ||
-      !/[0-9]/.test(password) ||
-      !/[^A-Za-z0-9]/.test(password)
+      password.length < 10 ||
+      !/[A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż]/.test(password) ||
+      !/[0-9]/.test(password)
     ) {
       return res.status(400).json({
         ok:false,
-        error:"Hasło musi mieć co najmniej 12 znaków oraz zawierać małą literę, wielką literę, cyfrę i znak specjalny."
+        error:"Hasło musi mieć co najmniej 10 znaków, w tym literę i cyfrę."
       });
     }
     path = "/auth/v1/signup" + (redirect ? "?redirect_to=" + encodeURIComponent(redirect) : "");
@@ -101,15 +99,13 @@ async function webAuthProxy(req, res) {
       return res.status(401).json({ ok:false, error:"Link do ustawienia hasła wygasł. Poproś o nowy." });
     }
     if (
-      password.length < 12 ||
-      !/[a-z]/.test(password) ||
-      !/[A-Z]/.test(password) ||
-      !/[0-9]/.test(password) ||
-      !/[^A-Za-z0-9]/.test(password)
+      password.length < 10 ||
+      !/[A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż]/.test(password) ||
+      !/[0-9]/.test(password)
     ) {
       return res.status(400).json({
         ok:false,
-        error:"Hasło musi mieć co najmniej 12 znaków oraz zawierać małą literę, wielką literę, cyfrę i znak specjalny."
+        error:"Hasło musi mieć co najmniej 10 znaków, w tym literę i cyfrę."
       });
     }
     method = "PUT";
